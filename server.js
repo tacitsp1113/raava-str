@@ -2,7 +2,13 @@ const express = require('express');
 const { getRouter } = require('stremio-addon-sdk');
 const addonInterface = require('./addon');
 
+const path = require('path');
 const app = express();
+
+// Serve logo
+app.get('/logo.png', (req, res) => {
+  res.sendFile(path.join(__dirname, 'logo.png'));
+});
 const PORT = process.env.PORT || 7000;
 
 // Mount Stremio addon router (handles /manifest.json, /stream/:type/:id.json, etc.)

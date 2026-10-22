@@ -159,9 +159,10 @@ function formatStreamItem(item, magnetData, seedData) {
     seedLabel = `👤 ${seedData.seeders} ${seedData.seeders === 1 ? 'semilla' : 'semillas'}`;
   }
 
+  const flag = /latino/i.test(lang) ? '🇲🇽 ' : '';
   return {
     name: `RAAVA STR\n${qualityBadge}`,
-    title: `🎬 ${rawQuality} (${format})\n${seedLabel} | 💾 ${size || 'Tamaño N/D'} | 🔊 ${lang}\n⚡ P2P Direct Stream`,
+    title: `🎬 ${rawQuality} (${format})\n${flag}${lang}\n${seedLabel} · 💾 ${size || 'Tamaño N/D'}\n⚡ P2P Direct Stream`,
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
     behaviorHints: {
