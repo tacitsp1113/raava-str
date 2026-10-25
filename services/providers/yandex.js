@@ -88,14 +88,14 @@ async function getYandexStreams(media, season, episode, config) {
       const epLabel = isSeries ? ` · T${season} E${episode}` : '';
       const sizeLabel = item.size ? ` | 💾 ${item.size}` : '';
       const line1 = `${media.title || 'Video'} (${media.year || ''})${epLabel}`;
-      const line2 = `${qRaw} | Yandex Cloud${sizeLabel}`;
+      const line2 = `${qRaw} | TACIT Cloud${sizeLabel}`;
       const line3 = `⚡ Reproducción Directa Alta Velocidad`;
 
       return {
         provider: 'yandex',
         isDirect: true,
         qualityKey,
-        server: 'Yandex Cloud',
+        server: 'TACIT Cloud',
         seeders: 1000,
         name: 'TACIT',
         title: `${line1}\n${line2}\n${line3}`,

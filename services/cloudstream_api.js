@@ -206,7 +206,7 @@ async function getStreams(type, id, season = null, episode = null) {
     if (!directUrl) return null;
 
     return {
-      name: 'Yandex Cloud',
+      name: 'TACIT Cloud',
       url: directUrl,
       quality: c.quality || '1080p',
       size: c.size || null

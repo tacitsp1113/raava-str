@@ -435,10 +435,10 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="provider" data-val="yandex" style="grid-column: 1 / -1; border-color: rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.08);">
         <div class="card-info">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span class="name">Yandex Cloud · 35,000 Títulos</span>
+            <span class="name">TACIT Cloud</span>
             <span style="background: #0ea5e9; color: black; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Instantáneo</span>
           </div>
-          <span class="desc">Películas y series completas en 4K, 1080p y Dual sin esperas</span>
+          <span class="desc">Reproducción instantánea en alta velocidad</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>

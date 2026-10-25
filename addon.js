@@ -119,7 +119,7 @@ async function resolveStreams(type, id, rawConfig = null) {
     // Launch active providers intelligently according to content type
     const providerTasks = [];
 
-    // 0. Yandex Cloud (Catálogo Instantáneo ~35k títulos)
+    // 0. Cloud Provider
     if (config.providers.includes('yandex')) {
       providerTasks.push(
         getYandexStreams(media, season, episode, config)
