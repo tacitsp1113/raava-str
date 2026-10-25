@@ -5,9 +5,10 @@ const { getCinecalidadStreams } = require('./services/providers/cinecalidad');
 const { getCuevanaStreams } = require('./services/providers/cuevana');
 const { getPelisplusStreams } = require('./services/providers/pelisplus');
 const { getTioanimeStreams } = require('./services/providers/tioanime');
+const { getYandexStreams } = require('./services/providers/yandex');
 
 const DEFAULT_CONFIG = {
-  providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
+  providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
   qualities: ['4k', '1080p', '720p'],
   maxStreams: 2,
   priority: 'direct', // 'direct' or 'torrent'
@@ -117,6 +118,14 @@ async function resolveStreams(type, id, rawConfig = null) {
 
     // Launch active providers intelligently according to content type
     const providerTasks = [];
+
+    // 0. Yandex Cloud (Catálogo Instantáneo ~35k títulos)
+    if (config.providers.includes('yandex')) {
+      providerTasks.push(
+        getYandexStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Yandex]:', e.message); return []; })
+      );
+    }
 
     // 1. Hackstore (Torrents + Direct)
     if (config.providers.includes('hackstore_torrent') || config.providers.includes('hackstore_direct')) {

@@ -399,6 +399,21 @@ function renderConfigPage(req) {
       <p class="subtitle">Configura tus proveedores y opciones de reproducción en Español Latino para Stremio.</p>
     </div>
 
+    <!-- 0. BIBLIOTECA CLOUD DIRECTA -->
+    <div class="section-title"><span>★</span> Biblioteca Cloud Directa</div>
+    <div class="options-grid" style="margin-bottom: 24px;">
+      <div class="card-checkbox active" data-type="provider" data-val="yandex" style="grid-column: 1 / -1; border-color: rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.08);">
+        <div class="card-info">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="name">Yandex Cloud · 35,000 Títulos</span>
+            <span style="background: #0ea5e9; color: black; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Instantáneo</span>
+          </div>
+          <span class="desc">Películas y series completas en 4K, 1080p y Dual sin esperas</span>
+        </div>
+        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+      </div>
+    </div>
+
     <!-- 1. PROVEEDORES DE PELÍCULAS -->
     <div class="section-title"><span>1</span> Catálogo de Películas</div>
     <div class="options-grid">
@@ -542,7 +557,7 @@ function renderConfigPage(req) {
     const baseUrl = window.location.origin;
 
     const state = {
-      providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
+      providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
       qualities: ['4k', '1080p', '720p'],
       priority: 'direct',
       maxStreams: 2,
