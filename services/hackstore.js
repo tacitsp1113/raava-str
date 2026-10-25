@@ -161,12 +161,12 @@ function formatStreamItem(item, magnetData, seedData) {
 
   const flag = /latino/i.test(lang) ? '🇲🇽 ' : '';
   return {
-    name: `RAAVA STR\n${qualityBadge}`,
+    name: `TACIT STR\n${qualityBadge}`,
     title: `🎬 ${rawQuality} (${format})\n${flag}${lang}\n${seedLabel} · 💾 ${size || 'Tamaño N/D'}\n⚡ P2P Direct Stream`,
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
     behaviorHints: {
-      bingeGroup: `raava-str-${qualityBadge.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
+      bingeGroup: `tacit-str-${qualityBadge.toLowerCase().replace(/[^a-z0-9]/g, '-')}`
     }
   };
 }

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: raava-str
+    name: tacit-str
     env: node
     plan: free
     buildCommand: npm install

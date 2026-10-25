@@ -1,7 +1,7 @@
 {
-  "name": "raava-stremio",
+  "name": "tacit-str",
   "version": "1.0.0",
-  "description": "RAAVA Streams - Addon para Stremio con películas y series en Español Latino (4K / 1080p)",
+  "description": "TACIT STR - Stremio Addon para películas y series en Español Latino (Híbrido Torrents + Streaming Directo)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -10,16 +10,17 @@
   "keywords": [
     "stremio",
     "stremio-addon",
-    "raava",
+    "tacit",
     "movies",
     "series",
     "latino"
   ],
-  "author": "RAAVA",
+  "author": "TACIT",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.9",
     "bittorrent-tracker": "^11.2.3",
+    "cheerio": "^1.2.0",
     "express": "^4.21.2",
     "stremio-addon-sdk": "^1.6.10"
   }
