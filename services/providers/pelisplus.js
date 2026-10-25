@@ -3,9 +3,10 @@ const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
+const { resolveEmbed69 } = require('../extractors/embed69');
 const { isStreamAlive } = require('../extractors/validator');
 
-const BASE_URL = 'https://pelisplus.lat';
+const BASE_URL = 'https://pelisplushd.bz';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 async function searchPelisplus(query) {
@@ -18,12 +19,17 @@ async function searchPelisplus(query) {
     const $ = cheerio.load(res.data);
     const results = [];
 
-    $('.item-pelicula, .items-peliculas article, article.post').each((_, el) => {
+    $('a.Posters-link, .item-pelicula, .items-peliculas article, article.post').each((_, el) => {
       const $el = $(el);
-      const title = $el.find('h2, h3, .title').first().text().trim();
-      const href = $el.find('a').first().attr('href');
-      const yearText = $el.find('.year, .meta span, span').text();
-      const yearMatch = yearText.match(/\b(19\d\d|20\d\d)\b/);
+      const dataTitle = $el.attr('data-title') || '';
+      let title = dataTitle
+        .replace(/^VER\s+/i, '')
+        .replace(/\s*\(\d{4}\)?.*$/i, '')
+        .replace(/\s+Online\s+Gratis\s+HD$/i, '')
+        .trim() || $el.find('h2, h3, .title').first().text().trim();
+
+      const href = $el.attr('href') || $el.find('a').first().attr('href');
+      const yearMatch = dataTitle.match(/\((\d{4})\)/) || $el.text().match(/\b(19\d\d|20\d\d)\b/);
       const year = yearMatch ? parseInt(yearMatch[1], 10) : null;
 
       if (title && href) {
@@ -41,33 +47,42 @@ async function searchPelisplus(query) {
   }
 }
 
-function findBestMatch(results, media) {
+function findBestMatch(results, media, isSeries = false) {
   if (!results || results.length === 0) return null;
 
   const targetClean = media.cleanTitle;
   const targetOriginalClean = media.cleanOriginalTitle;
   const targetYear = media.year;
 
-  for (const item of results) {
+  // 1. Filter candidates by content type
+  const typeFiltered = isSeries
+    ? results.filter(r => r.href.includes('/serie/'))
+    : results.filter(r => r.href.includes('/pelicula/'));
+  const candidates = typeFiltered.length > 0 ? typeFiltered : results;
+
+  // 2. Exact clean title match
+  for (const item of candidates) {
     const clean = cleanTitle(item.title);
     if (clean === targetClean || clean === targetOriginalClean) return item;
   }
 
+  // 3. Exact year match with title match
   if (targetYear) {
-    for (const item of results) {
+    for (const item of candidates) {
       const clean = cleanTitle(item.title);
       if (item.year && Math.abs(item.year - targetYear) <= 1) {
-        if (clean.includes(targetClean) || targetClean.includes(clean)) return item;
+        if (clean === targetClean || clean.includes(targetClean) || targetClean.includes(clean)) return item;
       }
     }
   }
 
-  for (const item of results) {
+  // 4. Substring match
+  for (const item of candidates) {
     const clean = cleanTitle(item.title);
     if (clean && (clean.includes(targetClean) || targetClean.includes(clean))) return item;
   }
 
-  return results[0];
+  return candidates[0];
 }
 
 async function getPelisplusStreams(media, season = null, episode = null, config = {}) {
@@ -81,7 +96,7 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
     searchResults = await searchPelisplus(media.originalTitle);
   }
 
-  const matched = findBestMatch(searchResults, media);
+  const matched = findBestMatch(searchResults, media, isSeries);
   if (!matched || !matched.href) return [];
 
   let targetUrl = matched.href;
@@ -92,12 +107,12 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       const $ = cheerio.load(showRes.data);
       let epHref = null;
 
-      $('.seasons-episodes a, .episode-item, .item-episode').each((_, el) => {
-        const text = $(el).text();
+      $('a[href*="/temporada/"][href*="/capitulo/"], .seasons-episodes a, .episode-item').each((_, el) => {
         const href = $(el).attr('href');
-        const match = text.match(/(\d+)x(\d+)/) || text.match(/T(\d+)\s*E(\d+)/i);
+        if (!href) return;
+        const match = href.match(/\/temporada\/(\d+)\/capitulo\/(\d+)/i) || $(el).text().match(/(\d+)x(\d+)/);
         if (match && parseInt(match[1], 10) === parseInt(season, 10) && parseInt(match[2], 10) === parseInt(episode, 10)) {
-          if (href) epHref = href.startsWith('http') ? href : `${BASE_URL}${href}`;
+          epHref = href.startsWith('http') ? href : `${BASE_URL}${href}`;
         }
       });
 
@@ -107,21 +122,46 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
 
   try {
     const pageRes = await axios.get(targetUrl, { headers: { 'User-Agent': USER_AGENT }, timeout: 6000 });
-    const $ = cheerio.load(pageRes.data);
-    const options = [];
+    const html = pageRes.data;
+    if (typeof html !== 'string') return [];
 
-    $('iframe[src], .player-container iframe, [data-video], [data-player]').each((_, el) => {
+    const rawOptions = [];
+
+    // Extract video[i] matches
+    const videoMatches = [...html.matchAll(/video\[\d+\]\s*=\s*['"]([^'"]+)['"]/g)];
+    for (const m of videoMatches) {
+      const url = m[1];
+      if (url && !rawOptions.includes(url)) rawOptions.push(url);
+    }
+
+    // Extract iframes
+    const $ = cheerio.load(html);
+    $('iframe[src], [data-video], [data-player]').each((_, el) => {
       const src = $(el).attr('src') || $(el).attr('data-video') || $(el).attr('data-player');
-      if (src && !src.includes('google') && !src.includes('youtube') && !options.includes(src)) {
-        options.push(src);
+      if (src && !src.includes('google') && !src.includes('youtube') && !rawOptions.includes(src)) {
+        rawOptions.push(src);
       }
     });
 
-    const promises = options.slice(0, 3).map(async (optUrl) => {
+    const streamTargets = [];
+    for (const opt of rawOptions.slice(0, 4)) {
+      if (opt.includes('embed69.org')) {
+        const decrypted = await resolveEmbed69(opt);
+        for (const item of decrypted) {
+          if (item.audio === 'Latino') {
+            streamTargets.push(item.url);
+          }
+        }
+      } else {
+        streamTargets.push(opt);
+      }
+    }
+
+    const promises = streamTargets.slice(0, 3).map(async (optUrl) => {
       let resolved = null;
       let server = 'Directo';
 
-      if (optUrl.includes('voe.sx') || optUrl.includes('cloudwindow-route') || optUrl.includes('voe-network')) {
+      if (optUrl.includes('voe.sx') || optUrl.includes('repacklab.com') || optUrl.includes('fraudulentwelfare.com') || optUrl.includes('cloudwindow-route') || optUrl.includes('voe-network')) {
         server = 'VOE';
         resolved = await resolveVoe(optUrl);
       } else if (optUrl.includes('vimeos.net') || optUrl.includes('vimeos.zip')) {
@@ -136,13 +176,19 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       const quality = resolved.quality || '1080p';
       const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
 
+      const epLabel = isSeries ? ` · T${season} E${episode}` : '';
+      const line1 = `${media.title || 'Video'} (${media.year || ''})${epLabel}`;
+      const line2 = `${quality} | WEB-DL | Latino 🇲🇽`;
+      const line3 = `⚡ Stream Directo · Servidor ${server}`;
+
       return {
         provider: 'pelisplus',
         isDirect: true,
         qualityKey,
+        server,
         seeders: 999,
-        name: `TACIT\n${quality}`,
-        title: `PelisPlus · ${server}\nEspañol Latino · Stream Directo`,
+        name: 'TACIT',
+        title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {
           notWebReady: false,
@@ -161,5 +207,6 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
 }
 
 module.exports = {
+  searchPelisplus,
   getPelisplusStreams
 };
