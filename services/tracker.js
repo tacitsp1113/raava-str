@@ -13,21 +13,18 @@ async function getTrackerClient() {
     try {
       const { Client } = await import('bittorrent-tracker');
       trackerClient = Client;
-    } catch (err) {
-      console.error('[Tracker] Failed to import bittorrent-tracker:', err.message);
-    }
+    } catch (_) {}
   }
   return trackerClient;
 }
 
 /**
- * Scrapes tracker for seeders and leechers with a fast timeout
+ * Scrapes tracker for seeders and leechers with a non-blocking fast timeout
  */
 async function scrapeSeeders(infoHash, customTrackers = []) {
   if (!infoHash) return null;
   const hashKey = infoHash.toLowerCase();
 
-  // Return cached result (cache valid for 15 minutes)
   const cached = seedCache.get(hashKey);
   if (cached && (Date.now() - cached.timestamp < 15 * 60 * 1000)) {
     return cached.data;
@@ -41,13 +38,13 @@ async function scrapeSeeders(infoHash, customTrackers = []) {
   return new Promise((resolve) => {
     let resolved = false;
 
+    // Ultralight timer (600ms max) so it never lags the response on Cloud/Render
     const timer = setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        // Don't block if tracker is slow
         resolve(null);
       }
-    }, 1800);
+    }, 600);
 
     try {
       Client.scrape({ infoHash: hashKey, announce: announceList }, (err, data) => {
@@ -66,7 +63,7 @@ async function scrapeSeeders(infoHash, customTrackers = []) {
           }
         }
       });
-    } catch (e) {
+    } catch (_) {
       if (!resolved) {
         resolved = true;
         clearTimeout(timer);

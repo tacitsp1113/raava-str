@@ -35,7 +35,7 @@ const manifest = {
   version: '1.0.0',
   name: 'TACIT STR',
   description: 'TACIT STR · Inspirado en Tacit Ronin. Películas, series y anime en Español Latino (Híbrido Torrents 4K + Directo Instantáneo)',
-  logo: 'https://raw.githubusercontent.com/tacitsp1113/tacit-str/main/logo.png',
+  logo: 'https://raava-str-1.onrender.com/logo.png',
   background: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1920&q=80',
   resources: ['stream'],
   types: ['movie', 'series', 'anime'],
@@ -144,6 +144,7 @@ async function resolveStreams(type, id, rawConfig = null) {
     const minSeeders = typeof config.minSeeders === 'number' ? config.minSeeders : 1;
     allStreams = allStreams.filter(s => {
       if (!s.isDirect) {
+        if (minSeeders <= 1) return true;
         return (s.seeders || 0) >= minSeeders;
       }
       return true;

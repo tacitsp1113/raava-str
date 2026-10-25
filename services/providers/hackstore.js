@@ -46,11 +46,11 @@ function parseMagnet(magnetUrl) {
   return { infoHash, trackers };
 }
 
-async function searchPosts(query, postType = 'movies') {
+async function queryHackstoreApi(query, postType = 'movies') {
   if (!query) return [];
   try {
     const url = `${API_BASE}/search?post_type=${postType}&query=${encodeURIComponent(query)}`;
-    const res = await axios.get(url, { headers: HEADERS, timeout: 6000 });
+    const res = await axios.get(url, { headers: HEADERS, timeout: 5000 });
     const posts = res.data?.data?.posts;
     return Array.isArray(posts) ? posts : [];
   } catch (err) {
@@ -58,11 +58,52 @@ async function searchPosts(query, postType = 'movies') {
   }
 }
 
+async function searchPosts(media, postType = 'movies') {
+  // Strategy 1: Search raw title without & or colons
+  const cleanQ = media.title.replace(/[&:\-–]/g, ' ').replace(/\s+/g, ' ').trim();
+  let posts = await queryHackstoreApi(cleanQ, postType);
+  if (posts.length > 0 && hasRelevantMatch(posts, media)) return posts;
+
+  // Strategy 2: Search cleanTitle
+  if (media.cleanTitle && media.cleanTitle !== cleanQ) {
+    posts = await queryHackstoreApi(media.cleanTitle, postType);
+    if (posts.length > 0 && hasRelevantMatch(posts, media)) return posts;
+  }
+
+  // Strategy 3: Search original title
+  if (media.originalTitle && media.originalTitle !== media.title) {
+    posts = await queryHackstoreApi(media.originalTitle.replace(/[&:\-–]/g, ' ').trim(), postType);
+    if (posts.length > 0 && hasRelevantMatch(posts, media)) return posts;
+  }
+
+  // Strategy 4: Search primary keyword (e.g. "Deadpool")
+  const firstWord = media.cleanTitle.split(' ')[0];
+  if (firstWord && firstWord.length >= 3) {
+    posts = await queryHackstoreApi(firstWord, postType);
+    if (posts.length > 0 && hasRelevantMatch(posts, media)) return posts;
+  }
+
+  return [];
+}
+
+function hasRelevantMatch(posts, media) {
+  const targetClean = media.cleanTitle;
+  for (const post of posts) {
+    const pClean = cleanTitle(post.title);
+    if (pClean.includes(targetClean) || targetClean.includes(pClean)) return true;
+    if (post.release_date && media.year) {
+      const pYear = parseInt(post.release_date.split('-')[0], 10);
+      if (Math.abs(pYear - media.year) <= 1 && (pClean.includes(targetClean.split(' ')[0]))) return true;
+    }
+  }
+  return false;
+}
+
 async function getDownloads(postId) {
   if (!postId) return [];
   try {
     const url = `${API_BASE}/downloads?post_id=${postId}`;
-    const res = await axios.get(url, { headers: HEADERS, timeout: 6000 });
+    const res = await axios.get(url, { headers: HEADERS, timeout: 5000 });
     const items = res.data?.data;
     return Array.isArray(items) ? items : [];
   } catch (err) {
@@ -74,7 +115,7 @@ async function getPlayers(postId) {
   if (!postId) return [];
   try {
     const url = `${API_BASE}/player?post_id=${postId}`;
-    const res = await axios.get(url, { headers: HEADERS, timeout: 6000 });
+    const res = await axios.get(url, { headers: HEADERS, timeout: 5000 });
     const items = res.data?.data;
     return Array.isArray(items) ? items : [];
   } catch (err) {
@@ -86,7 +127,7 @@ async function getEpisodes(showId) {
   if (!showId) return [];
   try {
     const url = `${API_BASE}/episodes?post_id=${showId}`;
-    const res = await axios.get(url, { headers: HEADERS, timeout: 6000 });
+    const res = await axios.get(url, { headers: HEADERS, timeout: 5000 });
     const items = res.data?.data;
     return Array.isArray(items) ? items : [];
   } catch (err) {
@@ -114,7 +155,7 @@ function findBestMatch(posts, media) {
   if (targetYear) {
     for (const post of posts) {
       const postClean = cleanTitle(post.title);
-      const postYear = post.release_date ? parseInt(post.release_date.split('-')[0]) : null;
+      const postYear = post.release_date ? parseInt(post.release_date.split('-')[0], 10) : null;
       if (postYear && Math.abs(postYear - targetYear) <= 1) {
         if (postClean.includes(targetClean) || targetClean.includes(postClean)) {
           return post;
@@ -191,10 +232,6 @@ async function resolveDirectPlayer(player) {
 
   if (!resolved || !resolved.url) return null;
 
-  // Validate stream URL
-  const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1500);
-  if (!alive) return null;
-
   const rawQuality = player.quality || resolved.quality || '1080p';
   let qualityBadge = '1080p';
   let qualityKey = '1080p';
@@ -238,18 +275,12 @@ async function getHackstoreStreams(media, season = null, episode = null, config 
   let posts = [];
 
   if (isSeries) {
-    posts = await searchPosts(media.title, 'tvshows');
-    if (posts.length === 0 && media.originalTitle && media.originalTitle !== media.title) {
-      posts = await searchPosts(media.originalTitle, 'tvshows');
-    }
+    posts = await searchPosts(media, 'tvshows');
     if (posts.length === 0) {
-      posts = await searchPosts(media.title, 'animes');
+      posts = await searchPosts(media, 'animes');
     }
   } else {
-    posts = await searchPosts(media.title, 'movies');
-    if (posts.length === 0 && media.originalTitle && media.originalTitle !== media.title) {
-      posts = await searchPosts(media.originalTitle, 'movies');
-    }
+    posts = await searchPosts(media, 'movies');
   }
 
   const matched = findBestMatch(posts, media);
