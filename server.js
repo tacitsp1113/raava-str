@@ -48,6 +48,36 @@ app.get('/:configuration/stream/:type/:id.json', async (req, res) => {
   }
 });
 
+// --- CLOUDSTREAM COMPATIBLE REST API ---
+const csApi = require('./services/cloudstream_api');
+
+app.get('/api/cs/home', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { type, page, limit } = req.query;
+  res.json(csApi.getHome(type || 'movie', Number(page) || 1, Number(limit) || 30));
+});
+
+app.get('/api/cs/search', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { q, limit } = req.query;
+  res.json(csApi.searchCatalog(q || '', Number(limit) || 40));
+});
+
+app.get('/api/cs/load', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { type, id } = req.query;
+  const details = csApi.loadDetails(type || 'movie', id);
+  if (!details) return res.status(404).json({ error: 'Not found' });
+  res.json(details);
+});
+
+app.get('/api/cs/links', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { type, id, season, episode } = req.query;
+  const streams = await csApi.getStreams(type || 'movie', id, season, episode);
+  res.json({ streams });
+});
+
 // --- INTERACTIVE CONFIGURATION & INSTALLATION PAGE ---
 
 function renderConfigPage(req) {
