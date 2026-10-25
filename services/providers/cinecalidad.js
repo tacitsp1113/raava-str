@@ -126,8 +126,8 @@ async function resolveOption(optionUrl, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `▶ TACIT ${quality}`,
-    title: `${displayTitle}\n${quality} | WEB-DL | Latino 🇲🇽\n⚡ Servidor Rápido · 1.8 GB`,
+    name: 'TACIT',
+    title: `${displayTitle}\n${quality} | WEB-DL | Latino 🇲🇽\n⚡ Stream Directo · 1.8 GB`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,

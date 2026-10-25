@@ -118,7 +118,7 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
 
   const epLabel = (season && episode) ? ` · T${season} E${episode}` : '';
   const mediaHeader = media?.title ? `${media.title} (${media.year || ''})${epLabel}` : 'TACIT Stream';
-  const speedLabel = serverTier === 1 ? '⚡ Servidor Rápido · 1.8 GB' : '⚡ Ruta alterna: úsala si el directo se traba';
+  const speedLabel = serverTier === 1 ? '⚡ Stream Directo · 1.8 GB' : '⚡ Ruta alterna: úsala si el directo se traba';
 
   return {
     provider: 'cuevana',
@@ -127,7 +127,7 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `▶ TACIT ${quality}`,
+    name: 'TACIT',
     title: `${mediaHeader}\n${quality} | WEB-DL | Latino 🇲🇽\n${speedLabel}`,
     url: resolved.url,
     behaviorHints: {
