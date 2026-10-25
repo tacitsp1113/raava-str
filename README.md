@@ -81,5 +81,11 @@ El proyecto incluye `render.yaml` preconfigurado para Node.js con detección de 
 
 ---
 
+## 🤝 Créditos y Agradecimientos
+
+* Lógica de desencriptación e investigación comunitaria referenciada de [Droydr13/pluggin-latino](https://github.com/Droydr13/pluggin-latino), pioneros en documentar el algoritmo de desplazamiento de bytes en VOE y la resolución criptográfica de Embed69.
+
+---
+
 ## 📜 Licencia
 MIT © TACIT STR
