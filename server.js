@@ -23,7 +23,7 @@ app.get('/:configuration/manifest.json', (req, res) => {
   const customManifest = {
     ...manifest,
     name: 'TACIT STR',
-    description: `TACIT STR (${config.providers.length} proveedores · Máx ${config.maxStreams} enlaces · ${config.priority === 'direct' ? 'Directo prioritario' : 'Torrents prioritarios'})`
+    description: `TACIT STR (${config.providers.length} proveedores · Hasta ${config.maxStreams || 2} enlaces por proveedor · ${config.priority === 'direct' ? 'Directo prioritario' : 'Torrents prioritarios'})`
   };
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -509,10 +509,11 @@ function renderConfigPage(req) {
 
     <div class="slider-container">
       <div class="slider-header">
-        <span class="slider-title">Límite de resultados a mostrar</span>
-        <span class="slider-value" id="maxLabel">6 enlaces</span>
+        <span class="slider-title">Enlaces por proveedor</span>
+        <span class="slider-value" id="maxLabel">2 por proveedor</span>
       </div>
-      <input type="range" id="maxSlider" min="1" max="10" value="6">
+      <input type="range" id="maxSlider" min="1" max="5" value="2">
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cada proveedor activo aportará hasta esta cantidad de enlaces, garantizando variedad de fuentes (ej. 2 de Hackstore, 2 de Cuevana, etc.).</p>
     </div>
 
     <!-- ACCIONES DE INSTALACIÓN -->
@@ -536,7 +537,7 @@ function renderConfigPage(req) {
       providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
       qualities: ['4k', '1080p', '720p'],
       priority: 'direct',
-      maxStreams: 6,
+      maxStreams: 2,
       minSeeders: 1
     };
 
@@ -574,7 +575,7 @@ function renderConfigPage(req) {
     const label = document.getElementById('maxLabel');
     slider.addEventListener('input', (e) => {
       state.maxStreams = parseInt(e.target.value, 10);
-      label.textContent = state.maxStreams === 1 ? '1 enlace' : state.maxStreams + ' enlaces';
+      label.textContent = state.maxStreams === 1 ? '1 por proveedor' : state.maxStreams + ' por proveedor';
       updateUrls();
     });
 

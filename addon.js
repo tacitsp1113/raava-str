@@ -9,7 +9,7 @@ const { getTioanimeStreams } = require('./services/providers/tioanime');
 const DEFAULT_CONFIG = {
   providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
   qualities: ['4k', '1080p', '720p'],
-  maxStreams: 6,
+  maxStreams: 2,
   priority: 'direct', // 'direct' or 'torrent'
   minSeeders: 1
 };
@@ -210,9 +210,19 @@ async function resolveStreams(type, id, rawConfig = null) {
       return 0;
     });
 
-    // D. Límite máximo de enlaces
-    const maxLimit = Math.max(1, parseInt(config.maxStreams, 10) || 6);
-    const finalStreams = allStreams.slice(0, maxLimit);
+    // D. Límite de enlaces por proveedor (distribución balanceada y diversa)
+    const maxPerProvider = Math.max(1, parseInt(config.maxPerProvider || config.maxStreams, 10) || 2);
+    const providerCounts = {};
+    const finalStreams = [];
+
+    for (const s of allStreams) {
+      const prov = s.provider || 'default';
+      providerCounts[prov] = (providerCounts[prov] || 0);
+      if (providerCounts[prov] < maxPerProvider) {
+        finalStreams.push(s);
+        providerCounts[prov]++;
+      }
+    }
 
     console.log(`[TACIT] Returning ${finalStreams.length} stream(s) for "${media.title}"`);
     const result = { streams: finalStreams };

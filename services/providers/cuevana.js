@@ -2,6 +2,7 @@ const axios = require('axios');
 const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
+const { resolveVidhide } = require('../extractors/vidhide');
 const { isStreamAlive } = require('../extractors/validator');
 
 const DOMAINS = ['https://cuevana3.sc', 'https://cuevana.ch'];
@@ -101,6 +102,9 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl) {
   } else if (fixed.includes('vimeos.net') || fixed.includes('vimeos.zip')) {
     server = 'Vimeos';
     resolved = await resolveVimeos(fixed);
+  } else if (fixed.includes('vidhide') || fixed.includes('filelions') || fixed.includes('dhtpre') || fixed.includes('mivalyo') || fixed.includes('dinisglows')) {
+    server = 'VidHide';
+    resolved = await resolveVidhide(fixed);
   }
 
   if (!resolved || !resolved.url) return null;
@@ -139,6 +143,9 @@ async function getCuevanaStreams(media, season = null, episode = null, config = 
   if (items.length === 0 && media.originalTitle && media.originalTitle !== media.title) {
     items = await searchCuevana(media.originalTitle, baseUrl);
   }
+  if (items.length === 0 && media.cleanTitle) {
+    items = await searchCuevana(media.cleanTitle, baseUrl);
+  }
 
   const matched = findBestMatch(items, media);
   if (!matched || !matched.link) return [];
@@ -147,9 +154,9 @@ async function getCuevanaStreams(media, season = null, episode = null, config = 
   if (!idMatch) return [];
   const pid = idMatch[1];
 
-  let playerEndpoint = `${baseUrl}/wp-json/cuevana/v1/players?pid=${pid}`;
+  let playerEndpoint = `${baseUrl}/wp-json/cuevana/v1/player/${pid}`;
   if (isSeries) {
-    playerEndpoint = `${baseUrl}/wp-json/cuevana/v1/players?pid=${pid}&s=${season}&e=${episode}`;
+    playerEndpoint = `${baseUrl}/wp-json/cuevana/v1/episode/${pid}/${season}/${episode}`;
   }
 
   try {
