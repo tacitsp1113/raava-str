@@ -4,15 +4,15 @@ Addon híbrido de alto rendimiento para **Stremio** enfocado en películas, seri
 
 ---
 
-## ⚡ Características Principales
+## ⚡ Características Implementadas
 
 * **Estructura Visual Profesional (Estilo Nuve+ / LAT-ADD):**
   * Etiqueta limpia con el nombre del addon (`TACIT`).
   * Título y metadatos detallados: Título de la obra, año, temporada/episodio, resolución (`1080p | WEB-DL`), bandera de doblaje (`Latino 🇲🇽`) y peso estimado.
-  * Jerarquía clara de servidores: Servidores principales de alta tasa de transferencia y servidores secundarios etiquetados como `⚡ Ruta alterna: úsala si el directo se traba`.
+  * Jerarquía clara de servidores: Servidores principales de alta velocidad al inicio (`VOE`, `Vimeos`) y servidores secundarios etiquetados como `⚡ Ruta alterna: úsala si el directo se traba` (`VidHide`).
 
 * **Enrutamiento Inteligente de Contenido:**
-  * **Películas:** Consulta especializada a *Hackstore* (Torrents 4K/1080p + Vimeos) y *CineCalidad* (VOE y Vimeos).
+  * **Películas:** Consulta especializada a *Hackstore* (Torrents 4K/1080p + Vimeos), *CineCalidad* (VOE y Vimeos) y *PelisPlus*.
   * **Series:** Consulta especializada a *Cuevana* y *PelisPlus* (con soporte de capítulos completos en VidHide, Vimeos y VOE).
   * **Anime:** Consulta exclusiva a *TioAnime* para animación japonesa en audio latino y subtitulada.
   * Reduce la latencia de scraping a la mitad evitando llamadas a proveedores que no alojan ese formato.
@@ -35,26 +35,27 @@ Addon híbrido de alto rendimiento para **Stremio** enfocado en películas, seri
 ## 🛠️ Extractores y Descodificadores Integrados
 
 1. **VOE (`services/extractors/voe.js`):**
-   * Decodificador matemático multicapa: Desplazamiento rotacional César, stripping de basura en string, Base64 paso 1, shift de bytes `-3`, reverso y Base64 paso 2 para extraer el HLS `master.m3u8`.
-2. **Vimeos (`services/extractors/vimeos.js`):**
+   * Decodificador matemático multicapa: Desplazamiento rotacional César, stripping de basura en string, Base64 paso 1, shift numérico de bytes `-3`, reverso y Base64 paso 2 para extraer el stream HLS directo.
+2. **Embed69 (`services/extractors/embed69.js`):**
+   * Resolutor criptográfico para PelisPlus: cálculo de *Proof-of-Work* (PoW SHA-256) en milisegundos y desencriptación AES-256-CBC con clave derivada para extraer servidores directos en audio Latino y Subtitulado.
+3. **Vimeos (`services/extractors/vimeos.js`):**
    * Desempaquetador Dean Edwards (`eval(function(p,a,c,k,e,d)...)`). Extrae el stream m3u8 directo y subtítulos en formato VTT.
-3. **VidHide / FileLions (`services/extractors/vidhide.js`):**
+4. **VidHide / FileLions (`services/extractors/vidhide.js`):**
    * Desempaquetador Dean Edwards adaptado a CDNs de VidHide, FileLions y hosts espejo para series de TV.
-4. **Validador de Disponibilidad (`services/extractors/validator.js`):**
+5. **Validador de Disponibilidad (`services/extractors/validator.js`):**
    * Peticiones `HEAD` de baja latencia (1.5s) que descartan enlaces caídos (404/410) antes de entregarlos al reproductor.
 
 ---
 
-## 📡 Endpoints del Servidor
+## 📡 Proveedores Activos
 
-| Ruta | Descripción |
-| :--- | :--- |
-| `GET /configure` | Página web de configuración e instalación interactiva. |
-| `GET /:configuration/configure` | Redirección desde el engranaje de configuración en Stremio. |
-| `GET /manifest.json` | Manifiesto estándar con configuración por defecto. |
-| `GET /:configuration/manifest.json` | Manifiesto parametrizado según la configuración del usuario en Base64. |
-| `GET /:configuration/stream/:type/:id.json` | Endpoint de resolución de streams para películas y series. |
-| `GET /logo.png` | Icono oficial de Tacit Ronin en alta resolución. |
+| Proveedor | Enfoque | Dominio Oficial | Formatos |
+| :--- | :--- | :--- | :--- |
+| **Hackstore** | Películas 4K/1080p y Torrents | `hackstore2.com` | Magnet + Vimeos |
+| **Cinecalidad** | Películas y estrenos | `cinecalidad.am` | VOE + Vimeos |
+| **Cuevana** | Películas y Series | `cuevana3.sc` | VOE + VidHide + Vimeos |
+| **PelisPlus** | Películas y Series Latino | `pelisplushd.bz` | Embed69 + VOE + Streamwish |
+| **TioAnime** | Animación Japonesa | `tioanime.com` | Vimeos + Mega + Mp4Upload |
 
 ---
 
@@ -65,10 +66,18 @@ Addon híbrido de alto rendimiento para **Stremio** enfocado en películas, seri
 npm install
 npm start
 ```
-Abre tu navegador en: `http://localhost:7000/configure`
+Abre tu navegador en: `http://localhost:10000/configure`
 
 ### 2. Despliegue en Render
-El proyecto incluye [render.yaml](render.yaml) preconfigurado para Node.js con detección de puerto automática (`process.env.PORT`).
+El proyecto incluye `render.yaml` preconfigurado para Node.js con detección de puerto automática (`process.env.PORT`).
+
+---
+
+## 🔮 Pendientes y Hoja de Ruta (Roadmap)
+
+- [ ] **Filtro de Idioma en Configuración:** Añadir casilla en `/configure` para filtrar estrictamente solo audio Latino o incluir Castellano.
+- [ ] **Resolución de Altcha en Render:** Bypass del captcha Altcha cuando VOE detecta IPs de centros de datos (datacenter cloud IP).
+- [ ] **Portar proveedores adicionales:** Explorar la integración de *LaMovie* o *SeriesFlix* desde la base comunitaria de plugins latinos.
 
 ---
 
