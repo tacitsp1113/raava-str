@@ -23,7 +23,7 @@ app.get('/:configuration/manifest.json', (req, res) => {
   const customManifest = {
     ...manifest,
     name: 'TACIT STR',
-    description: `TACIT STR · Tacit Ronin Edition (${config.providers.length} fuentes activas · Max ${config.maxStreams} links · ${config.priority === 'direct' ? 'Directo prioritario' : 'Torrents prioritarios'})`
+    description: `TACIT STR (${config.providers.length} proveedores · Máx ${config.maxStreams} enlaces · ${config.priority === 'direct' ? 'Directo prioritario' : 'Torrents prioritarios'})`
   };
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -59,21 +59,20 @@ function renderConfigPage(req) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TACIT STR - Tacit Ronin Jaeger System</title>
+  <title>TACIT STR - Configuración</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #07060d;
-      --card-bg: rgba(18, 14, 33, 0.75);
-      --card-border: rgba(139, 92, 246, 0.25);
-      --accent: #8b5cf6;
-      --accent-glow: rgba(139, 92, 246, 0.4);
-      --accent-hover: #7c3aed;
+      --bg: #0b0f17;
+      --card-bg: rgba(16, 22, 34, 0.82);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #0ea5e9;
+      --accent-hover: #0284c7;
+      --accent-glow: rgba(14, 165, 233, 0.3);
       --cyan: #06b6d4;
-      --blade: #e0e7ff;
-      --text: #f8fafc;
+      --text: #f1f5f9;
       --text-muted: #94a3b8;
     }
 
@@ -81,184 +80,172 @@ function renderConfigPage(req) {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at 50% 8%, #1f1442 0%, #0a0814 55%, #040308 100%);
+      background: radial-gradient(circle at 50% 0%, #152238 0%, #0b0f17 50%, #06090e 100%);
       color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
+      padding: 44px 20px;
     }
 
     .container {
-      max-width: 720px;
+      max-width: 700px;
       width: 100%;
       background: var(--card-bg);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 30px;
-      padding: 44px 38px;
-      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.8), 0 0 50px rgba(139, 92, 246, 0.15);
-      position: relative;
+      border-radius: 24px;
+      padding: 40px 36px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(14, 165, 233, 0.08);
     }
 
     .header {
       text-align: center;
-      margin-bottom: 34px;
+      margin-bottom: 32px;
     }
 
-    .jaeger-emblem {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 80px;
-      height: 80px;
-      border-radius: 22px;
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(6, 182, 212, 0.25));
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      margin-bottom: 16px;
-      box-shadow: 0 12px 30px rgba(139, 92, 246, 0.35);
-    }
-
-    .jaeger-emblem img {
-      width: 54px;
-      height: 54px;
-      object-fit: contain;
-    }
-
-    .badge-jaeger {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.4);
-      color: #c4b5fd;
-      padding: 6px 18px;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
+    .logo-img {
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+      object-fit: cover;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(14, 165, 233, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       margin-bottom: 14px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    }
+
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(14, 165, 233, 0.12);
+      border: 1px solid rgba(14, 165, 233, 0.35);
+      color: #7dd3fc;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: 0.8px;
       font-family: 'JetBrains Mono', monospace;
     }
 
     .dot {
-      width: 8px;
-      height: 8px;
-      background: #06b6d4;
+      width: 7px;
+      height: 7px;
+      background: #38bdf8;
       border-radius: 50%;
-      box-shadow: 0 0 12px #06b6d4;
+      box-shadow: 0 0 10px #38bdf8;
     }
 
     h1 {
-      font-size: 2.8rem;
-      font-weight: 900;
-      background: linear-gradient(135deg, #ffffff 40%, #c4b5fd 80%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
       letter-spacing: -0.5px;
     }
 
     p.subtitle {
       color: var(--text-muted);
-      font-size: 1.05rem;
-      line-height: 1.55;
+      font-size: 0.98rem;
+      line-height: 1.5;
     }
 
     .section-title {
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: #a78bfa;
-      margin: 28px 0 14px 0;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin: 26px 0 12px 0;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .section-title span {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
-      background: rgba(139, 92, 246, 0.25);
+      background: rgba(14, 165, 233, 0.18);
+      color: #38bdf8;
       font-size: 0.75rem;
       font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
     }
 
     .options-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     @media (max-width: 600px) {
       .options-grid { grid-template-columns: 1fr; }
-      .container { padding: 32px 20px; }
-      h1 { font-size: 2.2rem; }
+      .container { padding: 28px 18px; }
+      h1 { font-size: 2rem; }
     }
 
     .card-checkbox {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 14px 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       user-select: none;
     }
 
     .card-checkbox:hover {
-      border-color: rgba(139, 92, 246, 0.45);
-      background: rgba(139, 92, 246, 0.06);
-      transform: translateY(-2px);
+      border-color: rgba(14, 165, 233, 0.4);
+      background: rgba(14, 165, 233, 0.05);
     }
 
     .card-checkbox.active {
       border-color: var(--accent);
-      background: rgba(139, 92, 246, 0.14);
-      box-shadow: 0 0 25px rgba(139, 92, 246, 0.2);
+      background: rgba(14, 165, 233, 0.12);
     }
 
     .card-info {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 2px;
     }
 
     .card-info .name {
       font-weight: 600;
-      font-size: 0.98rem;
-      color: #fff;
+      font-size: 0.94rem;
+      color: #f8fafc;
     }
 
     .card-info .desc {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--text-muted);
     }
 
     .custom-check {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 6px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s;
+      transition: all 0.15s;
+      flex-shrink: 0;
     }
 
     .card-checkbox.active .custom-check {
@@ -267,13 +254,13 @@ function renderConfigPage(req) {
     }
 
     .custom-check svg {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       stroke: white;
       stroke-width: 3;
       fill: none;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.15s;
     }
 
     .card-checkbox.active .custom-check svg {
@@ -282,10 +269,10 @@ function renderConfigPage(req) {
 
     /* Slider styling */
     .slider-container {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 18px 20px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 16px 18px;
     }
 
     .slider-header {
@@ -295,17 +282,23 @@ function renderConfigPage(req) {
       margin-bottom: 12px;
     }
 
+    .slider-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
     .slider-value {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #a78bfa;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #38bdf8;
       font-family: 'JetBrains Mono', monospace;
     }
 
     input[type=range] {
       width: 100%;
       height: 6px;
-      border-radius: 5px;
+      border-radius: 4px;
       background: rgba(255, 255, 255, 0.1);
       outline: none;
       -webkit-appearance: none;
@@ -313,12 +306,12 @@ function renderConfigPage(req) {
 
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
-      box-shadow: 0 0 14px var(--accent);
+      box-shadow: 0 0 10px var(--accent);
       transition: transform 0.1s;
     }
 
@@ -328,61 +321,61 @@ function renderConfigPage(req) {
 
     /* Actions */
     .actions {
-      margin-top: 36px;
+      margin-top: 32px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-install {
-      background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+      background: #0ea5e9;
       color: white;
       text-decoration: none;
-      padding: 18px;
-      border-radius: 16px;
-      font-size: 1.15rem;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 1.05rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      box-shadow: 0 10px 30px rgba(124, 58, 237, 0.45);
-      transition: all 0.25s ease;
+      gap: 9px;
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35);
+      transition: all 0.2s ease;
       cursor: pointer;
       border: none;
       width: 100%;
     }
 
     .btn-install:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 35px rgba(124, 58, 237, 0.65);
-      background: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 100%);
+      background: #0284c7;
+      transform: translateY(-1px);
+      box-shadow: 0 12px 28px rgba(14, 165, 233, 0.5);
     }
 
     .btn-copy {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.1);
       color: #cbd5e1;
-      padding: 14px;
-      border-radius: 14px;
-      font-size: 0.95rem;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 0.92rem;
       font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s;
     }
 
     .btn-copy:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       color: white;
     }
 
     .copied-toast {
       color: #34d399;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       text-align: center;
       height: 16px;
       opacity: 0;
@@ -397,24 +390,22 @@ function renderConfigPage(req) {
 <body>
   <div class="container">
     <div class="header">
-      <div class="jaeger-emblem">
-        <img src="/logo.png" alt="TACIT STR Logo">
-      </div>
+      <img src="/logo.png" alt="TACIT STR Logo" class="logo-img">
       <br>
-      <div class="badge-jaeger">
-        <span class="dot"></span> Tacit Ronin Jaeger Edition v1.0
+      <div class="badge-tag">
+        <span class="dot"></span> TACIT STR · LATINO
       </div>
       <h1>TACIT STR</h1>
-      <p class="subtitle">Inspirado en la velocidad y precisión de Tacit Ronin. Personaliza tu motor de películas, series y anime en Español Latino para Stremio.</p>
+      <p class="subtitle">Configura tus proveedores y opciones de reproducción en Español Latino para Stremio.</p>
     </div>
 
     <!-- 1. PROVEEDORES -->
-    <div class="section-title"><span>1</span> Red de Proveedores (Latino)</div>
+    <div class="section-title"><span>1</span> Proveedores</div>
     <div class="options-grid">
       <div class="card-checkbox active" data-type="provider" data-val="hackstore_torrent">
         <div class="card-info">
           <span class="name">Hackstore Torrents</span>
-          <span class="desc">Torrents 4K/1080p · Seeders P2P</span>
+          <span class="desc">Torrents P2P en 4K y 1080p</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -422,7 +413,7 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="provider" data-val="hackstore_direct">
         <div class="card-info">
           <span class="name">Hackstore Directo</span>
-          <span class="desc">Vimeos 1080p instantáneo</span>
+          <span class="desc">Streaming Vimeos 1080p</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -430,7 +421,7 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="provider" data-val="cinecalidad">
         <div class="card-info">
           <span class="name">CineCalidad</span>
-          <span class="desc">Streaming VOE / Vimeos Latino</span>
+          <span class="desc">Servidores Vimeos y VOE</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -438,7 +429,7 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="provider" data-val="cuevana">
         <div class="card-info">
           <span class="name">Cuevana</span>
-          <span class="desc">Catálogo masivo películas/series</span>
+          <span class="desc">Películas y series en streaming</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -461,12 +452,12 @@ function renderConfigPage(req) {
     </div>
 
     <!-- 2. CALIDADES -->
-    <div class="section-title"><span>2</span> Calidades Permitidas</div>
+    <div class="section-title"><span>2</span> Calidades</div>
     <div class="options-grid">
       <div class="card-checkbox active" data-type="quality" data-val="4k">
         <div class="card-info">
           <span class="name">4K Ultra HD</span>
-          <span class="desc">2160p · HDR / Dolby Vision</span>
+          <span class="desc">2160p · Alto bitrate</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -474,7 +465,7 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="quality" data-val="1080p">
         <div class="card-info">
           <span class="name">1080p Full HD</span>
-          <span class="desc">Recomendado para TV y PC</span>
+          <span class="desc">Resolución recomendada</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -482,7 +473,7 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="quality" data-val="720p">
         <div class="card-info">
           <span class="name">720p HD</span>
-          <span class="desc">Conexiones lentas o móviles</span>
+          <span class="desc">Resolución ligera</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -490,27 +481,27 @@ function renderConfigPage(req) {
       <div class="card-checkbox" data-type="quality" data-val="480p">
         <div class="card-info">
           <span class="name">480p SD</span>
-          <span class="desc">Ahorro máximo de datos</span>
+          <span class="desc">Bajo consumo de datos</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
     </div>
 
     <!-- 3. PRIORIDAD Y MÁXIMO DE ENLACES -->
-    <div class="section-title"><span>3</span> Prioridad de Combate & Límite</div>
+    <div class="section-title"><span>3</span> Prioridad de Reproducción</div>
     <div class="options-grid" style="margin-bottom: 12px;">
       <div class="card-checkbox active" data-type="priority" data-val="direct">
         <div class="card-info">
-          <span class="name">⚡ Directo Primero</span>
-          <span class="desc">Ataque veloz · Reproducción inmediata</span>
+          <span class="name">Directo Primero</span>
+          <span class="desc">Servidores web (Vimeos / VOE) al inicio</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
 
       <div class="card-checkbox" data-type="priority" data-val="torrent">
         <div class="card-info">
-          <span class="name">🧲 Torrents Primero</span>
-          <span class="desc">Fuerza bruta · Máximo Bitrate / 4K</span>
+          <span class="name">Torrents Primero</span>
+          <span class="desc">Enlaces P2P con mayor calidad al inicio</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -518,20 +509,20 @@ function renderConfigPage(req) {
 
     <div class="slider-container">
       <div class="slider-header">
-        <span style="font-weight: 600;">Máximo de enlaces en pantalla</span>
-        <span class="slider-value" id="maxLabel">4 enlaces</span>
+        <span class="slider-title">Límite de resultados a mostrar</span>
+        <span class="slider-value" id="maxLabel">6 enlaces</span>
       </div>
-      <input type="range" id="maxSlider" min="1" max="10" value="4">
+      <input type="range" id="maxSlider" min="1" max="10" value="6">
     </div>
 
     <!-- ACCIONES DE INSTALACIÓN -->
     <div class="actions">
       <a href="#" id="installBtn" class="btn-install">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
         Instalar en Stremio
       </a>
       <button type="button" id="copyBtn" class="btn-copy">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
         Copiar Enlace de Instalación
       </button>
       <div class="copied-toast" id="toast">¡Enlace copiado al portapapeles!</div>
@@ -545,7 +536,7 @@ function renderConfigPage(req) {
       providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
       qualities: ['4k', '1080p', '720p'],
       priority: 'direct',
-      maxStreams: 4,
+      maxStreams: 6,
       minSeeders: 1
     };
 

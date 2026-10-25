@@ -195,12 +195,12 @@ function formatTorrentItem(item, magnetData, seedData) {
     isDirect: false,
     qualityKey,
     seeders,
-    name: `TACIT STR\n[Torrent ${qualityBadge}]`,
-    title: `🎬 Hackstore · ${rawQuality} (${format})\n🇲🇽 ${lang}\n${seedLabel} · 💾 ${size || 'N/D'}\n⚡ P2P Direct Stream`,
+    name: `TACIT\n${qualityBadge}`,
+    title: `Hackstore · ${rawQuality} (${format})\n${lang} · ${size || 'N/D'} · ${seedLabel}`,
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
     behaviorHints: {
-      bingeGroup: `tacit-str-torrent-${qualityKey}`
+      bingeGroup: `tacit-torrent-${qualityKey}`
     }
   };
 }
@@ -247,8 +247,8 @@ async function resolveDirectPlayer(player) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT STR\n[⚡ ${qualityBadge}]`,
-    title: `⚡ ${serverName} (${qualityBadge})\n🇲🇽 ${lang}\n🚀 Reproducción Instantánea (Sin Torrent)`,
+    name: `TACIT\n${qualityBadge}`,
+    title: `${serverName} · ${qualityBadge}\n${lang} · Stream Directo`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,

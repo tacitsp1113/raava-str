@@ -9,10 +9,35 @@ const { getTioanimeStreams } = require('./services/providers/tioanime');
 const DEFAULT_CONFIG = {
   providers: ['hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
   qualities: ['4k', '1080p', '720p'],
-  maxStreams: 4,
+  maxStreams: 6,
   priority: 'direct', // 'direct' or 'torrent'
   minSeeders: 1
 };
+
+// In-memory cache for resolved streams (TTL: 30 minutes)
+const streamCache = new Map();
+const CACHE_TTL_MS = 30 * 60 * 1000;
+
+function getCachedStreams(key) {
+  const item = streamCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expiresAt) {
+    streamCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCachedStreams(key, data) {
+  if (streamCache.size > 500) {
+    const oldestKey = streamCache.keys().next().value;
+    streamCache.delete(oldestKey);
+  }
+  streamCache.set(key, {
+    data,
+    expiresAt: Date.now() + CACHE_TTL_MS
+  });
+}
 
 function parseConfig(raw) {
   if (!raw || typeof raw !== 'string') return DEFAULT_CONFIG;
@@ -34,7 +59,7 @@ const manifest = {
   id: 'org.tacit.str',
   version: '1.0.0',
   name: 'TACIT STR',
-  description: 'TACIT STR · Inspirado en Tacit Ronin. Películas, series y anime en Español Latino (Híbrido Torrents 4K + Directo Instantáneo)',
+  description: 'Películas, series y anime en Español Latino. Enlaces híbridos (Torrents 4K/1080p y Directo Vimeos/VOE).',
   logo: 'https://raava-str-1.onrender.com/logo.png',
   background: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1920&q=80',
   resources: ['stream'],
@@ -51,6 +76,13 @@ const manifest = {
  * Core stream resolver supporting both IMDb (tt...) and TMDB (tmdb:...)
  */
 async function resolveStreams(type, id, rawConfig = null) {
+  const cacheKey = `${type}:${id}:${rawConfig || 'default'}`;
+  const cached = getCachedStreams(cacheKey);
+  if (cached) {
+    console.log(`[TACIT Cache HIT] ${type}:${id} returning ${cached.streams.length} stream(s)`);
+    return cached;
+  }
+
   const config = parseConfig(rawConfig);
   console.log(`[TACIT Request] Type: ${type}, ID: ${id}, Providers: ${config.providers.join(',')}, Max: ${config.maxStreams}`);
 
@@ -179,11 +211,15 @@ async function resolveStreams(type, id, rawConfig = null) {
     });
 
     // D. Límite máximo de enlaces
-    const maxLimit = Math.max(1, parseInt(config.maxStreams, 10) || 4);
+    const maxLimit = Math.max(1, parseInt(config.maxStreams, 10) || 6);
     const finalStreams = allStreams.slice(0, maxLimit);
 
     console.log(`[TACIT] Returning ${finalStreams.length} stream(s) for "${media.title}"`);
-    return { streams: finalStreams };
+    const result = { streams: finalStreams };
+    if (finalStreams.length > 0) {
+      setCachedStreams(cacheKey, result);
+    }
+    return result;
   } catch (error) {
     console.error(`[TACIT Error] Failed to handle stream for ${id}:`, error);
     return { streams: [] };

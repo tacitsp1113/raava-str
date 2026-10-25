@@ -141,8 +141,8 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
         isDirect: true,
         qualityKey,
         seeders: 999,
-        name: `TACIT STR\n[⚡ ${quality}]`,
-        title: `⚡ PelisPlus (${server} ${quality})\n🇲🇽 Audio Latino\n🚀 Reproducción Instantánea`,
+        name: `TACIT\n${quality}`,
+        title: `PelisPlus · ${server}\nEspañol Latino · Stream Directo`,
         url: resolved.url,
         behaviorHints: {
           notWebReady: false,

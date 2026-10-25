@@ -116,8 +116,8 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT STR\n[⚡ ${quality}]`,
-    title: `⚡ Cuevana (${server} ${quality})\n🇲🇽 ${lang || 'Latino'}\n🚀 Reproducción Instantánea`,
+    name: `TACIT\n${quality}`,
+    title: `Cuevana · ${server}\n${lang || 'Español Latino'} · Stream Directo`,
     url: resolved.url,
     behaviorHints: {
       notWebReady: false,

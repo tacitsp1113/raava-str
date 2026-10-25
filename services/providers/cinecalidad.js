@@ -123,8 +123,8 @@ async function resolveOption(optionUrl) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT STR\n[⚡ ${quality}]`,
-    title: `⚡ CineCalidad (${serverName} ${quality})\n🇲🇽 Audio Latino\n🚀 Reproducción Instantánea`,
+    name: `TACIT\n${quality}`,
+    title: `CineCalidad · ${serverName}\nEspañol Latino · Stream Directo`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,
