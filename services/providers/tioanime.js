@@ -112,13 +112,18 @@ async function getTioanimeStreams(media, season = null, episode = null, config =
       const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1500);
       if (!alive) return null;
 
+      const epLabel = (season && episode) ? ` · T${season} E${episode}` : '';
+      const displayTitle = media?.title ? `${media.title} (${media.year || ''})${epLabel}` : 'TACIT Anime';
+
       return {
         provider: 'tioanime',
+        server: serverName,
+        serverTier: 1,
         isDirect: true,
         qualityKey: '1080p',
         seeders: 999,
-        name: `TACIT\n1080p`,
-        title: `TioAnime · ${serverName}\nLatino / Sub · Stream Directo`,
+        name: `▶ TACIT 1080p`,
+        title: `${displayTitle}\n1080p | Anime | Latino / Sub 🇯🇵🇲🇽\n⚡ Servidor Rápido · 1.4 GB`,
         url: resolved.url,
         behaviorHints: {
           notWebReady: false,

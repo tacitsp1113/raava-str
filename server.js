@@ -399,8 +399,8 @@ function renderConfigPage(req) {
       <p class="subtitle">Configura tus proveedores y opciones de reproducción en Español Latino para Stremio.</p>
     </div>
 
-    <!-- 1. PROVEEDORES -->
-    <div class="section-title"><span>1</span> Proveedores</div>
+    <!-- 1. PROVEEDORES DE PELÍCULAS -->
+    <div class="section-title"><span>1</span> Catálogo de Películas</div>
     <div class="options-grid">
       <div class="card-checkbox active" data-type="provider" data-val="hackstore_torrent">
         <div class="card-info">
@@ -425,11 +425,15 @@ function renderConfigPage(req) {
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
+    </div>
 
+    <!-- 2. PROVEEDORES DE SERIES -->
+    <div class="section-title"><span>2</span> Catálogo de Series</div>
+    <div class="options-grid">
       <div class="card-checkbox active" data-type="provider" data-val="cuevana">
         <div class="card-info">
           <span class="name">Cuevana</span>
-          <span class="desc">Películas y series en streaming</span>
+          <span class="desc">Series completas y estrenos (VidHide / VOE)</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -437,11 +441,15 @@ function renderConfigPage(req) {
       <div class="card-checkbox active" data-type="provider" data-val="pelisplus">
         <div class="card-info">
           <span class="name">PelisPlus</span>
-          <span class="desc">Series completas y estrenos</span>
+          <span class="desc">Temporadas completas y estrenos</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
+    </div>
 
+    <!-- 3. ANIME -->
+    <div class="section-title"><span>3</span> Catálogo de Anime</div>
+    <div class="options-grid">
       <div class="card-checkbox active" data-type="provider" data-val="tioanime">
         <div class="card-info">
           <span class="name">TioAnime</span>
@@ -451,8 +459,8 @@ function renderConfigPage(req) {
       </div>
     </div>
 
-    <!-- 2. CALIDADES -->
-    <div class="section-title"><span>2</span> Calidades</div>
+    <!-- 4. CALIDADES -->
+    <div class="section-title"><span>4</span> Calidades</div>
     <div class="options-grid">
       <div class="card-checkbox active" data-type="quality" data-val="4k">
         <div class="card-info">
@@ -487,8 +495,8 @@ function renderConfigPage(req) {
       </div>
     </div>
 
-    <!-- 3. PRIORIDAD Y MÁXIMO DE ENLACES -->
-    <div class="section-title"><span>3</span> Prioridad de Reproducción</div>
+    <!-- 5. PRIORIDAD Y MÁXIMO DE ENLACES -->
+    <div class="section-title"><span>5</span> Prioridad de Reproducción</div>
     <div class="options-grid" style="margin-bottom: 12px;">
       <div class="card-checkbox active" data-type="priority" data-val="direct">
         <div class="card-info">
@@ -612,6 +620,10 @@ app.get('/', (req, res) => {
 });
 
 app.get('/configure', (req, res) => {
+  res.send(renderConfigPage(req));
+});
+
+app.get('/:configuration/configure', (req, res) => {
   res.send(renderConfigPage(req));
 });
 

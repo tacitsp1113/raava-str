@@ -175,28 +175,27 @@ function findBestMatch(posts, media) {
   return posts[0];
 }
 
-function formatTorrentItem(item, magnetData, seedData) {
+function formatTorrentItem(item, magnetData, seedData, media = null) {
   const rawQuality = item.quality || '1080p';
   let qualityBadge = '1080p';
   let qualityKey = '1080p';
-  if (/4k|2160p|uhd/i.test(rawQuality)) { qualityBadge = '4K HDR'; qualityKey = '4k'; }
+  if (/4k|2160p|uhd/i.test(rawQuality)) { qualityBadge = '4K'; qualityKey = '4k'; }
   else if (/1080p|fhd|full hd/i.test(rawQuality)) { qualityBadge = '1080p'; qualityKey = '1080p'; }
   else if (/720p|hd/i.test(rawQuality)) { qualityBadge = '720p'; qualityKey = '720p'; }
   else { qualityBadge = 'SD'; qualityKey = '480p'; }
 
-  const size = item.size ? item.size.trim() : '';
-  const lang = item.lang ? item.lang.trim() : 'Latino';
-  const format = item.format || 'MKV';
+  const size = item.size ? item.size.trim() : null;
   const seeders = (seedData && typeof seedData.seeders === 'number') ? seedData.seeders : 0;
   const seedLabel = seeders > 0 ? `👤 ${seeders} semillas` : `👤 DHT Swarm`;
+  const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Torrent';
 
   return {
     provider: 'hackstore_torrent',
     isDirect: false,
     qualityKey,
     seeders,
-    name: `TACIT\n${qualityBadge}`,
-    title: `Hackstore · ${rawQuality} (${format})\n${lang} · ${size || 'N/D'} · ${seedLabel}`,
+    name: `▶ 🧲 TACIT ${qualityBadge}`,
+    title: `${displayTitle}\n${qualityBadge} | Remux / WEB-DL | Latino 🇲🇽\n💾 ${size || 'N/D'} · ${seedLabel}`,
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
     behaviorHints: {
@@ -205,7 +204,7 @@ function formatTorrentItem(item, magnetData, seedData) {
   };
 }
 
-async function resolveDirectPlayer(player) {
+async function resolveDirectPlayer(player, media = null) {
   if (!player || !player.url) return null;
   const url = player.url.trim();
 
@@ -240,15 +239,17 @@ async function resolveDirectPlayer(player) {
   else if (/720p|hd/i.test(rawQuality)) { qualityBadge = '720p'; qualityKey = '720p'; }
   else { qualityBadge = 'SD'; qualityKey = '480p'; }
 
-  const lang = player.lang || 'Latino';
+  const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Stream';
 
   return {
     provider: 'hackstore_direct',
+    server: serverName,
+    serverTier: 1,
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT\n${qualityBadge}`,
-    title: `${serverName} · ${qualityBadge}\n${lang} · Stream Directo`,
+    name: `▶ TACIT ${qualityBadge}`,
+    title: `${displayTitle}\n${qualityBadge} | WEB-DL | Latino 🇲🇽\n⚡ Servidor Rápido · 1.8 GB`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,
@@ -309,7 +310,7 @@ async function getHackstoreStreams(media, season = null, episode = null, config 
             if (!magnetData) return null;
             const announceList = magnetData.trackers.map((t) => t.replace('tracker:', ''));
             const seedData = await scrapeSeeders(magnetData.infoHash, announceList);
-            return formatTorrentItem(dl, magnetData, seedData);
+            return formatTorrentItem(dl, magnetData, seedData, media);
           })
         );
         return items.filter(Boolean);
@@ -321,7 +322,7 @@ async function getHackstoreStreams(media, season = null, episode = null, config 
   if (wantDirect) {
     promises.push(
       getPlayers(targetId).then(async (players) => {
-        const directItems = await Promise.all(players.map((p) => resolveDirectPlayer(p)));
+        const directItems = await Promise.all(players.map((p) => resolveDirectPlayer(p, media)));
         return directItems.filter(Boolean);
       }).catch(() => [])
     );

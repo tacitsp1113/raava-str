@@ -73,7 +73,7 @@ function findBestMatch(items, media) {
   return items[0];
 }
 
-async function resolveEmbedUrl(embedUrl, lang, baseUrl) {
+async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = null, episode = null) {
   if (!embedUrl) return null;
   let targetUrl = embedUrl;
 
@@ -114,14 +114,21 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl) {
 
   const quality = resolved.quality || '1080p';
   const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
+  const serverTier = (server === 'Vimeos' || server === 'VOE') ? 1 : 2;
+
+  const epLabel = (season && episode) ? ` · T${season} E${episode}` : '';
+  const mediaHeader = media?.title ? `${media.title} (${media.year || ''})${epLabel}` : 'TACIT Stream';
+  const speedLabel = serverTier === 1 ? '⚡ Servidor Rápido · 1.8 GB' : '⚡ Ruta alterna: úsala si el directo se traba';
 
   return {
     provider: 'cuevana',
+    server,
+    serverTier,
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT\n${quality}`,
-    title: `Cuevana · ${server}\n${lang || 'Español Latino'} · Stream Directo`,
+    name: `▶ TACIT ${quality}`,
+    title: `${mediaHeader}\n${quality} | WEB-DL | Latino 🇲🇽\n${speedLabel}`,
     url: resolved.url,
     behaviorHints: {
       notWebReady: false,
@@ -170,7 +177,7 @@ async function getCuevanaStreams(media, season = null, episode = null, config = 
 
     const streamPromises = embeds.slice(0, 4).map(e => {
       const lang = /latin/i.test(e.audio || '') ? 'Latino' : (e.audio || 'Latino');
-      return resolveEmbedUrl(e.url, lang, baseUrl);
+      return resolveEmbedUrl(e.url, lang, baseUrl, media, season, episode);
     });
 
     const streams = (await Promise.all(streamPromises)).filter(Boolean);

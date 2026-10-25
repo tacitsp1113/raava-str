@@ -93,7 +93,7 @@ function findBestMatch(results, media) {
   return results[0];
 }
 
-async function resolveOption(optionUrl) {
+async function resolveOption(optionUrl, media = null) {
   if (!optionUrl || typeof optionUrl !== 'string') return null;
   const fixedUrl = fixHostsLinks(optionUrl.trim());
 
@@ -117,14 +117,17 @@ async function resolveOption(optionUrl) {
 
   const quality = resolved.quality || '1080p';
   const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
+  const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Stream';
 
   return {
     provider: 'cinecalidad',
+    server: serverName,
+    serverTier: 1,
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: `TACIT\n${quality}`,
-    title: `CineCalidad · ${serverName}\nEspañol Latino · Stream Directo`,
+    name: `▶ TACIT ${quality}`,
+    title: `${displayTitle}\n${quality} | WEB-DL | Latino 🇲🇽\n⚡ Servidor Rápido · 1.8 GB`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,
@@ -188,7 +191,7 @@ async function getCinecalidadStreams(media, season = null, episode = null, confi
       }
     });
 
-    const streamPromises = options.slice(0, 4).map(opt => resolveOption(opt));
+    const streamPromises = options.slice(0, 4).map(opt => resolveOption(opt, media));
     const streams = (await Promise.all(streamPromises)).filter(Boolean);
 
     return streams;

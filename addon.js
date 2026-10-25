@@ -112,7 +112,10 @@ async function resolveStreams(type, id, rawConfig = null) {
       return { streams: [] };
     }
 
-    // Launch all active providers concurrently
+    const isSeries = Boolean(season && episode);
+    const isAnime = type === 'anime' || /anime/i.test(media.genres || '');
+
+    // Launch active providers intelligently according to content type
     const providerTasks = [];
 
     // 1. Hackstore (Torrents + Direct)
@@ -123,15 +126,15 @@ async function resolveStreams(type, id, rawConfig = null) {
       );
     }
 
-    // 2. CineCalidad (Direct)
-    if (config.providers.includes('cinecalidad')) {
+    // 2. CineCalidad (Especialista en Películas)
+    if (!isSeries && config.providers.includes('cinecalidad')) {
       providerTasks.push(
         getCinecalidadStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
       );
     }
 
-    // 3. Cuevana (Direct)
+    // 3. Cuevana (Especialista en Películas y Series completas)
     if (config.providers.includes('cuevana')) {
       providerTasks.push(
         getCuevanaStreams(media, season, episode, config)
@@ -139,7 +142,7 @@ async function resolveStreams(type, id, rawConfig = null) {
       );
     }
 
-    // 4. PelisPlus (Direct)
+    // 4. PelisPlus (Especialista en Series y Películas)
     if (config.providers.includes('pelisplus')) {
       providerTasks.push(
         getPelisplusStreams(media, season, episode, config)
@@ -147,8 +150,8 @@ async function resolveStreams(type, id, rawConfig = null) {
       );
     }
 
-    // 5. TioAnime (Anime Latino / Sub)
-    if (config.providers.includes('tioanime') && (type === 'anime' || /anime/i.test(media.genres || ''))) {
+    // 5. TioAnime (Especialista exclusivo en Anime)
+    if (isAnime && config.providers.includes('tioanime')) {
       providerTasks.push(
         getTioanimeStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
@@ -182,7 +185,7 @@ async function resolveStreams(type, id, rawConfig = null) {
       return true;
     });
 
-    // C. Ordenamiento por prioridad (Directo primero vs Torrents primero)
+    // C. Ordenamiento por prioridad y estabilidad de servidor
     const qRank = (q) => {
       if (q === '4k') return 4;
       if (q === '1080p') return 3;
@@ -191,6 +194,7 @@ async function resolveStreams(type, id, rawConfig = null) {
     };
 
     allStreams.sort((a, b) => {
+      // 1. Prioridad: Directo primero vs Torrents primero
       if (config.priority === 'direct') {
         if (a.isDirect && !b.isDirect) return -1;
         if (!a.isDirect && b.isDirect) return 1;
@@ -199,11 +203,18 @@ async function resolveStreams(type, id, rawConfig = null) {
         if (a.isDirect && !b.isDirect) return 1;
       }
 
-      // Dentro de la misma categoría, ordenar por calidad
+      // 2. Servidores directos: Tier 1 (Vimeos/VOE) antes que Tier 2 (VidHide)
+      if (a.isDirect && b.isDirect) {
+        const tierA = a.serverTier || 1;
+        const tierB = b.serverTier || 1;
+        if (tierA !== tierB) return tierA - tierB;
+      }
+
+      // 3. Dentro de la misma categoría, ordenar por calidad
       const diffQ = qRank(b.qualityKey) - qRank(a.qualityKey);
       if (diffQ !== 0) return diffQ;
 
-      // Si son torrents, ordenar por seeders
+      // 4. Si son torrents, ordenar por seeders
       if (!a.isDirect && !b.isDirect) {
         return (b.seeders || 0) - (a.seeders || 0);
       }
