@@ -8,15 +8,14 @@ const { getTioanimeStreams } = require('./services/providers/tioanime');
 const { getYandexStreams } = require('./services/providers/yandex');
 
 const DEFAULT_CONFIG = {
+  mode: 'balanced', // 'cloud' | 'balanced' | 'full'
+  scraperScope: 'specialized', // 'specialized' | 'global'
   providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
   qualities: ['4k', '1080p', '720p', '480p'],
+  disableTorrents: false,
+  priority: 'direct', // 'direct' | 'torrent'
   maxCloudStreams: 10,
   maxWebStreams: 3,
-  universalSearch: false,
-  smartMode: true,
-  disableTorrents: false,
-  mode: 'balanced', // 'cloud', 'balanced', 'full'
-  priority: 'direct', // 'direct' or 'torrent'
   minSeeders: 1
 };
 
@@ -48,16 +47,21 @@ function setCachedStreams(key, data) {
 function parseConfig(raw) {
   if (!raw || typeof raw !== 'string') return DEFAULT_CONFIG;
   try {
-    const decoded = Buffer.from(raw, 'base64').toString('utf8');
-    const parsed = JSON.parse(decoded);
-    return { ...DEFAULT_CONFIG, ...parsed };
-  } catch (_) {
+    let parsed;
     try {
-      const parsed = JSON.parse(decodeURIComponent(raw));
-      return { ...DEFAULT_CONFIG, ...parsed };
+      const decoded = Buffer.from(raw, 'base64').toString('utf8');
+      parsed = JSON.parse(decoded);
     } catch (_) {
-      return DEFAULT_CONFIG;
+      parsed = JSON.parse(decodeURIComponent(raw));
     }
+    const cfg = { ...DEFAULT_CONFIG, ...parsed };
+    // Retrocompatibilidad inteligente
+    if (parsed.universalSearch) cfg.scraperScope = 'global';
+    if (!cfg.mode) cfg.mode = 'balanced';
+    if (!cfg.scraperScope) cfg.scraperScope = 'specialized';
+    return cfg;
+  } catch (_) {
+    return DEFAULT_CONFIG;
   }
 }
 
@@ -202,9 +206,10 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   const allowTorrents = !config.disableTorrents;
   const wantTorrents = allowTorrents && config.providers.includes('hackstore_torrent');
   const wantDirect = config.providers.includes('hackstore_direct');
+  const isGlobal = config.scraperScope === 'global';
 
-  // 1. Hackstore (Torrents + Directo)
-  if (wantTorrents || wantDirect) {
+  // 1. Hackstore (Películas o Modo Global)
+  if ((!isSeries || isGlobal) && (wantTorrents || wantDirect)) {
     const hConfig = { ...config, allowTorrents };
     providerTasks.push(
       getHackstoreStreams(media, season, episode, hConfig)
@@ -212,32 +217,32 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
     );
   }
 
-  // 2. CineCalidad (Películas, o Series si Búsqueda Universal está activa)
-  if ((!isSeries || config.universalSearch) && config.providers.includes('cinecalidad')) {
+  // 2. CineCalidad (Películas o Modo Global)
+  if ((!isSeries || isGlobal) && config.providers.includes('cinecalidad')) {
     providerTasks.push(
       getCinecalidadStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
     );
   }
 
-  // 3. Cuevana
-  if (config.providers.includes('cuevana')) {
+  // 3. Cuevana (Series o Modo Global)
+  if ((isSeries || isGlobal) && config.providers.includes('cuevana')) {
     providerTasks.push(
       getCuevanaStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; })
     );
   }
 
-  // 4. PelisPlus
-  if (config.providers.includes('pelisplus')) {
+  // 4. PelisPlus (Series o Modo Global)
+  if ((isSeries || isGlobal) && config.providers.includes('pelisplus')) {
     providerTasks.push(
       getPelisplusStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; })
     );
   }
 
-  // 5. TioAnime
-  if (isAnime && config.providers.includes('tioanime')) {
+  // 5. TioAnime (Anime o Modo Global)
+  if ((isAnime || isGlobal) && config.providers.includes('tioanime')) {
     providerTasks.push(
       getTioanimeStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
