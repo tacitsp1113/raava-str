@@ -43,7 +43,7 @@ app.get('/:configuration/manifest.json', (req, res) => {
 
   const customManifest = {
     ...manifest,
-    name: `TACIT STR ${modeBadge} [${modeName}]`,
+    name: 'TACIT STR',
     description: `${modeBadge} ${modeName} (${modeDesc}) · ${torrentInfo} · [${qInfo}] · ${streamInfo}`
   };
   res.setHeader('Access-Control-Allow-Origin', '*');
