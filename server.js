@@ -249,6 +249,32 @@ function renderConfigPage(req) {
       background: rgba(14, 165, 233, 0.12);
     }
 
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-align: center;
+    }
+
+    .btn-preset:hover {
+      background: rgba(14, 165, 233, 0.15);
+      border-color: #0ea5e9;
+      color: #38bdf8;
+    }
+
+    .btn-preset.active-preset {
+      background: rgba(14, 165, 233, 0.25);
+      border-color: #0ea5e9;
+      color: #38bdf8;
+    }
+
     .card-info {
       display: flex;
       flex-direction: column;
@@ -429,6 +455,16 @@ function renderConfigPage(req) {
       <p class="subtitle">Configura tus proveedores y opciones de reproducción en Español Latino para Stremio.</p>
     </div>
 
+    <!-- PRESETS RÁPIDOS -->
+    <div style="margin-bottom: 24px;">
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Atajos Rápidos (Presets)</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+        <button type="button" class="btn-preset active-preset" id="presetBalanced" data-preset="balanced">⚡ Equilibrado</button>
+        <button type="button" class="btn-preset" id="presetCloud" data-preset="cloud">☁️ Solo Nube</button>
+        <button type="button" class="btn-preset" id="presetFull" data-preset="full">🚀 Catálogo Máximo</button>
+      </div>
+    </div>
+
     <!-- 0. BIBLIOTECA CLOUD DIRECTA -->
     <div class="section-title"><span>★</span> Biblioteca Cloud Directa</div>
     <div class="options-grid" style="margin-bottom: 24px;">
@@ -540,13 +576,13 @@ function renderConfigPage(req) {
       </div>
     </div>
 
-    <!-- 5. PRIORIDAD Y MÁXIMO DE ENLACES -->
-    <div class="section-title"><span>5</span> Prioridad de Reproducción</div>
+    <!-- 5. PRIORIDAD Y MODO DE BÚSQUEDA -->
+    <div class="section-title"><span>5</span> Prioridad y Búsqueda</div>
     <div class="options-grid" style="margin-bottom: 12px;">
       <div class="card-checkbox active" data-type="priority" data-val="direct">
         <div class="card-info">
           <span class="name">Directo Primero</span>
-          <span class="desc">Servidores web (Vimeos / VOE) al inicio</span>
+          <span class="desc">Servidores web y nube al inicio</span>
         </div>
         <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
@@ -560,13 +596,31 @@ function renderConfigPage(req) {
       </div>
     </div>
 
+    <div class="card-checkbox" data-type="universal" id="universalCard" style="margin-bottom: 16px;">
+      <div class="card-info">
+        <span class="name">🔄 Búsqueda Universal</span>
+        <span class="desc">Consultar todos los proveedores sin distinguir si es película o serie</span>
+      </div>
+      <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+    </div>
+
+    <!-- 6. LÍMITES DE ENLACES SEPARADOS -->
+    <div class="slider-container" style="margin-bottom: 14px;">
+      <div class="slider-header">
+        <span class="slider-title">☁️ Enlaces Biblioteca Cloud (TACIT)</span>
+        <span class="slider-value" id="cloudLabel">10 enlaces</span>
+      </div>
+      <input type="range" id="cloudSlider" min="1" max="15" value="10">
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cantidad de versiones únicas que entregará la nube directa (diferentes calidades, audios y tamaños).</p>
+    </div>
+
     <div class="slider-container">
       <div class="slider-header">
-        <span class="slider-title">Enlaces por proveedor</span>
-        <span class="slider-value" id="maxLabel">2 por proveedor</span>
+        <span class="slider-title">🌐 Enlaces por Proveedor Web</span>
+        <span class="slider-value" id="webLabel">3 por proveedor</span>
       </div>
-      <input type="range" id="maxSlider" min="1" max="5" value="2">
-      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cada proveedor activo aportará hasta esta cantidad de enlaces, garantizando variedad de fuentes (ej. 2 de Hackstore, 2 de Cuevana, etc.).</p>
+      <input type="range" id="webSlider" min="1" max="10" value="3">
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Límite de streams que aportará cada proveedor externo activo (Hackstore, Cuevana, Pelisplus, etc.).</p>
     </div>
 
     <!-- ACCIONES DE INSTALACIÓN -->
@@ -590,13 +644,83 @@ function renderConfigPage(req) {
       providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
       qualities: ['4k', '1080p', '720p'],
       priority: 'direct',
-      maxStreams: 2,
+      maxCloudStreams: 10,
+      maxWebStreams: 3,
+      universalSearch: false,
       minSeeders: 1
     };
 
-    // Toggle Checkboxes
+    function syncUI() {
+      // Checkboxes
+      document.querySelectorAll('.card-checkbox').forEach(card => {
+        const type = card.dataset.type;
+        const val = card.dataset.val;
+
+        if (type === 'provider') {
+          card.classList.toggle('active', state.providers.includes(val));
+        } else if (type === 'quality') {
+          card.classList.toggle('active', state.qualities.includes(val));
+        } else if (type === 'priority') {
+          card.classList.toggle('active', state.priority === val);
+        } else if (type === 'universal') {
+          card.classList.toggle('active', Boolean(state.universalSearch));
+        }
+      });
+
+      // Sliders
+      const cloudSlider = document.getElementById('cloudSlider');
+      const cloudLabel = document.getElementById('cloudLabel');
+      cloudSlider.value = state.maxCloudStreams;
+      cloudLabel.textContent = state.maxCloudStreams + ' enlaces';
+
+      const webSlider = document.getElementById('webSlider');
+      const webLabel = document.getElementById('webLabel');
+      webSlider.value = state.maxWebStreams;
+      webLabel.textContent = state.maxWebStreams === 1 ? '1 por proveedor' : state.maxWebStreams + ' por proveedor';
+
+      updateUrls();
+    }
+
+    // Presets click
+    document.querySelectorAll('.btn-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
+        btn.classList.add('active-preset');
+
+        const preset = btn.dataset.preset;
+        if (preset === 'balanced') {
+          state.providers = ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'];
+          state.qualities = ['4k', '1080p', '720p'];
+          state.priority = 'direct';
+          state.maxCloudStreams = 10;
+          state.maxWebStreams = 3;
+          state.universalSearch = false;
+        } else if (preset === 'cloud') {
+          state.providers = ['yandex'];
+          state.qualities = ['4k', '1080p', '720p'];
+          state.priority = 'direct';
+          state.maxCloudStreams = 10;
+          state.maxWebStreams = 1;
+          state.universalSearch = false;
+        } else if (preset === 'full') {
+          state.providers = ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'];
+          state.qualities = ['4k', '1080p', '720p', '480p'];
+          state.priority = 'direct';
+          state.maxCloudStreams = 15;
+          state.maxWebStreams = 10;
+          state.universalSearch = true;
+        }
+
+        syncUI();
+      });
+    });
+
+    // Checkboxes interaction
     document.querySelectorAll('.card-checkbox').forEach(card => {
       card.addEventListener('click', () => {
+        // Remove active-preset indicator as user customized
+        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
+
         const type = card.dataset.type;
         const val = card.dataset.val;
 
@@ -618,17 +742,31 @@ function renderConfigPage(req) {
           } else {
             state.qualities = state.qualities.filter(q => q !== val);
           }
+        } else if (type === 'universal') {
+          card.classList.toggle('active');
+          state.universalSearch = card.classList.contains('active');
         }
+
         updateUrls();
       });
     });
 
-    // Slider
-    const slider = document.getElementById('maxSlider');
-    const label = document.getElementById('maxLabel');
-    slider.addEventListener('input', (e) => {
-      state.maxStreams = parseInt(e.target.value, 10);
-      label.textContent = state.maxStreams === 1 ? '1 por proveedor' : state.maxStreams + ' por proveedor';
+    // Sliders interaction
+    const cloudSlider = document.getElementById('cloudSlider');
+    const cloudLabel = document.getElementById('cloudLabel');
+    cloudSlider.addEventListener('input', (e) => {
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
+      state.maxCloudStreams = parseInt(e.target.value, 10);
+      cloudLabel.textContent = state.maxCloudStreams + ' enlaces';
+      updateUrls();
+    });
+
+    const webSlider = document.getElementById('webSlider');
+    const webLabel = document.getElementById('webLabel');
+    webSlider.addEventListener('input', (e) => {
+      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
+      state.maxWebStreams = parseInt(e.target.value, 10);
+      webLabel.textContent = state.maxWebStreams === 1 ? '1 por proveedor' : state.maxWebStreams + ' por proveedor';
       updateUrls();
     });
 

@@ -116,9 +116,13 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
   const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
   const serverTier = (server === 'Vimeos' || server === 'VOE') ? 1 : 2;
 
-  const epLabel = (season && episode) ? ` · T${season} E${episode}` : '';
-  const mediaHeader = media?.title ? `${media.title} (${media.year || ''})${epLabel}` : 'TACIT Stream';
-  const speedLabel = serverTier === 1 ? '⚡ Stream Directo · 1.8 GB' : '⚡ Ruta alterna: úsala si el directo se traba';
+  const isSeries = Boolean(season && episode);
+  const qBadge = quality.toUpperCase();
+  const line1 = `🎬 ${qBadge} · SDR`;
+  const line2 = `🇲🇽 ES`;
+  const line3 = isSeries
+    ? `⚡ T${season} · E${episode}`
+    : `⚡ ${media?.title || 'Video'}`;
 
   return {
     provider: 'cuevana',
@@ -127,8 +131,8 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT',
-    title: `${mediaHeader}\n${quality} | WEB-DL | Latino 🇲🇽\n${speedLabel}`,
+    name: 'TACIT Web',
+    title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     behaviorHints: {
       notWebReady: false,

@@ -10,7 +10,9 @@ const { getYandexStreams } = require('./services/providers/yandex');
 const DEFAULT_CONFIG = {
   providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
   qualities: ['4k', '1080p', '720p'],
-  maxStreams: 2,
+  maxCloudStreams: 10,
+  maxWebStreams: 3,
+  universalSearch: false,
   priority: 'direct', // 'direct' or 'torrent'
   minSeeders: 1
 };
@@ -135,8 +137,8 @@ async function resolveStreams(type, id, rawConfig = null) {
       );
     }
 
-    // 2. CineCalidad (Especialista en Películas)
-    if (!isSeries && config.providers.includes('cinecalidad')) {
+    // 2. CineCalidad (Especialista en Películas, o en Series si Búsqueda Universal está activa)
+    if ((!isSeries || config.universalSearch) && config.providers.includes('cinecalidad')) {
       providerTasks.push(
         getCinecalidadStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
@@ -203,6 +205,10 @@ async function resolveStreams(type, id, rawConfig = null) {
     };
 
     allStreams.sort((a, b) => {
+      // 0. Enlace recomendado primero
+      if (a.isRecommended && !b.isRecommended) return -1;
+      if (!a.isRecommended && b.isRecommended) return 1;
+
       // 1. Prioridad: Directo primero vs Torrents primero
       if (config.priority === 'direct') {
         if (a.isDirect && !b.isDirect) return -1;
@@ -230,15 +236,17 @@ async function resolveStreams(type, id, rawConfig = null) {
       return 0;
     });
 
-    // D. Límite de enlaces por proveedor (distribución balanceada y diversa)
-    const maxPerProvider = Math.max(1, parseInt(config.maxPerProvider || config.maxStreams, 10) || 2);
+    // D. Límite de enlaces por proveedor (separando Cloud vs Web)
+    const maxCloud = Math.max(1, parseInt(config.maxCloudStreams || config.maxStreams, 10) || 10);
+    const maxWeb = Math.max(1, parseInt(config.maxWebStreams || config.maxStreams, 10) || 3);
     const providerCounts = {};
     const finalStreams = [];
 
     for (const s of allStreams) {
       const prov = s.provider || 'default';
+      const limit = prov === 'yandex' ? maxCloud : maxWeb;
       providerCounts[prov] = (providerCounts[prov] || 0);
-      if (providerCounts[prov] < maxPerProvider) {
+      if (providerCounts[prov] < limit) {
         finalStreams.push(s);
         providerCounts[prov]++;
       }

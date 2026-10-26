@@ -115,9 +115,10 @@ async function resolveOption(optionUrl, media = null) {
   const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1500);
   if (!alive) return null;
 
-  const quality = resolved.quality || '1080p';
-  const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
-  const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Stream';
+  const qBadge = quality.toUpperCase();
+  const line1 = `🎬 ${qBadge} · SDR`;
+  const line2 = `🇲🇽 ES`;
+  const line3 = `⚡ ${media?.title || 'Video'}`;
 
   return {
     provider: 'cinecalidad',
@@ -126,8 +127,8 @@ async function resolveOption(optionUrl, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT',
-    title: `${displayTitle}\n${quality} | WEB-DL | Latino 🇲🇽\n⚡ Stream Directo · 1.8 GB`,
+    name: 'TACIT Web',
+    title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,

@@ -189,13 +189,19 @@ function formatTorrentItem(item, magnetData, seedData, media = null) {
   const seedLabel = seeders > 0 ? `👤 ${seeders} semillas` : `👤 DHT Swarm`;
   const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Torrent';
 
+  const tLine1 = `🧲 ${qualityBadge.toUpperCase()} · SDR`;
+  const tLine2 = `🇲🇽 ES`;
+  const tLine3 = `⚡ ${media?.title || 'Video'}`;
+  const tLines = [tLine1, tLine2, tLine3];
+  if (size) tLines.push(`📦 ${size}`);
+
   return {
     provider: 'hackstore_torrent',
     isDirect: false,
     qualityKey,
     seeders,
-    name: 'TACIT',
-    title: `${displayTitle}\n${qualityBadge} | Remux / WEB-DL | Latino 🇲🇽\n💾 ${size || 'N/D'} · ${seedLabel}`,
+    name: 'TACIT Torrent',
+    title: tLines.join('\n'),
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
     behaviorHints: {
@@ -239,7 +245,9 @@ async function resolveDirectPlayer(player, media = null) {
   else if (/720p|hd/i.test(rawQuality)) { qualityBadge = '720p'; qualityKey = '720p'; }
   else { qualityBadge = 'SD'; qualityKey = '480p'; }
 
-  const displayTitle = media?.title ? `${media.title} (${media.year || ''})` : 'TACIT Stream';
+  const line1 = `🎬 ${qualityBadge.toUpperCase()} · SDR`;
+  const line2 = `🇲🇽 ES`;
+  const line3 = `⚡ ${media?.title || 'Video'}`;
 
   return {
     provider: 'hackstore_direct',
@@ -248,8 +256,8 @@ async function resolveDirectPlayer(player, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT',
-    title: `${displayTitle}\n${qualityBadge} | WEB-DL | Latino 🇲🇽\n⚡ Stream Directo · 1.8 GB`,
+    name: 'TACIT Web',
+    title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,

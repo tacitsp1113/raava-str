@@ -176,10 +176,12 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       const quality = resolved.quality || '1080p';
       const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
 
-      const epLabel = isSeries ? ` · T${season} E${episode}` : '';
-      const line1 = `${media.title || 'Video'} (${media.year || ''})${epLabel}`;
-      const line2 = `${quality} | WEB-DL | Latino 🇲🇽`;
-      const line3 = `⚡ Stream Directo · Servidor ${server}`;
+      const qBadge = quality.toUpperCase();
+      const line1 = `🎬 ${qBadge} · SDR`;
+      const line2 = `🇲🇽 ES`;
+      const line3 = isSeries
+        ? `⚡ T${season} · E${episode}`
+        : `⚡ ${media?.title || 'Video'}`;
 
       return {
         provider: 'pelisplus',
@@ -187,7 +189,7 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
         qualityKey,
         server,
         seeders: 999,
-        name: 'TACIT',
+        name: 'TACIT Web',
         title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {
