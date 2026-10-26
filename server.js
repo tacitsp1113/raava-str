@@ -20,10 +20,30 @@ app.use(defaultRouter);
 // Configured Manifest endpoint: /:configuration/manifest.json
 app.get('/:configuration/manifest.json', (req, res) => {
   const config = parseConfig(req.params.configuration);
+
+  let modeName = 'Equilibrado';
+  let modeBadge = '⚡';
+  let modeDesc = 'Nube + Respaldo Web';
+  if (config.mode === 'cloud') {
+    modeName = 'Solo Nube';
+    modeBadge = '☁️';
+    modeDesc = 'Biblioteca Cloud Directa';
+  } else if (config.mode === 'full') {
+    modeName = 'Catálogo Máximo';
+    modeBadge = '🚀';
+    modeDesc = 'Todos los Proveedores';
+  }
+
+  const torrentInfo = config.disableTorrents ? '🚫 Sin Torrents' : '🧲 Torrents Activos';
+  const qInfo = (config.qualities || ['1080p']).map(q => q.toUpperCase()).join(' · ');
+  const streamInfo = config.mode === 'cloud' 
+    ? `Nube: ${config.maxCloudStreams || 10}` 
+    : `Nube: ${config.maxCloudStreams || 10} | Web: ${config.maxWebStreams || 3}`;
+
   const customManifest = {
     ...manifest,
-    name: 'TACIT STR',
-    description: `TACIT STR (${config.providers.length} proveedores · Hasta ${config.maxStreams || 2} enlaces por proveedor · ${config.priority === 'direct' ? 'Directo prioritario' : 'Torrents prioritarios'})`
+    name: `TACIT STR ${modeBadge} [${modeName}]`,
+    description: `${modeBadge} ${modeName} (${modeDesc}) · ${torrentInfo} · [${qInfo}] · ${streamInfo}`
   };
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -83,6 +103,7 @@ app.get('/api/cs/links', async (req, res) => {
 function renderConfigPage(req) {
   const host = req.get('host');
   const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  const initialConfig = req.params && req.params.configuration ? parseConfig(req.params.configuration) : null;
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -455,172 +476,195 @@ function renderConfigPage(req) {
       <p class="subtitle">Configura tus proveedores y opciones de reproducción en Español Latino para Stremio.</p>
     </div>
 
-    <!-- PRESETS RÁPIDOS -->
+    <!-- SELECTOR DE MODOS (PRESETS) -->
     <div style="margin-bottom: 24px;">
-      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Atajos Rápidos (Presets)</div>
+      <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">Modo de Uso</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
-        <button type="button" class="btn-preset active-preset" id="presetBalanced" data-preset="balanced">⚡ Equilibrado</button>
         <button type="button" class="btn-preset" id="presetCloud" data-preset="cloud">☁️ Solo Nube</button>
-        <button type="button" class="btn-preset" id="presetFull" data-preset="full">🚀 Catálogo Máximo</button>
+        <button type="button" class="btn-preset active-preset" id="presetBalanced" data-preset="balanced">⚡ Equilibrado</button>
+        <button type="button" class="btn-preset" id="presetFull" data-preset="full">🚀 Catálogo Completo</button>
       </div>
     </div>
 
     <!-- 0. BIBLIOTECA CLOUD DIRECTA -->
-    <div class="section-title"><span>★</span> Biblioteca Cloud Directa</div>
-    <div class="options-grid" style="margin-bottom: 24px;">
-      <div class="card-checkbox active" data-type="provider" data-val="yandex" style="grid-column: 1 / -1; border-color: rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.08);">
-        <div class="card-info">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="name">TACIT Cloud</span>
-            <span style="background: #0ea5e9; color: black; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Instantáneo</span>
+    <div id="cloudSection">
+      <div class="section-title"><span>★</span> Biblioteca Cloud Directa</div>
+      <div class="options-grid" style="margin-bottom: 24px;">
+        <div class="card-checkbox active" data-type="provider" data-val="yandex" style="grid-column: 1 / -1; border-color: rgba(14, 165, 233, 0.4); background: rgba(14, 165, 233, 0.08);">
+          <div class="card-info">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="name">TACIT Cloud</span>
+              <span style="background: #0ea5e9; color: black; font-size: 0.68rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Instantáneo</span>
+            </div>
+            <span class="desc">Reproducción instantánea en alta velocidad desde SQLite</span>
           </div>
-          <span class="desc">Reproducción instantánea en alta velocidad</span>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
     </div>
 
-    <!-- 1. PROVEEDORES DE PELÍCULAS -->
-    <div class="section-title"><span>1</span> Catálogo de Películas</div>
-    <div class="options-grid">
-      <div class="card-checkbox active" data-type="provider" data-val="hackstore_torrent">
-        <div class="card-info">
-          <span class="name">Hackstore Torrents</span>
-          <span class="desc">Torrents P2P en 4K y 1080p</span>
+    <!-- SECCIÓN DE PROVEEDORES WEB INDIVIDUALES (OCULTO EN SOLO NUBE Y EQUILIBRADO) -->
+    <div id="webProvidersSection" style="display: none;">
+      <!-- 1. PROVEEDORES DE PELÍCULAS -->
+      <div class="section-title"><span>1</span> Catálogo de Películas</div>
+      <div class="options-grid">
+        <div class="card-checkbox active" data-type="provider" data-val="hackstore_torrent">
+          <div class="card-info">
+            <span class="name">Hackstore Torrents</span>
+            <span class="desc">Torrents P2P en 4K y 1080p</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+
+        <div class="card-checkbox active" data-type="provider" data-val="hackstore_direct">
+          <div class="card-info">
+            <span class="name">Hackstore Directo</span>
+            <span class="desc">Streaming Vimeos 1080p</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
+
+        <div class="card-checkbox active" data-type="provider" data-val="cinecalidad">
+          <div class="card-info">
+            <span class="name">CineCalidad</span>
+            <span class="desc">Servidores Vimeos y VOE</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
       </div>
 
-      <div class="card-checkbox active" data-type="provider" data-val="hackstore_direct">
-        <div class="card-info">
-          <span class="name">Hackstore Directo</span>
-          <span class="desc">Streaming Vimeos 1080p</span>
+      <!-- 2. PROVEEDORES DE SERIES -->
+      <div class="section-title" style="margin-top: 16px;"><span>2</span> Catálogo de Series</div>
+      <div class="options-grid">
+        <div class="card-checkbox active" data-type="provider" data-val="cuevana">
+          <div class="card-info">
+            <span class="name">Cuevana</span>
+            <span class="desc">Series completas y estrenos (VidHide / VOE)</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+
+        <div class="card-checkbox active" data-type="provider" data-val="pelisplus">
+          <div class="card-info">
+            <span class="name">PelisPlus</span>
+            <span class="desc">Temporadas completas y estrenos</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
       </div>
 
-      <div class="card-checkbox active" data-type="provider" data-val="cinecalidad">
-        <div class="card-info">
-          <span class="name">CineCalidad</span>
-          <span class="desc">Servidores Vimeos y VOE</span>
+      <!-- 3. ANIME -->
+      <div class="section-title" style="margin-top: 16px;"><span>3</span> Catálogo de Anime</div>
+      <div class="options-grid">
+        <div class="card-checkbox active" data-type="provider" data-val="tioanime">
+          <div class="card-info">
+            <span class="name">TioAnime</span>
+            <span class="desc">Anime en Audio Latino y Subtitulado</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
       </div>
     </div>
 
-    <!-- 2. PROVEEDORES DE SERIES -->
-    <div class="section-title"><span>2</span> Catálogo de Series</div>
-    <div class="options-grid">
-      <div class="card-checkbox active" data-type="provider" data-val="cuevana">
-        <div class="card-info">
-          <span class="name">Cuevana</span>
-          <span class="desc">Series completas y estrenos (VidHide / VOE)</span>
+    <!-- 4. CALIDADES (100% PERSONALIZABLE EN CUALQUIER MODO) -->
+    <div id="qualitiesSection" style="margin-top: 16px;">
+      <div class="section-title"><span>4</span> Calidades Deseadas</div>
+      <div class="options-grid">
+        <div class="card-checkbox active" data-type="quality" data-val="4k">
+          <div class="card-info">
+            <span class="name">4K Ultra HD</span>
+            <span class="desc">2160p · Mayor fidelidad</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
 
-      <div class="card-checkbox active" data-type="provider" data-val="pelisplus">
-        <div class="card-info">
-          <span class="name">PelisPlus</span>
-          <span class="desc">Temporadas completas y estrenos</span>
+        <div class="card-checkbox active" data-type="quality" data-val="1080p">
+          <div class="card-info">
+            <span class="name">1080p Full HD</span>
+            <span class="desc">Resolución recomendada</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+
+        <div class="card-checkbox active" data-type="quality" data-val="720p">
+          <div class="card-info">
+            <span class="name">720p HD</span>
+            <span class="desc">Carga ligera y rápida</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
+
+        <div class="card-checkbox active" data-type="quality" data-val="480p">
+          <div class="card-info">
+            <span class="name">480p SD</span>
+            <span class="desc">Ahorro de datos móviles</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
       </div>
     </div>
 
-    <!-- 3. ANIME -->
-    <div class="section-title"><span>3</span> Catálogo de Anime</div>
-    <div class="options-grid">
-      <div class="card-checkbox active" data-type="provider" data-val="tioanime">
-        <div class="card-info">
-          <span class="name">TioAnime</span>
-          <span class="desc">Anime en Audio Latino y Subtitulado</span>
+    <!-- 5. OPCIONES AVANZADAS Y PRIVACIDAD -->
+    <div id="optionsSection" style="margin-top: 20px;">
+      <div id="torrentCardContainer" style="margin-bottom: 12px;">
+        <div class="card-checkbox" data-type="disableTorrents" id="disableTorrentsCard">
+          <div class="card-info">
+            <span class="name">🚫 Desactivar Torrents</span>
+            <span class="desc">Solo entregar streaming directo HTTPS (Máxima privacidad, ideal para iOS y Smart TV)</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
         </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+      </div>
+
+      <div id="universalCardContainer" style="margin-bottom: 12px;">
+        <div class="card-checkbox" data-type="universal" id="universalCard">
+          <div class="card-info">
+            <span class="name">🔄 Búsqueda Universal</span>
+            <span class="desc">Consultar todos los proveedores sin distinguir si es película o serie</span>
+          </div>
+          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+        </div>
+      </div>
+
+      <div id="priorityContainer" style="display: none; margin-bottom: 12px;">
+        <div class="section-title"><span>5</span> Prioridad de Reproducción</div>
+        <div class="options-grid">
+          <div class="card-checkbox active" data-type="priority" data-val="direct">
+            <div class="card-info">
+              <span class="name">Directo Primero</span>
+              <span class="desc">Servidores web y nube al inicio</span>
+            </div>
+            <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+
+          <div class="card-checkbox" data-type="priority" data-val="torrent">
+            <div class="card-info">
+              <span class="name">Torrents Primero</span>
+              <span class="desc">Enlaces P2P con mayor calidad al inicio</span>
+            </div>
+            <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 4. CALIDADES -->
-    <div class="section-title"><span>4</span> Calidades</div>
-    <div class="options-grid">
-      <div class="card-checkbox active" data-type="quality" data-val="4k">
-        <div class="card-info">
-          <span class="name">4K Ultra HD</span>
-          <span class="desc">2160p · Alto bitrate</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-
-      <div class="card-checkbox active" data-type="quality" data-val="1080p">
-        <div class="card-info">
-          <span class="name">1080p Full HD</span>
-          <span class="desc">Resolución recomendada</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-
-      <div class="card-checkbox active" data-type="quality" data-val="720p">
-        <div class="card-info">
-          <span class="name">720p HD</span>
-          <span class="desc">Resolución ligera</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-
-      <div class="card-checkbox" data-type="quality" data-val="480p">
-        <div class="card-info">
-          <span class="name">480p SD</span>
-          <span class="desc">Bajo consumo de datos</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-    </div>
-
-    <!-- 5. PRIORIDAD Y MODO DE BÚSQUEDA -->
-    <div class="section-title"><span>5</span> Prioridad y Búsqueda</div>
-    <div class="options-grid" style="margin-bottom: 12px;">
-      <div class="card-checkbox active" data-type="priority" data-val="direct">
-        <div class="card-info">
-          <span class="name">Directo Primero</span>
-          <span class="desc">Servidores web y nube al inicio</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-
-      <div class="card-checkbox" data-type="priority" data-val="torrent">
-        <div class="card-info">
-          <span class="name">Torrents Primero</span>
-          <span class="desc">Enlaces P2P con mayor calidad al inicio</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
-    </div>
-
-    <div class="card-checkbox" data-type="universal" id="universalCard" style="margin-bottom: 16px;">
-      <div class="card-info">
-        <span class="name">🔄 Búsqueda Universal</span>
-        <span class="desc">Consultar todos los proveedores sin distinguir si es película o serie</span>
-      </div>
-      <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-    </div>
-
-    <!-- 6. LÍMITES DE ENLACES SEPARADOS -->
-    <div class="slider-container" style="margin-bottom: 14px;">
+    <!-- 6. LÍMITES DE ENLACES (SLIDERS INTELIGENTES) -->
+    <div id="cloudSliderContainer" class="slider-container" style="margin-top: 16px; margin-bottom: 14px;">
       <div class="slider-header">
         <span class="slider-title">☁️ Enlaces Biblioteca Cloud (TACIT)</span>
         <span class="slider-value" id="cloudLabel">10 enlaces</span>
       </div>
       <input type="range" id="cloudSlider" min="1" max="15" value="10">
-      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cantidad de versiones únicas que entregará la nube directa (diferentes calidades, audios y tamaños).</p>
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cantidad de versiones únicas de la nube directa (diferentes calidades, audios y tamaños).</p>
     </div>
 
-    <div class="slider-container">
+    <div id="webSliderContainer" class="slider-container" style="margin-bottom: 14px;">
       <div class="slider-header">
-        <span class="slider-title">🌐 Enlaces por Proveedor Web</span>
+        <span class="slider-title">🌐 Enlaces de Respaldo Web</span>
         <span class="slider-value" id="webLabel">3 por proveedor</span>
       </div>
       <input type="range" id="webSlider" min="1" max="10" value="3">
-      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Límite de streams que aportará cada proveedor externo activo (Hackstore, Cuevana, Pelisplus, etc.).</p>
+      <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Límite de streams que aportará cada proveedor externo como contingencia cuando no esté en la nube.</p>
     </div>
 
     <!-- ACCIONES DE INSTALACIÓN -->
@@ -640,10 +684,25 @@ function renderConfigPage(req) {
   <script>
     const baseUrl = window.location.origin;
 
-    const state = {
+    const initialServerConfig = ${JSON.stringify(initialConfig)};
+    const state = initialServerConfig ? {
+      mode: initialServerConfig.mode || 'balanced',
+      providers: initialServerConfig.providers || ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
+      qualities: initialServerConfig.qualities || ['4k', '1080p', '720p', '480p'],
+      priority: initialServerConfig.priority || 'direct',
+      smartMode: initialServerConfig.smartMode !== undefined ? initialServerConfig.smartMode : true,
+      disableTorrents: Boolean(initialServerConfig.disableTorrents),
+      maxCloudStreams: initialServerConfig.maxCloudStreams || 10,
+      maxWebStreams: initialServerConfig.maxWebStreams || 3,
+      universalSearch: Boolean(initialServerConfig.universalSearch),
+      minSeeders: 1
+    } : {
+      mode: 'balanced',
       providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
-      qualities: ['4k', '1080p', '720p'],
+      qualities: ['4k', '1080p', '720p', '480p'],
       priority: 'direct',
+      smartMode: true,
+      disableTorrents: false,
       maxCloudStreams: 10,
       maxWebStreams: 3,
       universalSearch: false,
@@ -651,7 +710,26 @@ function renderConfigPage(req) {
     };
 
     function syncUI() {
-      // Checkboxes
+      // Modos y visibilidad dinámica por etapas
+      const isCloud = (state.mode === 'cloud');
+      const isBalanced = (state.mode === 'balanced');
+      const isFull = (state.mode === 'full');
+
+      // Botones de presets
+      document.getElementById('presetCloud').classList.toggle('active-preset', isCloud);
+      document.getElementById('presetBalanced').classList.toggle('active-preset', isBalanced);
+      document.getElementById('presetFull').classList.toggle('active-preset', isFull);
+
+      // Ocultar / Mostrar secciones
+      document.getElementById('webProvidersSection').style.display = isFull ? 'block' : 'none';
+      document.getElementById('priorityContainer').style.display = isFull ? 'block' : 'none';
+      document.getElementById('torrentCardContainer').style.display = (isBalanced || isFull) ? 'block' : 'none';
+      document.getElementById('webSliderContainer').style.display = (isBalanced || isFull) ? 'block' : 'none';
+      document.getElementById('universalCardContainer').style.display = (isBalanced || isFull) ? 'block' : 'none';
+      document.getElementById('cloudSliderContainer').style.display = 'block';
+      document.getElementById('qualitiesSection').style.display = 'block';
+
+      // Checkboxes individuales
       document.querySelectorAll('.card-checkbox').forEach(card => {
         const type = card.dataset.type;
         const val = card.dataset.val;
@@ -664,6 +742,8 @@ function renderConfigPage(req) {
           card.classList.toggle('active', state.priority === val);
         } else if (type === 'universal') {
           card.classList.toggle('active', Boolean(state.universalSearch));
+        } else if (type === 'disableTorrents') {
+          card.classList.toggle('active', Boolean(state.disableTorrents));
         }
       });
 
@@ -684,28 +764,27 @@ function renderConfigPage(req) {
     // Presets click
     document.querySelectorAll('.btn-preset').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
-        btn.classList.add('active-preset');
-
         const preset = btn.dataset.preset;
-        if (preset === 'balanced') {
-          state.providers = ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'];
-          state.qualities = ['4k', '1080p', '720p'];
-          state.priority = 'direct';
-          state.maxCloudStreams = 10;
-          state.maxWebStreams = 3;
-          state.universalSearch = false;
-        } else if (preset === 'cloud') {
+        state.mode = preset;
+
+        if (preset === 'cloud') {
           state.providers = ['yandex'];
-          state.qualities = ['4k', '1080p', '720p'];
-          state.priority = 'direct';
+          state.smartMode = true;
+          state.disableTorrents = true;
           state.maxCloudStreams = 10;
           state.maxWebStreams = 1;
           state.universalSearch = false;
+        } else if (preset === 'balanced') {
+          state.providers = ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'];
+          state.smartMode = true;
+          state.disableTorrents = false;
+          state.maxCloudStreams = 10;
+          state.maxWebStreams = 3;
+          state.universalSearch = false;
         } else if (preset === 'full') {
           state.providers = ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'];
-          state.qualities = ['4k', '1080p', '720p', '480p'];
-          state.priority = 'direct';
+          state.smartMode = false;
+          state.disableTorrents = false;
           state.maxCloudStreams = 15;
           state.maxWebStreams = 10;
           state.universalSearch = true;
@@ -715,12 +794,9 @@ function renderConfigPage(req) {
       });
     });
 
-    // Checkboxes interaction
+    // Checkboxes interaction (100% personalizable en cualquier momento)
     document.querySelectorAll('.card-checkbox').forEach(card => {
       card.addEventListener('click', () => {
-        // Remove active-preset indicator as user customized
-        document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
-
         const type = card.dataset.type;
         const val = card.dataset.val;
 
@@ -745,6 +821,9 @@ function renderConfigPage(req) {
         } else if (type === 'universal') {
           card.classList.toggle('active');
           state.universalSearch = card.classList.contains('active');
+        } else if (type === 'disableTorrents') {
+          card.classList.toggle('active');
+          state.disableTorrents = card.classList.contains('active');
         }
 
         updateUrls();
@@ -755,7 +834,6 @@ function renderConfigPage(req) {
     const cloudSlider = document.getElementById('cloudSlider');
     const cloudLabel = document.getElementById('cloudLabel');
     cloudSlider.addEventListener('input', (e) => {
-      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
       state.maxCloudStreams = parseInt(e.target.value, 10);
       cloudLabel.textContent = state.maxCloudStreams + ' enlaces';
       updateUrls();
@@ -764,7 +842,6 @@ function renderConfigPage(req) {
     const webSlider = document.getElementById('webSlider');
     const webLabel = document.getElementById('webLabel');
     webSlider.addEventListener('input', (e) => {
-      document.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
       state.maxWebStreams = parseInt(e.target.value, 10);
       webLabel.textContent = state.maxWebStreams === 1 ? '1 por proveedor' : state.maxWebStreams + ' por proveedor';
       updateUrls();
@@ -782,7 +859,7 @@ function renderConfigPage(req) {
       document.getElementById('installBtn').setAttribute('href', stremioUrl);
     }
 
-    updateUrls();
+    syncUI();
 
     // Copy button
     document.getElementById('copyBtn').addEventListener('click', () => {

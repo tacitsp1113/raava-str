@@ -5,3 +5,4 @@ node_modules/
 scratch/
 *.sqlite-wal
 *.sqlite-shm
+GUIA_*.md

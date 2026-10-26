@@ -9,10 +9,13 @@ const { getYandexStreams } = require('./services/providers/yandex');
 
 const DEFAULT_CONFIG = {
   providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
-  qualities: ['4k', '1080p', '720p'],
+  qualities: ['4k', '1080p', '720p', '480p'],
   maxCloudStreams: 10,
   maxWebStreams: 3,
   universalSearch: false,
+  smartMode: true,
+  disableTorrents: false,
+  mode: 'balanced', // 'cloud', 'balanced', 'full'
   priority: 'direct', // 'direct' or 'torrent'
   minSeeders: 1
 };
@@ -118,73 +121,99 @@ async function resolveStreams(type, id, rawConfig = null) {
     const isSeries = Boolean(season && episode);
     const isAnime = type === 'anime' || /anime/i.test(media.genres || '');
 
-    // Launch active providers intelligently according to content type
-    const providerTasks = [];
-
-    // 0. Cloud Provider
-    if (config.providers.includes('yandex')) {
-      providerTasks.push(
-        getYandexStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Yandex]:', e.message); return []; })
-      );
-    }
-
-    // 1. Hackstore (Torrents + Direct)
-    if (config.providers.includes('hackstore_torrent') || config.providers.includes('hackstore_direct')) {
-      providerTasks.push(
-        getHackstoreStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Hackstore]:', e.message); return []; })
-      );
-    }
-
-    // 2. CineCalidad (Especialista en Películas, o en Series si Búsqueda Universal está activa)
-    if ((!isSeries || config.universalSearch) && config.providers.includes('cinecalidad')) {
-      providerTasks.push(
-        getCinecalidadStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
-      );
-    }
-
-    // 3. Cuevana (Especialista en Películas y Series completas)
-    if (config.providers.includes('cuevana')) {
-      providerTasks.push(
-        getCuevanaStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; })
-      );
-    }
-
-    // 4. PelisPlus (Especialista en Series y Películas)
-    if (config.providers.includes('pelisplus')) {
-      providerTasks.push(
-        getPelisplusStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; })
-      );
-    }
-
-    // 5. TioAnime (Especialista exclusivo en Anime)
-    if (isAnime && config.providers.includes('tioanime')) {
-      providerTasks.push(
-        getTioanimeStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
-      );
-    }
-
-    const settled = await Promise.allSettled(providerTasks);
     let allStreams = [];
-    for (const res of settled) {
-      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-        allStreams.push(...res.value);
+
+    // 0. Modo Inteligente: Si está activado, consultamos la Nube primero
+    if (config.smartMode && config.providers.includes('yandex')) {
+      try {
+        const cloudStreams = await getYandexStreams(media, season, episode, config);
+        if (Array.isArray(cloudStreams) && cloudStreams.length > 0) {
+          allStreams.push(...cloudStreams);
+          console.log(`[TACIT Smart Mode] Encontrados ${cloudStreams.length} enlace(s) en Nube. Respondiendo de inmediato sin consultar la web.`);
+        }
+      } catch (e) {
+        console.error('[TACIT Smart Cloud Error]:', e.message);
+      }
+    }
+
+    // 1. Si no hay enlaces en la nube (o si el modo inteligente está apagado), lanzamos los demás proveedores
+    if (allStreams.length === 0) {
+      const providerTasks = [];
+
+      // Si smartMode estaba apagado y yandex estaba en la lista, lo agregamos aquí
+      if (!config.smartMode && config.providers.includes('yandex')) {
+        providerTasks.push(
+          getYandexStreams(media, season, episode, config)
+            .catch(e => { console.error('[TACIT Error Yandex]:', e.message); return []; })
+        );
+      }
+
+      // 1. Hackstore (Torrents + Directo)
+      const allowTorrents = !config.disableTorrents;
+      const wantTorrents = allowTorrents && config.providers.includes('hackstore_torrent');
+      const wantDirect = config.providers.includes('hackstore_direct');
+
+      if (wantTorrents || wantDirect) {
+        const hConfig = { ...config, allowTorrents };
+        providerTasks.push(
+          getHackstoreStreams(media, season, episode, hConfig)
+            .catch(e => { console.error('[TACIT Error Hackstore]:', e.message); return []; })
+        );
+      }
+
+      // 2. CineCalidad (Películas, o Series si Búsqueda Universal está activa)
+      if ((!isSeries || config.universalSearch) && config.providers.includes('cinecalidad')) {
+        providerTasks.push(
+          getCinecalidadStreams(media, season, episode, config)
+            .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
+        );
+      }
+
+      // 3. Cuevana
+      if (config.providers.includes('cuevana')) {
+        providerTasks.push(
+          getCuevanaStreams(media, season, episode, config)
+            .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; })
+        );
+      }
+
+      // 4. PelisPlus
+      if (config.providers.includes('pelisplus')) {
+        providerTasks.push(
+          getPelisplusStreams(media, season, episode, config)
+            .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; })
+        );
+      }
+
+      // 5. TioAnime
+      if (isAnime && config.providers.includes('tioanime')) {
+        providerTasks.push(
+          getTioanimeStreams(media, season, episode, config)
+            .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
+        );
+      }
+
+      const settled = await Promise.allSettled(providerTasks);
+      for (const res of settled) {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          allStreams.push(...res.value);
+        }
       }
     }
 
     // --- FILTRADO SEGÚN PREFERENCIAS DEL USUARIO ---
 
     // A. Filtro por calidad permitida
-    const allowedQualities = config.qualities || ['4k', '1080p', '720p'];
+    const allowedQualities = config.qualities || ['4k', '1080p', '720p', '480p'];
     allStreams = allStreams.filter(s => {
       const q = (s.qualityKey || '1080p').toLowerCase();
       return allowedQualities.includes(q);
     });
+
+    // A2. Filtro de torrents deshabilitados
+    if (config.disableTorrents) {
+      allStreams = allStreams.filter(s => s.isDirect);
+    }
 
     // B. Filtro por seeders mínimos en torrents
     const minSeeders = typeof config.minSeeders === 'number' ? config.minSeeders : 1;
