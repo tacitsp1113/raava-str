@@ -127,7 +127,7 @@ async function resolveOption(optionUrl, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT Web',
+    name: 'TACIT · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({

@@ -87,10 +87,11 @@ async function searchPosts(media, postType = 'movies') {
 }
 
 function hasRelevantMatch(posts, media) {
-  const targetClean = media.cleanTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  if (!targetClean) return false;
   for (const post of posts) {
-    const pClean = cleanTitle(post.title);
-    if (pClean.includes(targetClean) || targetClean.includes(pClean)) return true;
+    const pClean = cleanTitle(post.title || '');
+    if (pClean && (pClean.includes(targetClean) || targetClean.includes(pClean))) return true;
     if (post.release_date && media.year) {
       const pYear = parseInt(post.release_date.split('-')[0], 10);
       if (Math.abs(pYear - media.year) <= 1 && (pClean.includes(targetClean.split(' ')[0]))) return true;
@@ -200,7 +201,7 @@ function formatTorrentItem(item, magnetData, seedData, media = null) {
     isDirect: false,
     qualityKey,
     seeders,
-    name: 'TACIT Torrent',
+    name: 'TACIT 🧲',
     title: tLines.join('\n'),
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
@@ -256,7 +257,7 @@ async function resolveDirectPlayer(player, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT Web',
+    name: 'TACIT · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({

@@ -327,6 +327,15 @@ function processAndFilterStreams(rawStreams, config) {
   const finalStreams = [];
 
   for (const s of streams) {
+    // Normalizar la insignia en Stremio: TACIT (Nube), TACIT 🧲 (Torrents) o TACIT · WEB (Web)
+    if (s.provider === 'yandex') {
+      s.name = 'TACIT';
+    } else if (!s.isDirect) {
+      s.name = 'TACIT 🧲';
+    } else {
+      s.name = 'TACIT · WEB';
+    }
+
     const prov = s.provider || 'default';
     const limit = prov === 'yandex' ? maxCloud : maxWeb;
     providerCounts[prov] = (providerCounts[prov] || 0);

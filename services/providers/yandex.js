@@ -261,7 +261,7 @@ async function getYandexStreams(media, season, episode, config = {}) {
         server: 'TACIT Cloud',
         seeders: 1000,
         isRecommended: isRec,
-        name: 'TACIT Cloud',
+        name: 'TACIT',
         title: lines.join('\n'),
         url: directUrl,
         behaviorHints: {

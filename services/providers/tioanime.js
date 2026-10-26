@@ -123,7 +123,7 @@ async function getTioanimeStreams(media, season = null, episode = null, config =
         isDirect: true,
         qualityKey: '1080p',
         seeders: 999,
-        name: 'TACIT Anime',
+        name: 'TACIT · WEB',
         title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {

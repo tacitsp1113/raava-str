@@ -189,7 +189,7 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
         qualityKey,
         server,
         seeders: 999,
-        name: 'TACIT Web',
+        name: 'TACIT · WEB',
         title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {
