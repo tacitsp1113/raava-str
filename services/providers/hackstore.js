@@ -139,8 +139,8 @@ async function getEpisodes(showId) {
 function findBestMatch(posts, media) {
   if (!posts || posts.length === 0) return null;
 
-  const targetClean = media.cleanTitle;
-  const targetOriginalClean = media.cleanOriginalTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  const targetOriginalClean = media.cleanOriginalTitle || cleanTitle(media.originalTitle || '');
   const targetYear = media.year;
 
   // 1. Exact clean title match
@@ -201,7 +201,7 @@ function formatTorrentItem(item, magnetData, seedData, media = null) {
     isDirect: false,
     qualityKey,
     seeders,
-    name: 'TACIT 🧲',
+    name: 'TACIT STR 🧲',
     title: tLines.join('\n'),
     infoHash: magnetData.infoHash,
     sources: magnetData.trackers,
@@ -257,7 +257,7 @@ async function resolveDirectPlayer(player, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT · WEB',
+    name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({

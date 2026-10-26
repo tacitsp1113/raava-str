@@ -58,8 +58,8 @@ async function searchCinecalidad(query) {
 function findBestMatch(results, media) {
   if (!results || results.length === 0) return null;
 
-  const targetClean = media.cleanTitle;
-  const targetOriginalClean = media.cleanOriginalTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  const targetOriginalClean = media.cleanOriginalTitle || cleanTitle(media.originalTitle || '');
   const targetYear = media.year;
 
   // 1. Exact title or original title match
@@ -127,7 +127,7 @@ async function resolveOption(optionUrl, media = null) {
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT · WEB',
+    name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     subtitles: (resolved.subtitles || []).map(s => ({

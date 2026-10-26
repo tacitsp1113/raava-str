@@ -50,8 +50,8 @@ async function searchPelisplus(query) {
 function findBestMatch(results, media, isSeries = false) {
   if (!results || results.length === 0) return null;
 
-  const targetClean = media.cleanTitle;
-  const targetOriginalClean = media.cleanOriginalTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  const targetOriginalClean = media.cleanOriginalTitle || cleanTitle(media.originalTitle || '');
   const targetYear = media.year;
 
   // 1. Filter candidates by content type
@@ -189,7 +189,7 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
         qualityKey,
         server,
         seeders: 999,
-        name: 'TACIT · WEB',
+        name: 'TACIT STR · WEB',
         title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {

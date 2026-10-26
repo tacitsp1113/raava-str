@@ -327,13 +327,13 @@ function processAndFilterStreams(rawStreams, config) {
   const finalStreams = [];
 
   for (const s of streams) {
-    // Normalizar la insignia en Stremio: TACIT (Nube), TACIT 🧲 (Torrents) o TACIT · WEB (Web)
+    // Normalizar la insignia en Stremio: TACIT STR (Nube), TACIT STR 🧲 (Torrents) o TACIT STR · WEB (Web)
     if (s.provider === 'yandex') {
-      s.name = 'TACIT';
+      s.name = 'TACIT STR';
     } else if (!s.isDirect) {
-      s.name = 'TACIT 🧲';
+      s.name = 'TACIT STR 🧲';
     } else {
-      s.name = 'TACIT · WEB';
+      s.name = 'TACIT STR · WEB';
     }
 
     const prov = s.provider || 'default';

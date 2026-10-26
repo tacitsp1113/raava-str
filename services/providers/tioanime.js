@@ -37,8 +37,8 @@ async function searchTioanime(query) {
 
 function findBestMatch(results, media) {
   if (!results || results.length === 0) return null;
-  const targetClean = media.cleanTitle;
-  const targetOriginalClean = media.cleanOriginalTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  const targetOriginalClean = media.cleanOriginalTitle || cleanTitle(media.originalTitle || '');
 
   for (const item of results) {
     const clean = cleanTitle(item.title);
@@ -123,7 +123,7 @@ async function getTioanimeStreams(media, season = null, episode = null, config =
         isDirect: true,
         qualityKey: '1080p',
         seeders: 999,
-        name: 'TACIT · WEB',
+        name: 'TACIT STR · WEB',
         title: `${line1}\n${line2}\n${line3}`,
         url: resolved.url,
         behaviorHints: {

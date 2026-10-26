@@ -37,8 +37,8 @@ async function searchCuevana(query, baseUrl = DOMAINS[0]) {
 function findBestMatch(items, media) {
   if (!items || items.length === 0) return null;
 
-  const targetClean = media.cleanTitle;
-  const targetOriginalClean = media.cleanOriginalTitle;
+  const targetClean = media.cleanTitle || cleanTitle(media.title || '');
+  const targetOriginalClean = media.cleanOriginalTitle || cleanTitle(media.originalTitle || '');
   const targetYear = media.year;
 
   // 1. Exact clean title match
@@ -131,7 +131,7 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     isDirect: true,
     qualityKey,
     seeders: 999,
-    name: 'TACIT · WEB',
+    name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     behaviorHints: {
