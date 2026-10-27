@@ -145,9 +145,7 @@ async function resolveOption(optionUrl, media = null) {
 }
 
 async function getCinecalidadStreams(media, season = null, episode = null, config = {}) {
-  const allowedProviders = config.providers || ['cinecalidad'];
-  if (!allowedProviders.includes('cinecalidad')) return [];
-
+  const maxStreams = config.maxWebStreamsPerProvider || 2;
   const isSeries = Boolean(season && episode);
 
   let searchResults = await searchCinecalidad(media.title);
@@ -195,7 +193,7 @@ async function getCinecalidadStreams(media, season = null, episode = null, confi
     const streamPromises = options.slice(0, 4).map(opt => resolveOption(opt, media));
     const streams = (await Promise.all(streamPromises)).filter(Boolean);
 
-    return streams;
+    return streams.slice(0, maxStreams);
   } catch (err) {
     return [];
   }

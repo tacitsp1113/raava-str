@@ -1,21 +1,43 @@
 const { addonBuilder } = require('stremio-addon-sdk');
 const { getMediaDetails } = require('./services/tmdb');
-const { getHackstoreStreams } = require('./services/providers/hackstore');
+const { getYandexStreams } = require('./services/providers/yandex');
+const { getPelisplus4kStreams } = require('./services/providers/pelisplus4k');
+const { getLaMovieStreams } = require('./services/providers/lamovie');
+const { getLACartoonsStreams } = require('./services/providers/lacartoons');
 const { getCinecalidadStreams } = require('./services/providers/cinecalidad');
 const { getCuevanaStreams } = require('./services/providers/cuevana');
 const { getPelisplusStreams } = require('./services/providers/pelisplus');
+const { getHackstoreStreams } = require('./services/providers/hackstore');
 const { getTioanimeStreams } = require('./services/providers/tioanime');
-const { getYandexStreams } = require('./services/providers/yandex');
 
 const DEFAULT_CONFIG = {
   mode: 'balanced', // 'cloud' | 'balanced' | 'full'
-  scraperScope: 'specialized', // 'specialized' | 'global'
-  providers: ['yandex', 'hackstore_torrent', 'hackstore_direct', 'cinecalidad', 'cuevana', 'pelisplus', 'tioanime'],
+  providers: {
+    movie: [
+      'pelisplus4k',
+      'lamovie',
+      'cuevana',
+      'cinecalidad',
+      'pelisplus',
+      'hackstore_direct',
+      'hackstore_torrent'
+    ],
+    series: [
+      'pelisplus4k',
+      'lamovie',
+      'cuevana',
+      'pelisplus',
+      'tioanime',
+      'lacartoons',
+      'hackstore_torrent'
+    ]
+  },
   qualities: ['4k', '1080p', '720p', '480p'],
   disableTorrents: false,
   priority: 'direct', // 'direct' | 'torrent'
   maxCloudStreams: 10,
-  maxWebStreams: 3,
+  maxWebStreamsPerProvider: 2, // Límite por sitio
+  maxTotalWebStreams: 6,       // Límite total web combinado
   minSeeders: 1
 };
 
@@ -55,10 +77,21 @@ function parseConfig(raw) {
       parsed = JSON.parse(decodeURIComponent(raw));
     }
     const cfg = { ...DEFAULT_CONFIG, ...parsed };
-    // Retrocompatibilidad inteligente
-    if (parsed.universalSearch) cfg.scraperScope = 'global';
+
+    // Asegurar estructura de providers { movie: [], series: [] }
+    if (!cfg.providers || typeof cfg.providers !== 'object' || Array.isArray(cfg.providers)) {
+      cfg.providers = {
+        movie: [...DEFAULT_CONFIG.providers.movie],
+        series: [...DEFAULT_CONFIG.providers.series]
+      };
+    } else {
+      cfg.providers = {
+        movie: Array.isArray(cfg.providers.movie) ? cfg.providers.movie : [...DEFAULT_CONFIG.providers.movie],
+        series: Array.isArray(cfg.providers.series) ? cfg.providers.series : [...DEFAULT_CONFIG.providers.series]
+      };
+    }
+
     if (!cfg.mode) cfg.mode = 'balanced';
-    if (!cfg.scraperScope) cfg.scraperScope = 'specialized';
     return cfg;
   } catch (_) {
     return DEFAULT_CONFIG;
@@ -83,47 +116,44 @@ const manifest = {
 };
 
 /**
- * Core stream resolver supporting both IMDb (tt...) and TMDB (tmdb:...)
+ * Endpoint principal de resolución de streams para Stremio
  */
-async function resolveStreams(type, id, rawConfig = null) {
-  const cacheKey = `${type}:${id}:${rawConfig || 'default'}`;
+async function resolveStreams(type, id, rawConfig) {
+  const config = parseConfig(rawConfig);
+  const cacheKey = `${config.mode}:${config.priority}:${config.disableTorrents}:${type}:${id}`;
+
   const cached = getCachedStreams(cacheKey);
   if (cached) {
-    console.log(`[TACIT Cache HIT] ${type}:${id} returning ${cached.streams.length} stream(s)`);
+    console.log(`[TACIT Cache] Instant HIT for ${id}`);
     return cached;
   }
 
-  const config = parseConfig(rawConfig);
-  console.log(`[TACIT Request] Type: ${type}, ID: ${id}, Providers: ${config.providers.join(',')}, Max: ${config.maxStreams}`);
+  console.log(`[TACIT Request] Resolving streams for type=${type}, id=${id}, mode=${config.mode}`);
 
   try {
-    let mediaId = id;
+    const isSeries = type === 'series';
+    let imdbId = id;
     let season = null;
     let episode = null;
 
-    if (id.startsWith('tmdb:')) {
+    if (isSeries && id.includes(':')) {
       const parts = id.split(':');
-      mediaId = `tmdb:${parts[1]}`;
-      if (parts.length >= 4) {
-        season = parts[2];
-        episode = parts[3];
-      }
-    } else if (id.includes(':')) {
-      const parts = id.split(':');
-      mediaId = parts[0];
+      imdbId = parts[0];
       season = parts[1];
       episode = parts[2];
     }
 
     const effectiveType = type === 'anime' ? (season && episode ? 'series' : 'movie') : type;
-    const media = await getMediaDetails(effectiveType, mediaId);
-    if (!media) {
-      console.log(`[TACIT] Could not resolve media details for ID: ${id}`);
+    const media = await getMediaDetails(effectiveType, imdbId);
+    if (!media || !media.title) {
+      console.warn(`[TACIT] No metadata resolved for ${id}`);
       return { streams: [] };
     }
 
-    const isSeries = Boolean(season && episode);
-    const isAnime = type === 'anime' || /anime/i.test(media.genres || '');
+    const isAnime = Boolean(
+      (media.genres && (media.genres.includes('Animación') || media.genres.includes('Animation'))) &&
+      (media.country === 'JP' || media.originalLanguage === 'ja')
+    );
 
     let finalStreams = [];
 
@@ -138,19 +168,17 @@ async function resolveStreams(type, id, rawConfig = null) {
       }
     }
     // MODO 2: EQUILIBRADO (Nube primero; si no existe, activa contingencia de páginas web)
-    else if (config.mode === 'balanced' || config.smartMode) {
+    else if (config.mode === 'balanced') {
       let cloudStreams = [];
-      if (config.providers.includes('yandex')) {
-        try {
-          cloudStreams = await getYandexStreams(media, season, episode, config);
-        } catch (e) {
-          console.error('[TACIT Error Nube Equilibrado]:', e.message);
-        }
+      try {
+        cloudStreams = await getYandexStreams(media, season, episode, config);
+      } catch (e) {
+        console.error('[TACIT Error Nube Equilibrado]:', e.message);
       }
 
       const filteredCloud = processAndFilterStreams(cloudStreams, config);
       if (filteredCloud.length > 0) {
-        console.log(`[TACIT Equilibrado] Encontrado en la nube (${filteredCloud.length} enlaces). Respondiendo de inmediato sin consultar la web.`);
+        console.log(`[TACIT Equilibrado] Encontrado en la nube (${filteredCloud.length} enlaces). Respondiendo al instante.`);
         finalStreams = filteredCloud;
       } else {
         console.log(`[TACIT Equilibrado] No encontrado en la nube. Activando páginas web de respaldo...`);
@@ -165,17 +193,14 @@ async function resolveStreams(type, id, rawConfig = null) {
         finalStreams = processAndFilterStreams(webStreams, config);
       }
     }
-    // MODO 3: CATÁLOGO COMPLETO (Nube y todas las páginas web consultadas en paralelo a la par)
+    // MODO 3: CATÁLOGO COMPLETO (Nube y páginas web consultadas en paralelo a la par)
     else {
-      console.log(`[TACIT Catálogo Completo] Consultando nube y todas las páginas web a la par...`);
-      const allTasks = [];
-      if (config.providers.includes('yandex')) {
-        allTasks.push(
-          getYandexStreams(media, season, episode, config)
-            .catch(e => { console.error('[TACIT Error Nube Full]:', e.message); return []; })
-        );
-      }
-      allTasks.push(...buildWebTasks(media, season, episode, isSeries, isAnime, config));
+      console.log(`[TACIT Catálogo Completo] Consultando nube y páginas web a la par...`);
+      const allTasks = [
+        getYandexStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Nube Full]:', e.message); return []; }),
+        ...buildWebTasks(media, season, episode, isSeries, isAnime, config)
+      ];
       const settled = await Promise.allSettled(allTasks);
       const combined = [];
       for (const res of settled) {
@@ -199,53 +224,85 @@ async function resolveStreams(type, id, rawConfig = null) {
 }
 
 /**
- * Genera las tareas de consulta para proveedores web externos
+ * Genera las tareas de consulta para proveedores web externos según el tipo de contenido
  */
 function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   const providerTasks = [];
+  const activeProviders = isSeries
+    ? (config.providers?.series || [])
+    : (config.providers?.movie || []);
+
   const allowTorrents = !config.disableTorrents;
-  const wantTorrents = allowTorrents && config.providers.includes('hackstore_torrent');
-  const wantDirect = config.providers.includes('hackstore_direct');
-  const isGlobal = config.scraperScope === 'global';
 
-  // 1. Hackstore (Películas o Modo Global)
-  if ((!isSeries || isGlobal) && (wantTorrents || wantDirect)) {
-    const hConfig = { ...config, allowTorrents };
+  // 1. PelisPlus 4K (TioPlus) — Películas y Series
+  if (activeProviders.includes('pelisplus4k')) {
     providerTasks.push(
-      getHackstoreStreams(media, season, episode, hConfig)
-        .catch(e => { console.error('[TACIT Error Hackstore]:', e.message); return []; })
+      getPelisplus4kStreams(media, season, episode, config)
+        .catch(e => { console.error('[TACIT Error Pelisplus4K]:', e.message); return []; })
     );
   }
 
-  // 2. CineCalidad (Películas o Modo Global)
-  if ((!isSeries || isGlobal) && config.providers.includes('cinecalidad')) {
+  // 2. LaMovie — Películas y Series
+  if (activeProviders.includes('lamovie')) {
     providerTasks.push(
-      getCinecalidadStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
+      getLaMovieStreams(media, season, episode, config)
+        .catch(e => { console.error('[TACIT Error LaMovie]:', e.message); return []; })
     );
   }
 
-  // 3. Cuevana (Series o Modo Global)
-  if ((isSeries || isGlobal) && config.providers.includes('cuevana')) {
+  // 3. Cuevana — Películas y Series
+  if (activeProviders.includes('cuevana')) {
     providerTasks.push(
       getCuevanaStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; })
     );
   }
 
-  // 4. PelisPlus (Series o Modo Global)
-  if ((isSeries || isGlobal) && config.providers.includes('pelisplus')) {
+  // 4. CineCalidad — Principalmente Películas
+  if (activeProviders.includes('cinecalidad')) {
+    providerTasks.push(
+      getCinecalidadStreams(media, season, episode, config)
+        .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
+    );
+  }
+
+  // 5. PelisPlus HD — Películas y Series
+  if (activeProviders.includes('pelisplus')) {
     providerTasks.push(
       getPelisplusStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; })
     );
   }
 
-  // 5. TioAnime (Anime o Modo Global)
-  if ((isAnime || isGlobal) && config.providers.includes('tioanime')) {
+  // 6. Hackstore Directo — Películas
+  if (activeProviders.includes('hackstore_direct')) {
+    providerTasks.push(
+      getHackstoreStreams(media, season, episode, { ...config, wantDirect: true, wantTorrents: false })
+        .catch(e => { console.error('[TACIT Error Hackstore Direct]:', e.message); return []; })
+    );
+  }
+
+  // 7. Hackstore Torrents — Películas y Series P2P
+  if (allowTorrents && activeProviders.includes('hackstore_torrent')) {
+    providerTasks.push(
+      getHackstoreStreams(media, season, episode, { ...config, wantDirect: false, wantTorrents: true, allowTorrents: true })
+        .catch(e => { console.error('[TACIT Error Hackstore Torrent]:', e.message); return []; })
+    );
+  }
+
+  // 8. TioAnime — Anime / Series
+  if (activeProviders.includes('tioanime') && (isAnime || isSeries)) {
     providerTasks.push(
       getTioanimeStreams(media, season, episode, config)
         .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
+    );
+  }
+
+  // 9. LACartoons — Series Animadas y Caricaturas Retro
+  if (isSeries && activeProviders.includes('lacartoons')) {
+    providerTasks.push(
+      getLACartoonsStreams(media, season, episode, config)
+        .catch(e => { console.error('[TACIT Error LACartoons]:', e.message); return []; })
     );
   }
 
@@ -280,7 +337,17 @@ function processAndFilterStreams(rawStreams, config) {
     return true;
   });
 
-  // C. Ordenamiento por prioridad y estabilidad de servidor
+  // C. Deduplicación por URL exacta
+  const seenUrls = new Set();
+  streams = streams.filter(s => {
+    const targetUrl = s.url || s.infoHash;
+    if (!targetUrl) return false;
+    if (seenUrls.has(targetUrl)) return false;
+    seenUrls.add(targetUrl);
+    return true;
+  });
+
+  // D. Ordenamiento por prioridad y calidad
   const qRank = (q) => {
     if (q === '4k') return 4;
     if (q === '1080p') return 3;
@@ -289,7 +356,7 @@ function processAndFilterStreams(rawStreams, config) {
   };
 
   streams.sort((a, b) => {
-    // 0. Enlace recomendado primero
+    // 0. Enlace recomendado de la nube primero
     if (a.isRecommended && !b.isRecommended) return -1;
     if (!a.isRecommended && b.isRecommended) return 1;
 
@@ -302,33 +369,31 @@ function processAndFilterStreams(rawStreams, config) {
       if (a.isDirect && !b.isDirect) return 1;
     }
 
-    // 2. Servidores directos: Tier 1 (Vimeos/VOE) antes que Tier 2 (VidHide)
-    if (a.isDirect && b.isDirect) {
-      const tierA = a.serverTier || 1;
-      const tierB = b.serverTier || 1;
-      if (tierA !== tierB) return tierA - tierB;
-    }
-
-    // 3. Dentro de la misma categoría, ordenar por calidad
+    // 2. Calidad más alta primero
     const diffQ = qRank(b.qualityKey) - qRank(a.qualityKey);
     if (diffQ !== 0) return diffQ;
 
-    // 4. Si son torrents, ordenar por seeders
+    // 3. En torrents, ordenar por mayor número de seeders
     if (!a.isDirect && !b.isDirect) {
       return (b.seeders || 0) - (a.seeders || 0);
     }
     return 0;
   });
 
-  // D. Límite de enlaces por proveedor (separando Cloud vs Web)
-  const maxCloud = Math.max(1, parseInt(config.maxCloudStreams || config.maxStreams, 10) || 10);
-  const maxWeb = Math.max(1, parseInt(config.maxWebStreams || config.maxStreams, 10) || 3);
+  // E. Límites numéricos: Límite por sitio + Límite total web combinado
+  const maxCloud = Math.max(1, parseInt(config.maxCloudStreams, 10) || 10);
+  const maxPerProvider = Math.max(1, parseInt(config.maxWebStreamsPerProvider, 10) || 2);
+  const maxTotalWeb = Math.max(1, parseInt(config.maxTotalWebStreams, 10) || 6);
+
   const providerCounts = {};
   const finalStreams = [];
+  let totalWebCount = 0;
 
   for (const s of streams) {
-    // Normalizar la insignia en Stremio: TACIT STR (Nube), TACIT STR 🧲 (Torrents) o TACIT STR · WEB (Web)
-    if (s.provider === 'yandex') {
+    const isCloud = s.provider === 'yandex';
+
+    // Normalizar insignia del stream en Stremio
+    if (isCloud) {
       s.name = 'TACIT STR';
     } else if (!s.isDirect) {
       s.name = 'TACIT STR 🧲';
@@ -336,12 +401,22 @@ function processAndFilterStreams(rawStreams, config) {
       s.name = 'TACIT STR · WEB';
     }
 
-    const prov = s.provider || 'default';
-    const limit = prov === 'yandex' ? maxCloud : maxWeb;
-    providerCounts[prov] = (providerCounts[prov] || 0);
-    if (providerCounts[prov] < limit) {
-      finalStreams.push(s);
-      providerCounts[prov]++;
+    if (isCloud) {
+      providerCounts['yandex'] = (providerCounts['yandex'] || 0);
+      if (providerCounts['yandex'] < maxCloud) {
+        finalStreams.push(s);
+        providerCounts['yandex']++;
+      }
+    } else {
+      // Stream web (directo o torrent)
+      const prov = s.provider || 'web_other';
+      providerCounts[prov] = (providerCounts[prov] || 0);
+
+      if (totalWebCount < maxTotalWeb && providerCounts[prov] < maxPerProvider) {
+        finalStreams.push(s);
+        providerCounts[prov]++;
+        totalWebCount++;
+      }
     }
   }
 

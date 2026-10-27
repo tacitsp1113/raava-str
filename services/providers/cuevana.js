@@ -144,9 +144,7 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
 }
 
 async function getCuevanaStreams(media, season = null, episode = null, config = {}) {
-  const allowed = config.providers || ['cuevana'];
-  if (!allowed.includes('cuevana')) return [];
-
+  const maxStreams = config.maxWebStreamsPerProvider || 2;
   const isSeries = Boolean(season && episode);
   const baseUrl = DOMAINS[0];
 
@@ -185,7 +183,7 @@ async function getCuevanaStreams(media, season = null, episode = null, config = 
     });
 
     const streams = (await Promise.all(streamPromises)).filter(Boolean);
-    return streams;
+    return streams.slice(0, maxStreams);
   } catch (err) {
     return [];
   }

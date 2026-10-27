@@ -52,8 +52,7 @@ function findBestMatch(results, media) {
 }
 
 async function getTioanimeStreams(media, season = null, episode = null, config = {}) {
-  const allowed = config.providers || ['tioanime'];
-  if (!allowed.includes('tioanime')) return [];
+  const maxStreams = config.maxWebStreamsPerProvider || 2;
 
   // TioAnime is anime series or anime movies
   const epNum = episode ? parseInt(episode, 10) : 1;
@@ -136,7 +135,7 @@ async function getTioanimeStreams(media, season = null, episode = null, config =
     });
 
     const streams = (await Promise.all(promises)).filter(Boolean);
-    return streams;
+    return streams.slice(0, maxStreams);
   } catch (err) {
     return [];
   }

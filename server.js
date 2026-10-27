@@ -39,7 +39,7 @@ app.get('/:configuration/manifest.json', (req, res) => {
   const qInfo = (config.qualities || ['1080p']).map(q => q.toUpperCase()).join(' · ');
   const streamInfo = config.mode === 'cloud' 
     ? `Nube: ${config.maxCloudStreams || 10}` 
-    : `Nube: ${config.maxCloudStreams || 10} | Web: ${config.maxWebStreams || 3}`;
+    : `Nube: ${config.maxCloudStreams || 10} | Web: máx ${config.maxTotalWebStreams || 6}`;
 
   const customManifest = {
     ...manifest,
@@ -112,6 +112,10 @@ function handleConfigPage(req, res) {
 app.get('/', handleConfigPage);
 app.get('/configure', handleConfigPage);
 app.get('/:configuration/configure', handleConfigPage);
+
+// --- DIAGNÓSTICO Y ESTADO DE PROVEEDORES ---
+const { handleStatusPage } = require('./services/health');
+app.get('/status', handleStatusPage);
 
 // Iniciar Servidor
 app.listen(PORT, () => {

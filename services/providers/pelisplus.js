@@ -86,9 +86,7 @@ function findBestMatch(results, media, isSeries = false) {
 }
 
 async function getPelisplusStreams(media, season = null, episode = null, config = {}) {
-  const allowed = config.providers || ['pelisplus'];
-  if (!allowed.includes('pelisplus')) return [];
-
+  const maxStreams = config.maxWebStreamsPerProvider || 2;
   const isSeries = Boolean(season && episode);
 
   let searchResults = await searchPelisplus(media.title);
@@ -202,7 +200,7 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
     });
 
     const streams = (await Promise.all(promises)).filter(Boolean);
-    return streams;
+    return streams.slice(0, maxStreams);
   } catch (err) {
     return [];
   }
