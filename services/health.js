@@ -44,14 +44,14 @@ async function pingUrl(name, url, isJson = false) {
 async function checkAllProviders() {
   const checks = [
     checkCloud(),
-    pingUrl('PelisPlus 4K', 'https://tioplus.app/api/search/avatar'),
+    pingUrl('SeriesFlix', 'https://seriesflixhd.pw/?s=avatar'),
     pingUrl('LaMovie', 'https://lamovie.org/wp-api/v1/search?q=avatar&postType=any&postsPerPage=5', true),
     pingUrl('CineCalidad', 'https://www.cinecalidad.am/?s=avatar'),
     pingUrl('Cuevana', 'https://cuevana3.sc/wp-json/cuevana/v1/search?q=avatar', true),
     pingUrl('PelisPlus HD', 'https://pelisplushd.bz/search?s=avatar'),
     pingUrl('TioAnime', 'https://tioanime.com/directorio?q=naruto'),
     pingUrl('LACartoons', 'https://www.lacartoons.com/?Titulo=spider'),
-    pingUrl('Hackstore', 'https://hackstore.rs/?s=avatar')
+    pingUrl('Hackstore', 'https://hackstore2.com/api/rest/search?post_type=movies&query=avatar', true)
   ];
 
   const results = await Promise.all(checks);

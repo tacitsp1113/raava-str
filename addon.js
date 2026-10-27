@@ -1,7 +1,7 @@
 const { addonBuilder } = require('stremio-addon-sdk');
 const { getMediaDetails } = require('./services/tmdb');
 const { getYandexStreams } = require('./services/providers/yandex');
-const { getPelisplus4kStreams } = require('./services/providers/pelisplus4k');
+const { getSeriesFlixStreams } = require('./services/providers/seriesflix');
 const { getLaMovieStreams } = require('./services/providers/lamovie');
 const { getLACartoonsStreams } = require('./services/providers/lacartoons');
 const { getCinecalidadStreams } = require('./services/providers/cinecalidad');
@@ -14,22 +14,23 @@ const DEFAULT_CONFIG = {
   mode: 'balanced', // 'cloud' | 'balanced' | 'full'
   providers: {
     movie: [
-      'pelisplus4k',
-      'lamovie',
       'cuevana',
       'cinecalidad',
+      'lamovie',
       'pelisplus',
       'hackstore_direct',
       'hackstore_torrent'
     ],
     series: [
-      'pelisplus4k',
-      'lamovie',
+      'seriesflix',
       'cuevana',
+      'cinecalidad',
+      'lamovie',
       'pelisplus',
+      'hackstore_direct',
+      'hackstore_torrent',
       'tioanime',
-      'lacartoons',
-      'hackstore_torrent'
+      'lacartoons'
     ]
   },
   qualities: ['4k', '1080p', '720p', '480p'],
@@ -120,7 +121,8 @@ const manifest = {
  */
 async function resolveStreams(type, id, rawConfig) {
   const config = parseConfig(rawConfig);
-  const cacheKey = `${config.mode}:${config.priority}:${config.disableTorrents}:${type}:${id}`;
+  const provKey = JSON.stringify(config.providers || {});
+  const cacheKey = `${config.mode}:${config.priority}:${config.disableTorrents}:${provKey}:${config.maxTotalWebStreams}:${type}:${id}`;
 
   const cached = getCachedStreams(cacheKey);
   if (cached) {
@@ -161,7 +163,7 @@ async function resolveStreams(type, id, rawConfig) {
     if (config.mode === 'cloud') {
       try {
         const cloudStreams = await getYandexStreams(media, season, episode, config);
-        finalStreams = processAndFilterStreams(cloudStreams, config);
+        finalStreams = processAndFilterStreams(cloudStreams, config, isSeries);
         console.log(`[TACIT Solo Nube] ${finalStreams.length} enlace(s) entregados desde SQLite.`);
       } catch (e) {
         console.error('[TACIT Error Solo Nube]:', e.message);
@@ -176,7 +178,7 @@ async function resolveStreams(type, id, rawConfig) {
         console.error('[TACIT Error Nube Equilibrado]:', e.message);
       }
 
-      const filteredCloud = processAndFilterStreams(cloudStreams, config);
+      const filteredCloud = processAndFilterStreams(cloudStreams, config, isSeries);
       if (filteredCloud.length > 0) {
         console.log(`[TACIT Equilibrado] Encontrado en la nube (${filteredCloud.length} enlaces). Respondiendo al instante.`);
         finalStreams = filteredCloud;
@@ -190,7 +192,7 @@ async function resolveStreams(type, id, rawConfig) {
             webStreams.push(...res.value);
           }
         }
-        finalStreams = processAndFilterStreams(webStreams, config);
+        finalStreams = processAndFilterStreams(webStreams, config, isSeries);
       }
     }
     // MODO 3: CATÁLOGO COMPLETO (Nube y páginas web consultadas en paralelo a la par)
@@ -208,7 +210,7 @@ async function resolveStreams(type, id, rawConfig) {
           combined.push(...res.value);
         }
       }
-      finalStreams = processAndFilterStreams(combined, config);
+      finalStreams = processAndFilterStreams(combined, config, isSeries);
     }
 
     console.log(`[TACIT] Returning ${finalStreams.length} stream(s) for "${media.title}"`);
@@ -234,11 +236,11 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
 
   const allowTorrents = !config.disableTorrents;
 
-  // 1. PelisPlus 4K (TioPlus) — Películas y Series
-  if (activeProviders.includes('pelisplus4k')) {
+  // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / Vimeos sin bloqueo de IP)
+  if (isSeries && activeProviders.includes('seriesflix')) {
     providerTasks.push(
-      getPelisplus4kStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Pelisplus4K]:', e.message); return []; })
+      getSeriesFlixStreams(media, season, episode, config)
+        .catch(e => { console.error('[TACIT Error SeriesFlix]:', e.message); return []; })
     );
   }
 
@@ -312,7 +314,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
 /**
  * Filtra, ordena y limita streams de forma uniforme
  */
-function processAndFilterStreams(rawStreams, config) {
+function processAndFilterStreams(rawStreams, config, isSeries = false) {
   if (!Array.isArray(rawStreams) || rawStreams.length === 0) return [];
 
   // A. Filtro por calidad permitida
@@ -347,7 +349,15 @@ function processAndFilterStreams(rawStreams, config) {
     return true;
   });
 
-  // D. Ordenamiento por prioridad y calidad
+  // D. Ordenamiento por prioridad, orden de proveedores y calidad
+  const providerList = isSeries ? config.providers?.series : config.providers?.movie;
+  const getProvRank = (p) => {
+    if (p === 'yandex') return -1;
+    if (!providerList || !Array.isArray(providerList)) return 999;
+    const idx = providerList.indexOf(p);
+    return idx === -1 ? 999 : idx;
+  };
+
   const qRank = (q) => {
     if (q === '4k') return 4;
     if (q === '1080p') return 3;
@@ -369,11 +379,16 @@ function processAndFilterStreams(rawStreams, config) {
       if (a.isDirect && !b.isDirect) return 1;
     }
 
-    // 2. Calidad más alta primero
+    // 2. Orden de prioridad de proveedores definido por el usuario
+    const rankA = getProvRank(a.provider);
+    const rankB = getProvRank(b.provider);
+    if (rankA !== rankB) return rankA - rankB;
+
+    // 3. Calidad más alta primero
     const diffQ = qRank(b.qualityKey) - qRank(a.qualityKey);
     if (diffQ !== 0) return diffQ;
 
-    // 3. En torrents, ordenar por mayor número de seeders
+    // 4. En torrents, ordenar por mayor número de seeders
     if (!a.isDirect && !b.isDirect) {
       return (b.seeders || 0) - (a.seeders || 0);
     }

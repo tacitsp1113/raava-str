@@ -217,16 +217,63 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       justify-content: space-between;
       padding: 12px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      transition: background 0.15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
       gap: 12px;
+      user-select: none;
     }
 
-    .provider-row:last-child {
-      border-bottom: none;
+    .provider-row.dragging {
+      opacity: 0.35;
+      background: rgba(14, 165, 233, 0.12);
     }
 
-    .provider-row:hover {
-      background: rgba(255, 255, 255, 0.02);
+    .provider-row.drag-over {
+      border-top: 2px solid var(--accent);
+      background: rgba(14, 165, 233, 0.06);
+    }
+
+    .order-controls {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: #64748b;
+      font-size: 1.15rem;
+      padding: 4px 3px;
+      transition: color 0.15s;
+    }
+
+    .drag-handle:hover {
+      color: #38bdf8;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .btn-order {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      border-radius: 6px;
+      width: 22px;
+      height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-order:hover {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: #0ea5e9;
+      color: #38bdf8;
     }
 
     .provider-meta {
@@ -628,196 +675,240 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       </div>
 
       <div class="providers-table-card">
-        <!-- CATEGORÍA 1: HÍBRIDOS (PELÍCULAS Y SERIES) -->
-        <div class="category-separator">🌟 Híbridos (Películas y Series)</div>
-
-        <!-- PelisPlus 4K (TioPlus) -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">PelisPlus 4K</span>
-              <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-              <span class="tag-badge tag-fast">⚡ HLS 1080p</span>
-            </div>
-            <div class="provider-desc">Streams directos de alta fidelidad vía VidHide HLS. Ultra rápido y sin cortes.</div>
-          </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="pelisplus4k" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="pelisplus4k" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(14,165,233,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.76rem; color: #7dd3fc;">
+          <span style="display:flex; align-items:center; gap:6px;">↕️ <strong>Prioridad de Proveedores:</strong> Arrastra (⠿) o pulsa ▲ ▼ para ordenar qué sitio tiene prioridad</span>
+          <span style="font-size: 0.72rem; color: #94a3b8;">Arriba = Más prioridad</span>
         </div>
 
-        <!-- LaMovie -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">LaMovie</span>
-              <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+        <div id="providersList">
+          <!-- 1. SeriesFlix -->
+          <div class="provider-row" draggable="true" data-prov-id="seriesflix">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
             </div>
-            <div class="provider-desc">Estrenos recientes y catálogo en audio Latino con servidores Vimeos y Goodstream.</div>
-          </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
-        </div>
-
-        <!-- Cuevana -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">Cuevana</span>
-              <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">SeriesFlix</span>
+                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+                <span class="tag-badge tag-fast">⚡ VOE / Vimeos</span>
+              </div>
+              <div class="provider-desc">Capítulos completos y estrenos de series en Audio Latino con servidores directos sin bloqueos de IP.</div>
             </div>
-            <div class="provider-desc">La biblioteca web más extensa de internet. Excelente respaldo general.</div>
-          </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
-        </div>
-
-        <!-- PelisPlus HD -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">PelisPlus HD</span>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type na" title="Exclusivo de series">
+                —
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="seriesflix" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
             </div>
-            <div class="provider-desc">Capítulos completos y estrenos con resolución criptográfica Embed69.</div>
           </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
-        </div>
 
-        <!-- CATEGORÍA 2: ESPECIALISTAS EN CINE -->
-        <div class="category-separator">🎬 Especialistas en Cine</div>
-
-        <!-- CineCalidad -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">CineCalidad</span>
-              <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+          <!-- 2. Cuevana -->
+          <div class="provider-row" draggable="true" data-prov-id="cuevana">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
             </div>
-            <div class="provider-desc">El estándar de oro para películas en 1080p con audio Latino dual (Vimeos/VOE).</div>
-          </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="cinecalidad" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type na" title="No disponible para series">
-              —
-            </button>
-          </div>
-        </div>
-
-        <!-- Hackstore Directo -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">Hackstore Directo</span>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">Cuevana</span>
+                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+              </div>
+              <div class="provider-desc">La biblioteca web más extensa de internet. Excelente respaldo general para cine y series.</div>
             </div>
-            <div class="provider-desc">Streaming directo m3u8 de películas en alta definición.</div>
-          </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type na" title="No disponible para series">
-              —
-            </button>
-          </div>
-        </div>
-
-        <!-- CATEGORÍA 3: ESPECIALISTAS EN SERIES Y ANIMACIÓN -->
-        <div class="category-separator">📺 Especialistas en Series y Animación</div>
-
-        <!-- TioAnime -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">TioAnime</span>
-              <span class="tag-badge tag-recommended">⭐ Anime</span>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
             </div>
-            <div class="provider-desc">Especialista líder en animación japonesa en audio Latino y subtitulado.</div>
           </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type na" title="Exclusivo de anime y series">
-              —
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="tioanime" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
-        </div>
 
-        <!-- LACartoons -->
-        <div class="provider-row">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">LACartoons</span>
-              <span class="tag-badge tag-retro">⭐ Retro / Cartoons</span>
+          <!-- 3. CineCalidad -->
+          <div class="provider-row" draggable="true" data-prov-id="cinecalidad">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
             </div>
-            <div class="provider-desc">Series animadas clásicas de Nickelodeon, Cartoon Network y Fox Kids en Latino.</div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">CineCalidad</span>
+                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+              </div>
+              <div class="provider-desc">El estándar de oro en 1080p con audio Latino dual (Vimeos/VOE) para películas y series.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="cinecalidad" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="cinecalidad" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
           </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type na" title="Exclusivo de series animadas">
-              —
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="lacartoons" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
-          </div>
-        </div>
 
-        <!-- Hackstore Torrents -->
-        <div class="provider-row" id="rowHackstoreTorrent">
-          <div class="provider-meta">
-            <div class="provider-name-line">
-              <span class="provider-title">Hackstore Torrents 🧲</span>
-              <span class="tag-badge tag-fast">P2P 4K/1080p</span>
+          <!-- 4. LaMovie -->
+          <div class="provider-row" draggable="true" data-prov-id="lamovie">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
             </div>
-            <div class="provider-desc">Enlaces magnet con más de 10 trackers UDP/WSS activos para máxima tasa de bits.</div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">LaMovie</span>
+                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+              </div>
+              <div class="provider-desc">Estrenos recientes y catálogo en audio Latino con servidores Vimeos y Goodstream.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
           </div>
-          <div class="toggle-group">
-            <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="movie">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              🎬 Pelis
-            </button>
-            <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="series">
-              <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              📺 Series
-            </button>
+
+          <!-- 5. PelisPlus HD -->
+          <div class="provider-row" draggable="true" data-prov-id="pelisplus">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">PelisPlus HD</span>
+              </div>
+              <div class="provider-desc">Capítulos completos y estrenos con resolución criptográfica Embed69.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 6. Hackstore Directo -->
+          <div class="provider-row" draggable="true" data-prov-id="hackstore_direct">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">Hackstore Directo</span>
+              </div>
+              <div class="provider-desc">Streaming directo m3u8 de películas y series en alta definición.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 7. Hackstore Torrents -->
+          <div class="provider-row" draggable="true" data-prov-id="hackstore_torrent" id="rowHackstoreTorrent">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">Hackstore Torrents 🧲</span>
+                <span class="tag-badge tag-fast">P2P 4K/1080p</span>
+              </div>
+              <div class="provider-desc">Enlaces magnet con más de 10 trackers UDP/WSS activos para máxima tasa de bits.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 8. TioAnime -->
+          <div class="provider-row" draggable="true" data-prov-id="tioanime">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">TioAnime</span>
+                <span class="tag-badge tag-recommended">⭐ Anime</span>
+              </div>
+              <div class="provider-desc">Especialista líder en animación japonesa en audio Latino y subtitulado.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type na" title="Exclusivo de anime y series">
+                —
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="tioanime" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 9. LACartoons -->
+          <div class="provider-row" draggable="true" data-prov-id="lacartoons">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">LACartoons</span>
+                <span class="tag-badge tag-retro">⭐ Retro / Cartoons</span>
+              </div>
+              <div class="provider-desc">Series animadas clásicas de Nickelodeon, Cartoon Network y Fox Kids en Latino.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type na" title="Exclusivo de series animadas">
+                —
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="lacartoons" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -935,8 +1026,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     const initialServerConfig = ${JSON.stringify(initialConfig)};
 
-    const DEFAULT_MOVIES = ['pelisplus4k', 'lamovie', 'cuevana', 'cinecalidad', 'pelisplus', 'hackstore_direct', 'hackstore_torrent'];
-    const DEFAULT_SERIES = ['pelisplus4k', 'lamovie', 'cuevana', 'pelisplus', 'tioanime', 'lacartoons', 'hackstore_torrent'];
+    const DEFAULT_MOVIES = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'hackstore_torrent'];
+    const DEFAULT_SERIES = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'hackstore_torrent', 'tioanime', 'lacartoons'];
 
     const state = {
       mode: initialServerConfig?.mode || 'balanced',
@@ -958,6 +1049,45 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       balanced: '⚡ <strong>Equilibrado (Recomendado):</strong> Lo mejor de ambos mundos. Primero busca en nuestra biblioteca en la nube; si el título está disponible, te lo entrega de inmediato en &lt;1 seg. Si no lo encuentra, activa como respaldo los sitios web seleccionados abajo.',
       full: '🚀 <strong>Catálogo Completo:</strong> Consulta nuestra biblioteca y las páginas web al mismo tiempo en paralelo, reuniendo la mayor cantidad posible de opciones.'
     };
+
+    function updateProviderOrderFromDOM() {
+      const rows = document.querySelectorAll('#providersList .provider-row');
+      const orderedIds = Array.from(rows).map(r => r.dataset.provId).filter(Boolean);
+
+      const newMovies = [];
+      const newSeries = [];
+
+      orderedIds.forEach(id => {
+        const movieBtn = document.querySelector(`.btn-toggle-type[data-prov="${id}"][data-type="movie"]`);
+        if (movieBtn && movieBtn.classList.contains('active')) {
+          newMovies.push(id);
+        }
+        const seriesBtn = document.querySelector(`.btn-toggle-type[data-prov="${id}"][data-type="series"]`);
+        if (seriesBtn && seriesBtn.classList.contains('active')) {
+          newSeries.push(id);
+        }
+      });
+
+      state.providers.movie = newMovies;
+      state.providers.series = newSeries;
+      updateUrls();
+    }
+
+    function applySavedOrderToDOM() {
+      const container = document.getElementById('providersList');
+      if (!container) return;
+      const combined = [
+        ...(state.providers.series || []),
+        ...(state.providers.movie || [])
+      ];
+      const uniqueOrder = [...new Set(combined)];
+      uniqueOrder.reverse().forEach(provId => {
+        const row = container.querySelector(`.provider-row[data-prov-id="${provId}"]`);
+        if (row) {
+          container.prepend(row);
+        }
+      });
+    }
 
     function syncUI() {
       const isCloud = (state.mode === 'cloud');
@@ -1040,23 +1170,26 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     // Presets rápidos de proveedores
     document.getElementById('btnPresetRecommended').addEventListener('click', () => {
-      state.providers.movie = ['pelisplus4k', 'lamovie', 'cuevana', 'cinecalidad', 'pelisplus', 'hackstore_direct'];
-      state.providers.series = ['pelisplus4k', 'lamovie', 'cuevana', 'pelisplus', 'tioanime', 'lacartoons'];
+      state.providers.movie = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
+      state.providers.series = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
       setActiveQuickPreset('btnPresetRecommended');
+      applySavedOrderToDOM();
       syncUI();
     });
 
     document.getElementById('btnPresetMoviesOnly').addEventListener('click', () => {
-      state.providers.movie = ['pelisplus4k', 'lamovie', 'cuevana', 'cinecalidad', 'pelisplus', 'hackstore_direct'];
+      state.providers.movie = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
       state.providers.series = [];
       setActiveQuickPreset('btnPresetMoviesOnly');
+      applySavedOrderToDOM();
       syncUI();
     });
 
     document.getElementById('btnPresetSeriesOnly').addEventListener('click', () => {
       state.providers.movie = [];
-      state.providers.series = ['pelisplus4k', 'lamovie', 'cuevana', 'pelisplus', 'tioanime', 'lacartoons'];
+      state.providers.series = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'tioanime', 'lacartoons'];
       setActiveQuickPreset('btnPresetSeriesOnly');
+      applySavedOrderToDOM();
       syncUI();
     });
 
@@ -1064,6 +1197,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       state.providers.movie = [...DEFAULT_MOVIES];
       state.providers.series = [...DEFAULT_SERIES];
       setActiveQuickPreset('btnPresetAll');
+      applySavedOrderToDOM();
       syncUI();
     });
 
@@ -1081,19 +1215,83 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         const type = btn.dataset.type; // 'movie' | 'series'
         if (!prov || !type) return;
 
-        const list = state.providers[type] || [];
-        const index = list.indexOf(prov);
-
-        if (index > -1) {
-          list.splice(index, 1);
-        } else {
-          list.push(prov);
-        }
-
-        state.providers[type] = list;
+        btn.classList.toggle('active');
         document.querySelectorAll('.btn-quick-preset').forEach(b => b.classList.remove('active-quick'));
+        updateProviderOrderFromDOM();
         syncUI();
       });
+    });
+
+    // Drag and Drop & flechas de orden
+    let draggedRow = null;
+    const providerListEl = document.getElementById('providersList');
+
+    document.querySelectorAll('#providersList .provider-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        draggedRow = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      row.addEventListener('dragend', () => {
+        if (draggedRow) draggedRow.classList.remove('dragging');
+        document.querySelectorAll('#providersList .provider-row').forEach(r => r.classList.remove('drag-over'));
+        draggedRow = null;
+        updateProviderOrderFromDOM();
+      });
+
+      row.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (draggedRow && draggedRow !== row) {
+          row.classList.add('drag-over');
+        }
+      });
+
+      row.addEventListener('dragleave', () => {
+        row.classList.remove('drag-over');
+      });
+
+      row.addEventListener('drop', (e) => {
+        e.preventDefault();
+        row.classList.remove('drag-over');
+        if (draggedRow && draggedRow !== row) {
+          const allRows = Array.from(providerListEl.querySelectorAll('.provider-row'));
+          const draggedIdx = allRows.indexOf(draggedRow);
+          const targetIdx = allRows.indexOf(row);
+
+          if (draggedIdx < targetIdx) {
+            providerListEl.insertBefore(draggedRow, row.nextSibling);
+          } else {
+            providerListEl.insertBefore(draggedRow, row);
+          }
+          updateProviderOrderFromDOM();
+        }
+      });
+    });
+
+    // Botones flecha ▲ y ▼
+    document.addEventListener('click', (e) => {
+      const upBtn = e.target.closest('.btn-move-up');
+      if (upBtn) {
+        const row = upBtn.closest('.provider-row');
+        const prev = row.previousElementSibling;
+        if (prev && prev.classList.contains('provider-row')) {
+          row.parentNode.insertBefore(row, prev);
+          updateProviderOrderFromDOM();
+        }
+        return;
+      }
+      const downBtn = e.target.closest('.btn-move-down');
+      if (downBtn) {
+        const row = downBtn.closest('.provider-row');
+        const next = row.nextElementSibling;
+        if (next && next.classList.contains('provider-row')) {
+          row.parentNode.insertBefore(next, row);
+          updateProviderOrderFromDOM();
+        }
+        return;
+      }
     });
 
     // Checkboxes interaction (calidad, prioridad, disableTorrents)
@@ -1168,6 +1366,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     });
 
     // Iniciar UI
+    applySavedOrderToDOM();
     syncUI();
   </script>
 </body>
