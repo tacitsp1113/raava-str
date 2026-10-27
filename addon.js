@@ -225,7 +225,7 @@ async function resolveStreams(type, id, rawConfig) {
   }
 }
 
-function taskWithTimeout(taskPromise, ms = 6500) {
+function taskWithTimeout(taskPromise, ms = 11000) {
   return Promise.race([
     taskPromise,
     new Promise(resolve => setTimeout(() => resolve([]), ms))
@@ -249,7 +249,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getSeriesFlixStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error SeriesFlix]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -260,7 +260,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getLaMovieStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error LaMovie]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -271,7 +271,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getCuevanaStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -282,7 +282,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getCinecalidadStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -293,7 +293,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getPelisplusStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -304,7 +304,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getHackstoreStreams(media, season, episode, { ...config, wantDirect: true, wantTorrents: false })
           .catch(e => { console.error('[TACIT Error Hackstore Direct]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -315,7 +315,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getHackstoreStreams(media, season, episode, { ...config, wantDirect: false, wantTorrents: true, allowTorrents: true })
           .catch(e => { console.error('[TACIT Error Hackstore Torrent]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -326,7 +326,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getTioanimeStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }
@@ -337,7 +337,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
       taskWithTimeout(
         getLACartoonsStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error LACartoons]:', e.message); return []; }),
-        6500
+        11000
       )
     );
   }

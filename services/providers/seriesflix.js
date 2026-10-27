@@ -193,8 +193,8 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
       const buttons = extractButtons(epData.html);
       if (buttons.length === 0) continue;
 
-      // Priorizar VOE, Vimeos y Nupload
-      const candidateTasks = buttons.slice(0, 6).map(async (btn) => {
+      // Priorizar VOE, Vimeos y Nupload (máximo 3 mejores candidatos en paralelo)
+      const candidateTasks = buttons.slice(0, 3).map(async (btn) => {
         try {
           let resolved = null;
           let server = 'Directo';
