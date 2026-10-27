@@ -137,10 +137,16 @@ async function getPelisplus4kStreams(media, season = null, episode = null, confi
               url: resolved.url,
               behaviorHints: {
                 notWebReady: false,
-                bingeGroup: isSeries ? `tacit-pp4k-${media.imdb_id || media.title}-s${season}` : undefined
+                proxyHeaders: {
+                  request: resolved.headers || {
+                    'User-Agent': USER_AGENT,
+                    'Referer': hostUrl
+                  }
+                }
               },
               qualityKey: '1080p',
               isDirect: true,
+              seeders: 999,
               provider: 'pelisplus4k'
             });
 

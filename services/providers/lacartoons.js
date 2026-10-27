@@ -61,11 +61,21 @@ async function resolveOkRu(url) {
     const parsed = JSON.parse(decoded);
     const metadata = typeof parsed.flashvars?.metadata === 'string' ? JSON.parse(parsed.flashvars.metadata) : parsed.flashvars?.metadata;
     if (metadata?.hlsManifestUrl) {
-      return { url: metadata.hlsManifestUrl, quality: '720p', format: 'hls' };
+      return {
+        url: metadata.hlsManifestUrl,
+        quality: '720p',
+        format: 'hls',
+        headers: { 'User-Agent': USER_AGENT }
+      };
     }
     if (Array.isArray(metadata?.videos) && metadata.videos.length > 0) {
       const best = metadata.videos[metadata.videos.length - 1];
-      return { url: best.url, quality: '720p', format: 'mp4' };
+      return {
+        url: best.url,
+        quality: '720p',
+        format: 'mp4',
+        headers: { 'User-Agent': USER_AGENT }
+      };
     }
     return null;
   } catch (_) {
@@ -147,10 +157,13 @@ async function getLACartoonsStreams(media, season = null, episode = null, config
             url: resolved.url,
             behaviorHints: {
               notWebReady: false,
-              bingeGroup: `tacit-lacartoons-${media.imdb_id || media.title}-s${season}`
+              proxyHeaders: {
+                request: resolved.headers || {}
+              }
             },
             qualityKey: '720p',
             isDirect: true,
+            seeders: 999,
             provider: 'lacartoons'
           });
 

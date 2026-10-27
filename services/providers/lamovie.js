@@ -153,10 +153,14 @@ async function getLaMovieStreams(media, season = null, episode = null, config = 
               url: resolved.url,
               behaviorHints: {
                 notWebReady: false,
-                bingeGroup: isSeries ? `tacit-lamovie-${media.imdb_id || media.title}-s${season}` : undefined
+                proxyHeaders: {
+                  request: resolved.headers || {}
+                }
               },
+              subtitles: resolved.subtitles && resolved.subtitles.length > 0 ? resolved.subtitles : undefined,
               qualityKey,
               isDirect: true,
+              seeders: 999,
               provider: 'lamovie'
             });
 
