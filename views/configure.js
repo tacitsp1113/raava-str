@@ -1058,11 +1058,11 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       const newSeries = [];
 
       orderedIds.forEach(id => {
-        const movieBtn = document.querySelector(`.btn-toggle-type[data-prov="${id}"][data-type="movie"]`);
+        const movieBtn = document.querySelector('.btn-toggle-type[data-prov="' + id + '"][data-type="movie"]');
         if (movieBtn && movieBtn.classList.contains('active')) {
           newMovies.push(id);
         }
-        const seriesBtn = document.querySelector(`.btn-toggle-type[data-prov="${id}"][data-type="series"]`);
+        const seriesBtn = document.querySelector('.btn-toggle-type[data-prov="' + id + '"][data-type="series"]');
         if (seriesBtn && seriesBtn.classList.contains('active')) {
           newSeries.push(id);
         }
@@ -1082,7 +1082,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       ];
       const uniqueOrder = [...new Set(combined)];
       uniqueOrder.reverse().forEach(provId => {
-        const row = container.querySelector(`.provider-row[data-prov-id="${provId}"]`);
+        const row = container.querySelector('.provider-row[data-prov-id="' + provId + '"]');
         if (row) {
           container.prepend(row);
         }
