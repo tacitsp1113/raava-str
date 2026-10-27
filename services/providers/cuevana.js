@@ -141,10 +141,7 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
     behaviorHints: {
-      notWebReady: false,
-      proxyHeaders: {
-        request: resolved.headers || {}
-      }
+      notWebReady: false
     }
   };
 }

@@ -155,10 +155,7 @@ async function getLaMovieStreams(media, season = null, episode = null, config = 
               title: `${line1}\n${line2}\n${line3}`,
               url: resolved.url,
               behaviorHints: {
-                notWebReady: false,
-                proxyHeaders: {
-                  request: resolved.headers || {}
-                }
+                notWebReady: false
               },
               subtitles: resolved.subtitles && resolved.subtitles.length > 0 ? resolved.subtitles : undefined,
               qualityKey,

@@ -266,10 +266,7 @@ async function resolveDirectPlayer(player, media = null) {
       lang: s.lang === 'spa' ? 'Spanish' : 'English'
     })),
     behaviorHints: {
-      notWebReady: false,
-      proxyHeaders: {
-        request: resolved.headers || {}
-      }
+      notWebReady: false
     }
   };
 }

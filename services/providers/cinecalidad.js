@@ -147,10 +147,7 @@ async function resolveOption(optionUrl, media = null) {
       lang: s.lang === 'spa' ? 'Spanish' : 'English'
     })),
     behaviorHints: {
-      notWebReady: false,
-      proxyHeaders: {
-        request: resolved.headers || {}
-      }
+      notWebReady: false
     }
   };
 }
