@@ -29,6 +29,32 @@ async function isStreamAlive(url, headers = {}, timeoutMs = 1500) {
   }
 }
 
+/**
+ * Lista negra de servidores cuyos tokens HLS se enlazan criptográficamente
+ * a la IP que los solicitó (Datacenter de Render != IP de la TV/teléfono del usuario).
+ * Bloquean o cortan el audio al reproducirse desde otra IP.
+ */
+const IP_LOCKED_DOMAINS = [
+  'vidhide',
+  'earnvids',
+  'streamhide',
+  'luluvdo',
+  'lulustream',
+  'doodstream',
+  'dood.',
+  'dhtpre',
+  'mivalyo',
+  'dinisglows',
+  'minochinos'
+];
+
+function isIpLockedServer(url) {
+  if (!url || typeof url !== 'string') return false;
+  const lower = url.toLowerCase();
+  return IP_LOCKED_DOMAINS.some(domain => lower.includes(domain));
+}
+
 module.exports = {
-  isStreamAlive
+  isStreamAlive,
+  isIpLockedServer
 };

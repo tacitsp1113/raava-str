@@ -5,7 +5,7 @@ const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
 const { resolveEmbed69 } = require('../extractors/embed69');
-const { isStreamAlive } = require('../extractors/validator');
+const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const BASE_URL = 'https://pelisplushd.bz';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -147,16 +147,17 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       if (opt.includes('embed69.org')) {
         const decrypted = await resolveEmbed69(opt);
         for (const item of decrypted) {
-          if (item.audio === 'Latino') {
+          if (item.audio === 'Latino' && !isIpLockedServer(item.url)) {
             streamTargets.push(item.url);
           }
         }
-      } else {
+      } else if (!isIpLockedServer(opt)) {
         streamTargets.push(opt);
       }
     }
 
     const promises = streamTargets.slice(0, 3).map(async (optUrl) => {
+      if (isIpLockedServer(optUrl)) return null;
       let resolved = null;
       let server = 'Directo';
 
@@ -166,8 +167,8 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       } else if (optUrl.includes('vimeos.net') || optUrl.includes('vimeos.zip')) {
         server = 'Vimeos';
         resolved = await resolveVimeos(optUrl);
-      } else if (optUrl.includes('vidhide') || optUrl.includes('filelions') || optUrl.includes('minochinos')) {
-        server = 'VidHide';
+      } else if (optUrl.includes('filelions')) {
+        server = 'FileLions';
         resolved = await resolveVidhide(optUrl);
       } else if (optUrl.includes('streamwish') || optUrl.includes('vibuxer') || optUrl.includes('swdyu')) {
         server = 'StreamWish';

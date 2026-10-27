@@ -2,7 +2,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
 const { resolveVidhide } = require('../extractors/vidhide');
-const { isStreamAlive } = require('../extractors/validator');
+const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const BASE_URL = 'https://www.lacartoons.com';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -137,10 +137,11 @@ async function getLACartoonsStreams(media, season = null, episode = null, config
     const streams = [];
 
     for (const src of iframes.slice(0, 3)) {
+      if (isIpLockedServer(src)) continue;
       let resolved = null;
       if (src.includes('ok.ru')) {
         resolved = await resolveOkRu(src);
-      } else if (src.includes('vidhide') || src.includes('filelions')) {
+      } else if (src.includes('filelions')) {
         resolved = await resolveVidhide(src);
       }
 

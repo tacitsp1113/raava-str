@@ -3,7 +3,7 @@ const { cleanTitle } = require('../tmdb');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
-const { isStreamAlive } = require('../extractors/validator');
+const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const BASE_URL = 'https://lamovie.org';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -117,7 +117,7 @@ async function getLaMovieStreams(media, season = null, episode = null, config = 
     const streams = [];
 
     for (const embed of sortedEmbeds.slice(0, 5)) {
-      if (!embed.url || typeof embed.url !== 'string') continue;
+      if (!embed.url || typeof embed.url !== 'string' || isIpLockedServer(embed.url)) continue;
       const rawUrl = embed.url;
 
       let resolved = null;
@@ -130,8 +130,8 @@ async function getLaMovieStreams(media, season = null, episode = null, config = 
         } else if (rawUrl.includes('voe.sx') || rawUrl.includes('repacklab.com') || rawUrl.includes('fraudulentwelfare.com')) {
           serverName = 'VOE';
           resolved = await resolveVoe(rawUrl);
-        } else if (rawUrl.includes('vidhide') || rawUrl.includes('filelions') || rawUrl.includes('minochinos')) {
-          serverName = 'VidHide';
+        } else if (rawUrl.includes('filelions')) {
+          serverName = 'FileLions';
           resolved = await resolveVidhide(rawUrl);
         } else if (rawUrl.includes('streamwish') || rawUrl.includes('vibuxer') || rawUrl.includes('swdyu')) {
           serverName = 'StreamWish';

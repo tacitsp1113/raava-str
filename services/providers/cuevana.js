@@ -3,7 +3,7 @@ const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
-const { isStreamAlive } = require('../extractors/validator');
+const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const DOMAINS = ['https://cuevana3.sc', 'https://cuevana.ch'];
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -74,7 +74,7 @@ function findBestMatch(items, media) {
 }
 
 async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = null, episode = null) {
-  if (!embedUrl) return null;
+  if (!embedUrl || isIpLockedServer(embedUrl)) return null;
   let targetUrl = embedUrl;
 
   try {
@@ -92,7 +92,10 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     }
   } catch (_) {}
 
+  if (isIpLockedServer(targetUrl)) return null;
   const fixed = fixHostsLinks(targetUrl);
+  if (isIpLockedServer(fixed)) return null;
+
   let resolved = null;
   let server = 'Directo';
 
@@ -102,8 +105,8 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
   } else if (fixed.includes('vimeos.net') || fixed.includes('vimeos.zip')) {
     server = 'Vimeos';
     resolved = await resolveVimeos(fixed);
-  } else if (fixed.includes('vidhide') || fixed.includes('filelions') || fixed.includes('dhtpre') || fixed.includes('mivalyo') || fixed.includes('dinisglows') || fixed.includes('minochinos')) {
-    server = 'VidHide';
+  } else if (fixed.includes('filelions')) {
+    server = 'FileLions';
     resolved = await resolveVidhide(fixed);
   } else if (fixed.includes('streamwish') || fixed.includes('vibuxer') || fixed.includes('swdyu') || fixed.includes('hglink')) {
     server = 'StreamWish';

@@ -4,7 +4,7 @@ const { cleanTitle } = require('../tmdb');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
-const { isStreamAlive } = require('../extractors/validator');
+const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const BASE_URL = 'https://www.cinecalidad.am';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
@@ -95,8 +95,9 @@ function findBestMatch(results, media) {
 }
 
 async function resolveOption(optionUrl, media = null) {
-  if (!optionUrl || typeof optionUrl !== 'string') return null;
+  if (!optionUrl || typeof optionUrl !== 'string' || isIpLockedServer(optionUrl)) return null;
   const fixedUrl = fixHostsLinks(optionUrl.trim());
+  if (isIpLockedServer(fixedUrl)) return null;
 
   if (fixedUrl.includes('youtube.com') || fixedUrl.includes('youtu.be')) return null;
 
@@ -109,8 +110,8 @@ async function resolveOption(optionUrl, media = null) {
   } else if (fixedUrl.includes('voe.sx') || fixedUrl.includes('cloudwindow-route') || fixedUrl.includes('voe-network')) {
     serverName = 'VOE';
     resolved = await resolveVoe(fixedUrl);
-  } else if (fixedUrl.includes('vidhide') || fixedUrl.includes('filelions') || fixedUrl.includes('minochinos')) {
-    serverName = 'VidHide';
+  } else if (fixedUrl.includes('filelions')) {
+    serverName = 'FileLions';
     resolved = await resolveVidhide(fixedUrl);
   } else if (fixedUrl.includes('streamwish') || fixedUrl.includes('vibuxer') || fixedUrl.includes('swdyu')) {
     serverName = 'StreamWish';
@@ -121,6 +122,9 @@ async function resolveOption(optionUrl, media = null) {
 
   const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1500);
   if (!alive) return null;
+
+  const quality = resolved.quality || '1080p';
+  const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
 
   const qBadge = quality.toUpperCase();
   const line1 = `🎬 ${qBadge} · SDR`;
