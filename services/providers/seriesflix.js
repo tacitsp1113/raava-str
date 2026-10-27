@@ -4,6 +4,7 @@ const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveStreamwish } = require('../extractors/vidhide');
+const { resolveNupload } = require('../extractors/nupload');
 const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
 const BASES = ['https://seriesflixhd.pw', 'https://seriesflixhd.best', 'https://seriesflixhd.ink'];
@@ -156,9 +157,8 @@ function extractButtons(html) {
 
     if (!targetUrl || !targetUrl.startsWith('http')) return;
 
-    // Descartar servidores bloqueados por IP o wrappers sin stream directo
+    // Descartar servidores bloqueados por IP
     if (isIpLockedServer(targetUrl)) return;
-    if (targetUrl.includes('nupload.my/watch/')) return;
 
     const label = $(el).text().trim().replace(/\s+/g, ' ');
     const detectedAudio = audioDe(label) || 'Latino';
@@ -193,8 +193,8 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
       const buttons = extractButtons(epData.html);
       if (buttons.length === 0) continue;
 
-      // Resolver en paralelo los mejores candidatos
-      const candidateTasks = buttons.slice(0, 5).map(async (btn) => {
+      // Priorizar VOE, Vimeos y Nupload
+      const candidateTasks = buttons.slice(0, 6).map(async (btn) => {
         try {
           let resolved = null;
           let server = 'Directo';
@@ -202,6 +202,9 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
           if (btn.url.includes('voe.sx') || btn.url.includes('repacklab.com') || btn.url.includes('cloudwindow-route')) {
             server = 'VOE';
             resolved = await resolveVoe(btn.url);
+          } else if (btn.url.includes('nupload.my')) {
+            server = 'Nupload';
+            resolved = await resolveNupload(btn.url);
           } else if (btn.url.includes('vimeos.net') || btn.url.includes('vimeos.zip')) {
             server = 'Vimeos';
             resolved = await resolveVimeos(btn.url);
