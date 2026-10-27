@@ -2,7 +2,7 @@ const axios = require('axios');
 const { cleanTitle } = require('../tmdb');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVoe } = require('../extractors/voe');
-const { resolveVidhide } = require('../extractors/vidhide');
+const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
 const { isStreamAlive } = require('../extractors/validator');
 
 const BASE_URL = 'https://lamovie.org';
@@ -130,9 +130,12 @@ async function getLaMovieStreams(media, season = null, episode = null, config = 
         } else if (rawUrl.includes('voe.sx') || rawUrl.includes('repacklab.com') || rawUrl.includes('fraudulentwelfare.com')) {
           serverName = 'VOE';
           resolved = await resolveVoe(rawUrl);
-        } else if (rawUrl.includes('vidhide') || rawUrl.includes('filelions')) {
+        } else if (rawUrl.includes('vidhide') || rawUrl.includes('filelions') || rawUrl.includes('minochinos')) {
           serverName = 'VidHide';
           resolved = await resolveVidhide(rawUrl);
+        } else if (rawUrl.includes('streamwish') || rawUrl.includes('vibuxer') || rawUrl.includes('swdyu')) {
+          serverName = 'StreamWish';
+          resolved = await resolveStreamwish(rawUrl);
         }
 
         if (resolved && resolved.url) {

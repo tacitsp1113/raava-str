@@ -1,11 +1,29 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
-const { resolveVidhide } = require('../extractors/vidhide');
+const { resolveVidhide, resolveStreamwish, fixHostsLinks } = require('../extractors/vidhide');
+const { resolveVoe } = require('../extractors/voe');
+const { resolveVimeos } = require('../extractors/vimeos');
 const { isStreamAlive } = require('../extractors/validator');
 
 const BASE_URL = 'https://tioplus.app';
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+function audioDe(text) {
+  if (!text) return '';
+  const s = text.toLowerCase();
+  if (/latino|\blat\b|latam|mexic|\bmx\b|419/.test(s)) return 'Latino';
+  if (/castellano|espana|\bcast\b|\besp\b/.test(s)) return 'Castellano';
+  if (/subtitulad|\bvose\b|\bsub\b|\bsubs\b|ingles|english/.test(s)) return 'Subtitulado';
+  return '';
+}
+
+function audioPagina(html) {
+  if (/audio Latino|Español Latino/i.test(html)) return 'Latino';
+  if (/audio Castellano|Español España/i.test(html)) return 'Castellano';
+  if (/subtitulad|subtulada/i.test(html)) return 'Subtitulado';
+  return 'Latino';
+}
 
 async function searchPelisplus4k(query) {
   if (!query) return [];
@@ -88,48 +106,92 @@ async function getPelisplus4kStreams(media, season = null, episode = null, confi
     if (typeof html !== 'string') return [];
 
     const $ = cheerio.load(html);
-    const serverTokens = [];
+    const pageAudio = audioPagina(html);
+    const serverList = [];
 
     $('li[data-server]').each((_, el) => {
-      const s = $(el).attr('data-server');
-      if (s && !serverTokens.includes(s)) serverTokens.push(s);
+      const token = $(el).attr('data-server');
+      const label = $(el).text().trim().replace(/\s+/g, ' ');
+      const detected = audioDe(label) || pageAudio;
+      if (token && !serverList.some(s => s.token === token)) {
+        serverList.push({ token, label, audio: detected });
+      }
     });
 
-    if (serverTokens.length === 0) return [];
+    if (serverList.length === 0) return [];
+
+    // Priorizar servidores más rápidos y estables (Earnvids/VidHide, StreamWish, Voe)
+    serverList.sort((a, b) => {
+      const score = (item) => {
+        const l = item.label.toLowerCase();
+        if (/earnvids|vidhide/i.test(l)) return 3;
+        if (/streamwish/i.test(l)) return 2;
+        if (/voe/i.test(l)) return 1;
+        return 0;
+      };
+      return score(b) - score(a);
+    });
 
     const streams = [];
 
-    for (const token of serverTokens.slice(0, 4)) {
+    for (const item of serverList.slice(0, 6)) {
       try {
-        const b64 = Buffer.from(token).toString('base64');
-        const playerRes = await axios.get(`${BASE_URL}/player/${b64}`, {
+        // Pausa ligera anti-bloqueo ("saturando la red")
+        await new Promise(r => setTimeout(r, 350));
+
+        const b64 = Buffer.from(item.token).toString('base64');
+        let playerRes = await axios.get(`${BASE_URL}/player/${b64}`, {
           headers: { 'User-Agent': USER_AGENT, 'Referer': targetUrl },
           timeout: 4000
         });
-        const playerHtml = typeof playerRes.data === 'string' ? playerRes.data : '';
+
+        let playerHtml = typeof playerRes.data === 'string' ? playerRes.data : '';
+        if (/saturando la red/i.test(playerHtml)) {
+          await new Promise(r => setTimeout(r, 1200));
+          playerRes = await axios.get(`${BASE_URL}/player/${b64}`, {
+            headers: { 'User-Agent': USER_AGENT, 'Referer': targetUrl },
+            timeout: 4000
+          });
+          playerHtml = typeof playerRes.data === 'string' ? playerRes.data : '';
+        }
+
         const matchHref = playerHtml.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/);
         if (!matchHref) continue;
 
         let hostUrl = matchHref[1];
         if (!hostUrl.startsWith('http')) continue;
 
-        // Estandarizar espejos conocidos de VidHide
-        hostUrl = hostUrl
-          .replace('https://mivalyo.com', 'https://vidhidepro.com')
-          .replace('https://dinisglows.com', 'https://vidhidepro.com')
-          .replace('https://dhtpre.com', 'https://vidhidepro.com');
+        // Normalizar espejos a dominios oficiales estables
+        hostUrl = fixHostsLinks(hostUrl);
 
         let resolved = null;
-        if (hostUrl.includes('vidhide') || hostUrl.includes('filelions')) {
+        if (hostUrl.includes('vidhide') || hostUrl.includes('filelions') || hostUrl.includes('minochinos') || hostUrl.includes('dhtpre')) {
           resolved = await resolveVidhide(hostUrl);
+        } else if (hostUrl.includes('streamwish') || hostUrl.includes('vibuxer') || hostUrl.includes('swdyu') || hostUrl.includes('hglink')) {
+          resolved = await resolveStreamwish(hostUrl);
+        } else if (hostUrl.includes('voe.sx') || hostUrl.includes('repacklab') || hostUrl.includes('cloudwindow-route') || hostUrl.includes('fraudulentwelfare')) {
+          resolved = await resolveVoe(hostUrl);
+        } else if (hostUrl.includes('vimeos.net') || hostUrl.includes('vimeos.zip')) {
+          resolved = await resolveVimeos(hostUrl);
         }
 
         if (resolved && resolved.url) {
           const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1500);
           if (alive) {
-            const line1 = '⭐ 1080P · SDR';
-            const line2 = '🇲🇽 ES (Latino)';
+            const audioBadge = item.audio === 'Latino'
+              ? '🇲🇽 ES (Latino)'
+              : item.audio === 'Castellano'
+              ? '🇪🇸 ES (Castellano)'
+              : '🇺🇸 EN (Subtitulado)';
+
+            const quality = resolved.quality || '1080p';
+            const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
+            const line1 = `⭐ ${quality.toUpperCase()} · SDR`;
+            const line2 = audioBadge;
             const line3 = isSeries ? `⚡ T${season} · E${episode}` : `⚡ ${media.title}`;
+
+            let hostOrigin = '';
+            try { hostOrigin = new URL(hostUrl).origin; } catch (_) {}
 
             streams.push({
               name: 'TACIT STR · WEB',
@@ -140,11 +202,12 @@ async function getPelisplus4kStreams(media, season = null, episode = null, confi
                 proxyHeaders: {
                   request: resolved.headers || {
                     'User-Agent': USER_AGENT,
-                    'Referer': hostUrl
+                    'Referer': `${hostOrigin}/`,
+                    'Origin': hostOrigin
                   }
                 }
               },
-              qualityKey: '1080p',
+              qualityKey,
               isDirect: true,
               seeders: 999,
               provider: 'pelisplus4k'

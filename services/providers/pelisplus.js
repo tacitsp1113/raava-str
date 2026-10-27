@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
+const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
 const { resolveEmbed69 } = require('../extractors/embed69');
 const { isStreamAlive } = require('../extractors/validator');
 
@@ -165,6 +166,12 @@ async function getPelisplusStreams(media, season = null, episode = null, config 
       } else if (optUrl.includes('vimeos.net') || optUrl.includes('vimeos.zip')) {
         server = 'Vimeos';
         resolved = await resolveVimeos(optUrl);
+      } else if (optUrl.includes('vidhide') || optUrl.includes('filelions') || optUrl.includes('minochinos')) {
+        server = 'VidHide';
+        resolved = await resolveVidhide(optUrl);
+      } else if (optUrl.includes('streamwish') || optUrl.includes('vibuxer') || optUrl.includes('swdyu')) {
+        server = 'StreamWish';
+        resolved = await resolveStreamwish(optUrl);
       }
 
       if (!resolved || !resolved.url) return null;

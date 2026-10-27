@@ -2,7 +2,7 @@ const axios = require('axios');
 const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
-const { resolveVidhide } = require('../extractors/vidhide');
+const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
 const { isStreamAlive } = require('../extractors/validator');
 
 const DOMAINS = ['https://cuevana3.sc', 'https://cuevana.ch'];
@@ -102,9 +102,12 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
   } else if (fixed.includes('vimeos.net') || fixed.includes('vimeos.zip')) {
     server = 'Vimeos';
     resolved = await resolveVimeos(fixed);
-  } else if (fixed.includes('vidhide') || fixed.includes('filelions') || fixed.includes('dhtpre') || fixed.includes('mivalyo') || fixed.includes('dinisglows')) {
+  } else if (fixed.includes('vidhide') || fixed.includes('filelions') || fixed.includes('dhtpre') || fixed.includes('mivalyo') || fixed.includes('dinisglows') || fixed.includes('minochinos')) {
     server = 'VidHide';
     resolved = await resolveVidhide(fixed);
+  } else if (fixed.includes('streamwish') || fixed.includes('vibuxer') || fixed.includes('swdyu') || fixed.includes('hglink')) {
+    server = 'StreamWish';
+    resolved = await resolveStreamwish(fixed);
   }
 
   if (!resolved || !resolved.url) return null;

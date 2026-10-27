@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
 const { resolveVimeos } = require('../extractors/vimeos');
 const { resolveVoe } = require('../extractors/voe');
+const { resolveVidhide, resolveStreamwish } = require('../extractors/vidhide');
 const { isStreamAlive } = require('../extractors/validator');
 
 const BASE_URL = 'https://www.cinecalidad.am';
@@ -108,6 +109,12 @@ async function resolveOption(optionUrl, media = null) {
   } else if (fixedUrl.includes('voe.sx') || fixedUrl.includes('cloudwindow-route') || fixedUrl.includes('voe-network')) {
     serverName = 'VOE';
     resolved = await resolveVoe(fixedUrl);
+  } else if (fixedUrl.includes('vidhide') || fixedUrl.includes('filelions') || fixedUrl.includes('minochinos')) {
+    serverName = 'VidHide';
+    resolved = await resolveVidhide(fixedUrl);
+  } else if (fixedUrl.includes('streamwish') || fixedUrl.includes('vibuxer') || fixedUrl.includes('swdyu')) {
+    serverName = 'StreamWish';
+    resolved = await resolveStreamwish(fixedUrl);
   }
 
   if (!resolved || !resolved.url) return null;
