@@ -12,10 +12,6 @@ app.get('/logo.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'logo.png'));
 });
 
-// Router estándar del SDK de Stremio
-const defaultRouter = getRouter(addonInterface);
-app.use(defaultRouter);
-
 // --- ENDPOINTS CONFIGURABLES DE STREMIO ---
 
 // Endpoint de Manifiesto Configurado: /:configuration/manifest.json
@@ -69,6 +65,10 @@ app.get('/:configuration/stream/:type/:id.json', async (req, res) => {
   }
 });
 
+// Router estándar del SDK de Stremio (para llamadas directas sin configuracion)
+const defaultRouter = getRouter(addonInterface);
+app.use(defaultRouter);
+
 // --- API REST COMPATIBLE CON CLOUDSTREAM / MOVIEPLUS ---
 const csApi = require('./services/cloudstream_api');
 
@@ -117,95 +117,7 @@ app.get('/:configuration/configure', handleConfigPage);
 const { handleStatusPage } = require('./services/health');
 app.get('/status', handleStatusPage);
 
-app.get('/api/debug-render', async (req, res) => {
-  const { getMediaDetails } = require('./services/tmdb');
-  const axios = require('axios');
-  const cheerio = require('cheerio');
-  const report = {};
 
-  try {
-    report.media = await getMediaDetails('series', 'tt0944947');
-    
-    // Test base search
-    const base = 'https://seriesflixhd.pw';
-    const searchUrl = `${base}/?s=${encodeURIComponent(report.media.title)}`;
-    report.searchUrl = searchUrl;
-
-    const sRes = await axios.get(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-      },
-      timeout: 8000
-    });
-    report.searchStatus = sRes.status;
-    report.searchHtmlLen = (sRes.data || '').length;
-    report.searchTitleTag = (sRes.data.match(/<title>([^<]+)<\/title>/i) || [])[1];
-
-    const $ = cheerio.load(sRes.data);
-    const articles = [];
-    $('article').each((_, el) => {
-      const a = $(el).find('h2.Title a, a').first();
-      articles.push({ title: $(el).find('h2.Title, .title').text().trim(), href: a.attr('href') });
-    });
-    report.articlesFound = articles;
-
-    // Test direct episode
-    const epUrl = `${base}/episodio/juego-de-tronos-zkpc-1x1/`;
-    report.epUrl = epUrl;
-    const epRes = await axios.get(epUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-      timeout: 8000
-    });
-    report.epStatus = epRes.status;
-    report.epHtmlLen = (epRes.data || '').length;
-    report.epTitleTag = (epRes.data.match(/<title>([^<]+)<\/title>/i) || [])[1];
-
-    const $ep = cheerio.load(epRes.data);
-    const buttons = [];
-    $ep('div[data-url], [data-url]').each((_, el) => {
-      buttons.push({ label: $ep(el).text().trim(), dataUrl: $ep(el).attr('data-url') });
-    });
-    report.buttonsCount = buttons.length;
-    report.buttons = buttons;
-
-    // Probar extractores individuales directamente
-    const { resolveVoe } = require('./services/extractors/voe');
-    const { resolveNupload } = require('./services/extractors/nupload');
-    const { isStreamAlive } = require('./services/extractors/validator');
-
-    report.extractorTests = [];
-    const testUrls = [
-      'https://voe.sx/e/iaiwgnewdw1f',
-      'https://nupload.my/watch/NmnyXVKIw5rloMQMFfgh3BZJlqJ7kz7HiykDsalSwIc8'
-    ];
-
-    for (const u of testUrls) {
-      const item = { url: u };
-      try {
-        if (u.includes('voe.sx')) {
-          item.resolved = await resolveVoe(u);
-        } else if (u.includes('nupload.my')) {
-          item.resolved = await resolveNupload(u);
-        }
-        if (item.resolved?.url) {
-          item.alive = await isStreamAlive(item.resolved.url, item.resolved.headers || {}, 1500);
-        }
-      } catch (e) {
-        item.error = e.message;
-      }
-      report.extractorTests.push(item);
-    }
-
-    // Call full getSeriesFlixStreams
-    const { getSeriesFlixStreams } = require('./services/providers/seriesflix');
-    report.streams = await getSeriesFlixStreams(report.media, '1', '1', { maxWebStreamsPerProvider: 2 });
-
-    res.json({ success: true, report });
-  } catch (err) {
-    res.json({ success: false, error: err.message, stack: err.stack, report });
-  }
-});
 
 // Iniciar Servidor
 app.listen(PORT, () => {

@@ -225,6 +225,13 @@ async function resolveStreams(type, id, rawConfig) {
   }
 }
 
+function taskWithTimeout(taskPromise, ms = 6500) {
+  return Promise.race([
+    taskPromise,
+    new Promise(resolve => setTimeout(() => resolve([]), ms))
+  ]);
+}
+
 /**
  * Genera las tareas de consulta para proveedores web externos según el tipo de contenido
  */
@@ -239,72 +246,99 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / Vimeos sin bloqueo de IP)
   if (isSeries && activeProviders.includes('seriesflix')) {
     providerTasks.push(
-      getSeriesFlixStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error SeriesFlix]:', e.message); return []; })
+      taskWithTimeout(
+        getSeriesFlixStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error SeriesFlix]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 2. LaMovie — Películas y Series
   if (activeProviders.includes('lamovie')) {
     providerTasks.push(
-      getLaMovieStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error LaMovie]:', e.message); return []; })
+      taskWithTimeout(
+        getLaMovieStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error LaMovie]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 3. Cuevana — Películas y Series
   if (activeProviders.includes('cuevana')) {
     providerTasks.push(
-      getCuevanaStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; })
+      taskWithTimeout(
+        getCuevanaStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 4. CineCalidad — Principalmente Películas
   if (activeProviders.includes('cinecalidad')) {
     providerTasks.push(
-      getCinecalidadStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; })
+      taskWithTimeout(
+        getCinecalidadStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 5. PelisPlus HD — Películas y Series
   if (activeProviders.includes('pelisplus')) {
     providerTasks.push(
-      getPelisplusStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; })
+      taskWithTimeout(
+        getPelisplusStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 6. Hackstore Directo — Películas
   if (activeProviders.includes('hackstore_direct')) {
     providerTasks.push(
-      getHackstoreStreams(media, season, episode, { ...config, wantDirect: true, wantTorrents: false })
-        .catch(e => { console.error('[TACIT Error Hackstore Direct]:', e.message); return []; })
+      taskWithTimeout(
+        getHackstoreStreams(media, season, episode, { ...config, wantDirect: true, wantTorrents: false })
+          .catch(e => { console.error('[TACIT Error Hackstore Direct]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 7. Hackstore Torrents — Películas y Series P2P
   if (allowTorrents && activeProviders.includes('hackstore_torrent')) {
     providerTasks.push(
-      getHackstoreStreams(media, season, episode, { ...config, wantDirect: false, wantTorrents: true, allowTorrents: true })
-        .catch(e => { console.error('[TACIT Error Hackstore Torrent]:', e.message); return []; })
+      taskWithTimeout(
+        getHackstoreStreams(media, season, episode, { ...config, wantDirect: false, wantTorrents: true, allowTorrents: true })
+          .catch(e => { console.error('[TACIT Error Hackstore Torrent]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 8. TioAnime — Anime / Series
   if (activeProviders.includes('tioanime') && (isAnime || isSeries)) {
     providerTasks.push(
-      getTioanimeStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; })
+      taskWithTimeout(
+        getTioanimeStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
   // 9. LACartoons — Series Animadas y Caricaturas Retro
   if (isSeries && activeProviders.includes('lacartoons')) {
     providerTasks.push(
-      getLACartoonsStreams(media, season, episode, config)
-        .catch(e => { console.error('[TACIT Error LACartoons]:', e.message); return []; })
+      taskWithTimeout(
+        getLACartoonsStreams(media, season, episode, config)
+          .catch(e => { console.error('[TACIT Error LACartoons]:', e.message); return []; }),
+        6500
+      )
     );
   }
 
@@ -439,8 +473,8 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
 }
 
 const builder = new addonBuilder(manifest);
-builder.defineStreamHandler(async ({ type, id }) => {
-  return resolveStreams(type, id, null);
+builder.defineStreamHandler(async ({ type, id, config }) => {
+  return resolveStreams(type, id, config);
 });
 
 module.exports = {
