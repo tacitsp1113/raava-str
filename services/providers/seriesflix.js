@@ -195,8 +195,8 @@ function extractButtons(html) {
 
     if (!targetUrl || !targetUrl.startsWith('http')) return;
 
-    // Descartar servidores bloqueados por IP de datacenter
-    if (isIpLockedServer(targetUrl)) return;
+    // Descartar servidores bloqueados por IP de datacenter o con protección hotlink que rompe Stremio (Nupload)
+    if (isIpLockedServer(targetUrl) || targetUrl.includes('nupload.my')) return;
 
     const label = $(el).text().trim().replace(/\s+/g, ' ');
     const detectedAudio = audioDe(label) || 'Latino';
