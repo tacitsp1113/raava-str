@@ -10,6 +10,28 @@ const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 const BASES = ['https://seriesflixhd.pw', 'https://seriesflixhd.best', 'https://seriesflixhd.ink'];
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
+// In-memory cache con TTL de 15 minutos
+const sfCache = new Map();
+const CACHE_TTL_MS = 15 * 60 * 1000;
+
+function getCached(key) {
+  const item = sfCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expiresAt) {
+    sfCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCached(key, data) {
+  if (sfCache.size > 500) {
+    const oldest = sfCache.keys().next().value;
+    sfCache.delete(oldest);
+  }
+  sfCache.set(key, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
 function audioDe(text) {
   if (!text) return '';
   const s = text.toLowerCase();
@@ -26,7 +48,7 @@ async function fetchHtml(url) {
         'User-Agent': USER_AGENT,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
-      timeout: 4000,
+      timeout: 4500,
       maxRedirects: 3
     });
     return typeof res.data === 'string' ? res.data : '';
@@ -36,6 +58,11 @@ async function fetchHtml(url) {
 }
 
 async function searchSeries(base, query) {
+  if (!query) return [];
+  const cacheKey = `sf_search_${query.toLowerCase().trim()}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   const html = await fetchHtml(`${base}/?s=${encodeURIComponent(query)}`);
   if (!html) return [];
   const $ = cheerio.load(html);
@@ -53,6 +80,7 @@ async function searchSeries(base, query) {
     }
   });
 
+  if (results.length > 0) setCached(cacheKey, results);
   return results;
 }
 
@@ -73,6 +101,10 @@ function findBestMatch(results, media) {
 }
 
 async function findEpisodeUrl(base, seriesUrl, season, episode) {
+  const cacheKey = `sf_ep_${seriesUrl}_s${season}_e${episode}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   // 1. Atajo ultrarrápido: En SeriesFlix el slug del episodio es casi siempre `${slug}-${season}x${episode}/`
   const cleanHref = seriesUrl.replace(/\/+$/, '');
   const slug = cleanHref.split('/').pop();
@@ -81,7 +113,9 @@ async function findEpisodeUrl(base, seriesUrl, season, episode) {
     try {
       const directHtml = await fetchHtml(directUrl);
       if (directHtml && (directHtml.includes('optns-bx') || directHtml.includes('VideoPlayer') || directHtml.includes('data-url'))) {
-        return { url: directUrl, html: directHtml };
+        const res = { url: directUrl, html: directHtml };
+        setCached(cacheKey, res);
+        return res;
       }
     } catch (_) {}
   }
@@ -131,7 +165,11 @@ async function findEpisodeUrl(base, seriesUrl, season, episode) {
 
   if (episodeUrl) {
     const epHtml = await fetchHtml(episodeUrl);
-    return { url: episodeUrl, html: epHtml };
+    if (epHtml) {
+      const res = { url: episodeUrl, html: epHtml };
+      setCached(cacheKey, res);
+      return res;
+    }
   }
 
   return null;
@@ -157,7 +195,7 @@ function extractButtons(html) {
 
     if (!targetUrl || !targetUrl.startsWith('http')) return;
 
-    // Descartar servidores bloqueados por IP
+    // Descartar servidores bloqueados por IP de datacenter
     if (isIpLockedServer(targetUrl)) return;
 
     const label = $(el).text().trim().replace(/\s+/g, ' ');
@@ -171,6 +209,15 @@ function extractButtons(html) {
   });
 
   return buttons;
+}
+
+// Clasificación de prioridad de servidores: VOE > StreamWish > Vimeos > Otros
+function getServerTier(url) {
+  if (url.includes('voe.sx') || url.includes('cloudwindow-route') || url.includes('voe-network') || url.includes('repacklab.com')) return 1;
+  if (url.includes('streamwish') || url.includes('vibuxer') || url.includes('swdyu')) return 2;
+  if (url.includes('vimeos.net') || url.includes('vimeos.zip')) return 3;
+  if (url.includes('nupload.my')) return 4;
+  return 5;
 }
 
 async function getSeriesFlixStreams(media, season = null, episode = null, config = {}) {
@@ -193,28 +240,36 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
       const buttons = extractButtons(epData.html);
       if (buttons.length === 0) continue;
 
-      // Priorizar VOE, Vimeos y Nupload (máximo 3 mejores candidatos en paralelo)
-      const candidateTasks = buttons.slice(0, 3).map(async (btn) => {
+      // Ordenar botones por prioridad: Latino primero y servidores de alto ancho de banda (VOE > StreamWish > Vimeos)
+      buttons.sort((a, b) => {
+        const aLat = a.audio === 'Latino' ? -1 : 1;
+        const bLat = b.audio === 'Latino' ? -1 : 1;
+        if (aLat !== bLat) return aLat - bLat;
+        return getServerTier(a.url) - getServerTier(b.url);
+      });
+
+      // Procesar en paralelo los 4 mejores candidatos
+      const candidateTasks = buttons.slice(0, 4).map(async (btn) => {
         try {
           let resolved = null;
           let server = 'Directo';
 
-          if (btn.url.includes('voe.sx') || btn.url.includes('repacklab.com') || btn.url.includes('cloudwindow-route')) {
+          if (btn.url.includes('voe.sx') || btn.url.includes('repacklab.com') || btn.url.includes('cloudwindow-route') || btn.url.includes('voe-network')) {
             server = 'VOE';
             resolved = await resolveVoe(btn.url);
-          } else if (btn.url.includes('nupload.my')) {
-            server = 'Nupload';
-            resolved = await resolveNupload(btn.url);
-          } else if (btn.url.includes('vimeos.net') || btn.url.includes('vimeos.zip')) {
-            server = 'Vimeos';
-            resolved = await resolveVimeos(btn.url);
           } else if (btn.url.includes('streamwish') || btn.url.includes('vibuxer') || btn.url.includes('swdyu')) {
             server = 'StreamWish';
             resolved = await resolveStreamwish(btn.url);
+          } else if (btn.url.includes('vimeos.net') || btn.url.includes('vimeos.zip')) {
+            server = 'Vimeos';
+            resolved = await resolveVimeos(btn.url);
+          } else if (btn.url.includes('nupload.my')) {
+            server = 'Nupload';
+            resolved = await resolveNupload(btn.url);
           }
 
           if (resolved && resolved.url) {
-            const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1200);
+            const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1800);
             if (alive) {
               const audioBadge = btn.audio === 'Latino'
                 ? '🇲🇽 ES (Latino)'
@@ -224,7 +279,7 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
 
               const quality = resolved.quality || '1080p';
               const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
-              const line1 = `⭐ ${quality.toUpperCase()} · SDR`;
+              const line1 = `🎬 ${quality.toUpperCase()} · SDR`;
               const line2 = audioBadge;
               const line3 = `⚡ T${season} · E${episode}`;
 
@@ -232,6 +287,8 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
                 name: 'TACIT STR · WEB',
                 title: `${line1}\n${line2}\n${line3}`,
                 url: resolved.url,
+                server,
+                serverTier: 1,
                 behaviorHints: {
                   notWebReady: false
                 },
