@@ -15,11 +15,15 @@ const DEFAULT_CONFIG = {
   mode: 'balanced', // 'cloud' | 'balanced' | 'full'
   providers: {
     movie: [
-      'cinecalidad'
+      'cinecalidad',
+      'cuevana',
+      'pelisplus'
     ],
     series: [
       'seriesflix',
-      'cinecalidad'
+      'cinecalidad',
+      'cuevana',
+      'pelisplus'
     ]
   },
   qualities: ['4k', '1080p', '720p', '480p'],
@@ -289,9 +293,52 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
     )
   );
 
-  // --- PROVEEDORES PAUSADOS TEMPORALMENTE A PETICIÓN DEL USUARIO ---
-  // (LaMovie, Cuevana, PelisPlus, Hackstore Direct, Hackstore Torrents, TioAnime, LACartoons)
-  // Se mantienen desconectados para probar en aislamiento puro SeriesFlix y CineCalidad.
+  // 3. Cuevana — Respaldo general para Series y Películas (Vimeos / FileLions / StreamWish)
+  providerTasks.push(
+    taskWithTimeout(
+      (async () => {
+        const t0 = Date.now();
+        addLog('info', 'Cuevana', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
+        const s = await getCuevanaStreams(media, season, episode, config);
+        const elapsed = Date.now() - t0;
+        if (s.length > 0) {
+          addLog('success', 'Cuevana', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
+        } else {
+          addLog('warn', 'Cuevana', `Sin resultados en ${elapsed}ms`);
+        }
+        return s;
+      })().catch(e => {
+        addLog('error', 'Cuevana', `Error: ${e.message}`);
+        return [];
+      }),
+      11000
+    )
+  );
+
+  // 4. PelisPlus — Respaldo para Series y Películas (StreamWish / Vidhide / Directo)
+  providerTasks.push(
+    taskWithTimeout(
+      (async () => {
+        const t0 = Date.now();
+        addLog('info', 'PelisPlus', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
+        const s = await getPelisplusStreams(media, season, episode, config);
+        const elapsed = Date.now() - t0;
+        if (s.length > 0) {
+          addLog('success', 'PelisPlus', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
+        } else {
+          addLog('warn', 'PelisPlus', `Sin resultados en ${elapsed}ms`);
+        }
+        return s;
+      })().catch(e => {
+        addLog('error', 'PelisPlus', `Error: ${e.message}`);
+        return [];
+      }),
+      11000
+    )
+  );
+
+  // --- PROVEEDORES PAUSADOS TEMPORALMENTE ---
+  // (LaMovie, Hackstore Direct, Hackstore Torrents, TioAnime, LACartoons)
 
   return providerTasks;
 }

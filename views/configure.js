@@ -1030,8 +1030,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     const initialServerConfig = ${JSON.stringify(initialConfig)};
 
-    const DEFAULT_MOVIES = ['cinecalidad'];
-    const DEFAULT_SERIES = ['seriesflix', 'cinecalidad'];
+    const DEFAULT_MOVIES = ['cinecalidad', 'cuevana', 'pelisplus'];
+    const DEFAULT_SERIES = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
 
     const state = {
       mode: initialServerConfig?.mode || 'balanced',
@@ -1181,17 +1181,17 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       });
     });
 
-    // Presets rápidos de proveedores (enfocados en SeriesFlix y CineCalidad para pruebas)
+    // Presets rápidos de proveedores
     document.getElementById('btnPresetRecommended').addEventListener('click', () => {
-      state.providers.movie = ['cinecalidad'];
-      state.providers.series = ['seriesflix', 'cinecalidad'];
+      state.providers.movie = ['cinecalidad', 'cuevana', 'pelisplus'];
+      state.providers.series = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
       setActiveQuickPreset('btnPresetRecommended');
       applySavedOrderToDOM();
       syncUI();
     });
 
     document.getElementById('btnPresetMoviesOnly').addEventListener('click', () => {
-      state.providers.movie = ['cinecalidad'];
+      state.providers.movie = ['cinecalidad', 'cuevana', 'pelisplus'];
       state.providers.series = [];
       setActiveQuickPreset('btnPresetMoviesOnly');
       applySavedOrderToDOM();
@@ -1200,7 +1200,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     document.getElementById('btnPresetSeriesOnly').addEventListener('click', () => {
       state.providers.movie = [];
-      state.providers.series = ['seriesflix', 'cinecalidad'];
+      state.providers.series = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
       setActiveQuickPreset('btnPresetSeriesOnly');
       applySavedOrderToDOM();
       syncUI();
