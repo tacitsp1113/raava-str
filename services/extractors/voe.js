@@ -68,11 +68,16 @@ async function resolveVoe(url) {
     let html = res.data;
     if (typeof html !== 'string') return null;
 
+    let currentUrl = url;
+
     // Check permanentToken redirect if present
     if (/permanentToken/i.test(html)) {
       const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
       if (redirectMatch) {
-        const nextUrl = redirectMatch[1];
+        const nextUrl = redirectMatch[1].startsWith('http')
+          ? redirectMatch[1]
+          : new URL(redirectMatch[1], currentUrl).href;
+        currentUrl = nextUrl;
         const nextRes = await axios.get(nextUrl, {
           headers: { 'User-Agent': USER_AGENT, 'Referer': url },
           timeout: 6000
@@ -85,10 +90,10 @@ async function resolveVoe(url) {
     const arrayMatch = html.match(/json">\s*\[\s*['"]([^'"]+)['"]\s*\]\s*<\/script>\s*<script[^>]*src=['"]([^'"]+)['"]/i);
     if (arrayMatch) {
       const encodedData = arrayMatch[1];
-      const loaderUrl = arrayMatch[2].startsWith('http') ? arrayMatch[2] : new URL(arrayMatch[2], url).href;
+      const loaderUrl = arrayMatch[2].startsWith('http') ? arrayMatch[2] : new URL(arrayMatch[2], currentUrl).href;
 
       const loaderRes = await axios.get(loaderUrl, {
-        headers: { 'User-Agent': USER_AGENT, 'Referer': url },
+        headers: { 'User-Agent': USER_AGENT, 'Referer': currentUrl },
         timeout: 5000
       });
 

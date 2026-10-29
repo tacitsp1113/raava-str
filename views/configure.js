@@ -820,8 +820,10 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
             <div class="provider-meta">
               <div class="provider-name-line">
                 <span class="provider-title">Hackstore Directo</span>
+                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
+                <span class="tag-badge tag-fast">⚡ API REST Vimeos</span>
               </div>
-              <div class="provider-desc">Streaming directo m3u8 de películas y series en alta definición.</div>
+              <div class="provider-desc">Streaming directo Full HD (Vimeos) para películas y series mediante API REST limpia sin bloqueos de IP.</div>
             </div>
             <div class="toggle-group">
               <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="movie">
@@ -847,7 +849,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
                 <span class="provider-title">Hackstore Torrents 🧲</span>
                 <span class="tag-badge tag-fast">P2P 4K/1080p</span>
               </div>
-              <div class="provider-desc">Enlaces magnet con más de 10 trackers UDP/WSS activos para máxima tasa de bits.</div>
+              <div class="provider-desc">Enlaces magnet con más de 10 trackers UDP/WSS activos para máxima fidelidad 4K/1080p en películas y series.</div>
             </div>
             <div class="toggle-group">
               <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="movie">
