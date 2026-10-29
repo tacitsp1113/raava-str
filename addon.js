@@ -150,8 +150,21 @@ async function resolveStreams(type, id, rawConfig) {
 
     let finalStreams = [];
 
+    // MODO 0: SOLO RASPADORES (Omite SQLite al 100% para pruebas puras de CineCalidad y SeriesFlix)
+    if (config.mode === 'scrapers' || config.maxCloudStreams === 0) {
+      addLog('info', 'Scrapers', `Modo Solo Raspadores activo. Omitiendo SQLite y consultando páginas web...`);
+      const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
+      const settled = await Promise.allSettled(providerTasks);
+      const webStreams = [];
+      for (const res of settled) {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          webStreams.push(...res.value);
+        }
+      }
+      finalStreams = processAndFilterStreams(webStreams, config, isSeries);
+    }
     // MODO 1: SOLO NUBE (Exclusivamente biblioteca interna SQLite, cero peticiones web)
-    if (config.mode === 'cloud') {
+    else if (config.mode === 'cloud') {
       try {
         const cloudStreams = await getYandexStreams(media, season, episode, config);
         finalStreams = processAndFilterStreams(cloudStreams, config, isSeries);

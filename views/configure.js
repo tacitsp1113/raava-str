@@ -632,10 +632,11 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="section-block-desc">Define cómo interactúa el addon entre la biblioteca en la nube y las páginas web externas.</div>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
         <button type="button" class="btn-preset" data-preset="cloud" id="presetCloud">☁️ Solo Nube</button>
         <button type="button" class="btn-preset active-preset" data-preset="balanced" id="presetBalanced">⚡ Equilibrado</button>
         <button type="button" class="btn-preset" data-preset="full" id="presetFull">🚀 Completo</button>
+        <button type="button" class="btn-preset" data-preset="scrapers" id="presetScrapers">🌐 Solo Web</button>
       </div>
 
       <div class="mode-explanation" id="modeDescBox">
@@ -655,7 +656,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
           <span class="slider-title">Enlaces de la Nube</span>
           <span class="slider-value" id="cloudLabel">10 enlaces</span>
         </div>
-        <input type="range" id="cloudSlider" min="1" max="15" value="10">
+        <input type="range" id="cloudSlider" min="0" max="15" value="10">
         <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cantidad máxima de opciones de la nube directa que se mostrarán en Stremio.</p>
       </div>
     </div>
@@ -1050,7 +1051,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     const MODE_DESCRIPTIONS = {
       cloud: '☁️ <strong>Solo Nube:</strong> Consulta únicamente nuestra biblioteca interna. Cero esperas, enlaces directos en menos de 1 segundo y sin depender de páginas web externas.',
       balanced: '⚡ <strong>Equilibrado (Recomendado):</strong> Lo mejor de ambos mundos. Primero busca en nuestra biblioteca en la nube; si el título está disponible, te lo entrega de inmediato en &lt;1 seg. Si no lo encuentra, activa como respaldo los sitios web seleccionados abajo.',
-      full: '🚀 <strong>Catálogo Completo:</strong> Consulta nuestra biblioteca y las páginas web al mismo tiempo en paralelo, reuniendo la mayor cantidad posible de opciones.'
+      full: '🚀 <strong>Catálogo Completo:</strong> Consulta nuestra biblioteca y las páginas web al mismo tiempo en paralelo, reuniendo la mayor cantidad posible de opciones.',
+      scrapers: '🌐 <strong>Solo Páginas Web:</strong> Omite por completo la biblioteca en la nube y consulta exclusivamente a <strong>CineCalidad</strong> y <strong>SeriesFlix</strong>. Perfecto para probar raspadores en aislamiento.'
     };
 
     function updateProviderOrderFromDOM() {
@@ -1096,21 +1098,29 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       const isCloud = (state.mode === 'cloud');
       const isBalanced = (state.mode === 'balanced');
       const isFull = (state.mode === 'full');
+      const isScrapers = (state.mode === 'scrapers');
 
       // Botones de presets de modo
       document.getElementById('presetCloud').classList.toggle('active-preset', isCloud);
       document.getElementById('presetBalanced').classList.toggle('active-preset', isBalanced);
       document.getElementById('presetFull').classList.toggle('active-preset', isFull);
+      document.getElementById('presetScrapers').classList.toggle('active-preset', isScrapers);
 
       // Texto explicativo dinámico según modo
       document.getElementById('modeDescBox').innerHTML = MODE_DESCRIPTIONS[state.mode] || MODE_DESCRIPTIONS.balanced;
 
-      // Deshabilitar bloque web en modo Solo Nube
+      // Deshabilitar bloque web en modo Solo Nube o bloque nube en modo Solo Web
       const webBlock = document.getElementById('webSectionBlock');
+      const cloudBlock = document.getElementById('cloudSectionBlock');
       if (isCloud) {
         webBlock.classList.add('disabled-block');
       } else {
         webBlock.classList.remove('disabled-block');
+      }
+      if (isScrapers) {
+        cloudBlock.classList.add('disabled-block');
+      } else {
+        cloudBlock.classList.remove('disabled-block');
       }
 
       // Prioridad y fila de torrents según disableTorrents
@@ -1148,7 +1158,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       const cloudSlider = document.getElementById('cloudSlider');
       const cloudLabel = document.getElementById('cloudLabel');
       cloudSlider.value = state.maxCloudStreams;
-      cloudLabel.textContent = state.maxCloudStreams + ' enlaces';
+      cloudLabel.textContent = Number(state.maxCloudStreams) === 0 ? '0 (Desactivado)' : state.maxCloudStreams + ' enlaces';
 
       const webPerProvSlider = document.getElementById('webPerProvSlider');
       const webPerProvLabel = document.getElementById('webPerProvLabel');
