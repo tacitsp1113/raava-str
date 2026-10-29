@@ -51,22 +51,29 @@ function voeDecode(encoded, patternsRaw) {
   }
 }
 
+const { addLog } = require('../logger');
+
 /**
  * Resolves a VOE (voe.sx or mirrors) embed URL to direct m3u8 or mp4
  */
 async function resolveVoe(url) {
   try {
+    addLog('info', 'VOE', `Iniciando resolución VOE: ${url}`);
     const res = await axios.get(url, {
       headers: {
         'User-Agent': USER_AGENT,
-        'Referer': url
+        'Referer': url,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
       timeout: 6000,
       maxRedirects: 5
     });
 
     let html = res.data;
-    if (typeof html !== 'string') return null;
+    if (typeof html !== 'string') {
+      addLog('warn', 'VOE', `Respuesta no es HTML para ${url}`);
+      return null;
+    }
 
     let currentUrl = url;
 
@@ -105,6 +112,7 @@ async function resolveVoe(url) {
         const decodedJson = voeDecode(encodedData, patternsMatch[1]);
         if (decodedJson && (decodedJson.source || decodedJson.direct_access_url)) {
           const directUrl = decodedJson.source || decodedJson.direct_access_url;
+          addLog('success', 'VOE', `Decodificado con éxito: ${directUrl.slice(0, 60)}...`);
           return {
             url: directUrl,
             quality: '1080p',
@@ -123,6 +131,7 @@ async function resolveVoe(url) {
                         html.match(/file:\s*['"]([^'"]+\.m3u8[^'"]*)['"]/i);
     if (directMatch) {
       const directUrl = directMatch[1];
+      addLog('success', 'VOE', `Enlace directo encontrado en HTML: ${directUrl.slice(0, 60)}...`);
       return {
         url: directUrl,
         quality: '1080p',
@@ -134,8 +143,10 @@ async function resolveVoe(url) {
       };
     }
 
+    addLog('warn', 'VOE', `No se encontró patrón de video en HTML de ${url}`);
     return null;
   } catch (err) {
+    addLog('error', 'VOE', `Fallo al resolver ${url}: ${err.message} (status: ${err.response?.status || 'N/A'})`);
     return null;
   }
 }

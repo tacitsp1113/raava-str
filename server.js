@@ -127,6 +127,12 @@ app.get('/api/logs', (req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.json(getLogs());
 });
+app.get('/debug/test-voe', async (req, res) => {
+  const { resolveVoe } = require('./services/extractors/voe');
+  const testUrl = req.query.url || 'https://voe.sx/e/v8fb10gqo1f3';
+  const result = await resolveVoe(testUrl);
+  res.json({ testUrl, result, recentLogs: getLogs().slice(0, 8) });
+});
 
 
 
