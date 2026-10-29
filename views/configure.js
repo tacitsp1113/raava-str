@@ -617,8 +617,9 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   <div class="container">
     <div class="header">
       <img src="${baseUrl}/logo.png" alt="TACIT STR" class="logo-img">
-      <div>
+      <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
         <span class="badge-tag"><span class="dot"></span> EDICIÓN TACIT RONIN</span>
+        <a href="/logs" target="_blank" class="badge-tag" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399; text-decoration: none;">📡 MONITOR DE LOGS EN VIVO</a>
       </div>
       <h1>TACIT STR</h1>
       <p class="subtitle">Streaming híbrido en Español Latino para Stremio: Catálogo en Nube, Proveedores Web y Torrents P2P.</p>
@@ -1028,8 +1029,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     const initialServerConfig = ${JSON.stringify(initialConfig)};
 
-    const DEFAULT_MOVIES = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'hackstore_torrent'];
-    const DEFAULT_SERIES = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'hackstore_torrent', 'tioanime', 'lacartoons'];
+    const DEFAULT_MOVIES = ['cinecalidad'];
+    const DEFAULT_SERIES = ['seriesflix', 'cinecalidad'];
 
     const state = {
       mode: initialServerConfig?.mode || 'balanced',
@@ -1039,9 +1040,9 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       },
       qualities: initialServerConfig?.qualities || ['4k', '1080p', '720p', '480p'],
       priority: initialServerConfig?.priority || 'direct',
-      disableTorrents: Boolean(initialServerConfig?.disableTorrents),
+      disableTorrents: initialServerConfig?.disableTorrents !== undefined ? Boolean(initialServerConfig.disableTorrents) : true,
       maxCloudStreams: initialServerConfig?.maxCloudStreams || 10,
-      maxWebStreamsPerProvider: initialServerConfig?.maxWebStreamsPerProvider || 2,
+      maxWebStreamsPerProvider: initialServerConfig?.maxWebStreamsPerProvider || 3,
       maxTotalWebStreams: initialServerConfig?.maxTotalWebStreams || 6,
       minSeeders: 1
     };
@@ -1134,10 +1135,10 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         const type = card.dataset.type;
         const val = card.dataset.val;
 
-        if (type === 'quality') {
-          card.classList.toggle('active', state.qualities.includes(val));
-        } else if (type === 'priority') {
+        if (type === 'priority') {
           card.classList.toggle('active', state.priority === val);
+        } else if (type === 'quality') {
+          card.classList.toggle('active', state.qualities.includes(val));
         } else if (type === 'disableTorrents') {
           card.classList.toggle('active', Boolean(state.disableTorrents));
         }
@@ -1170,17 +1171,17 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       });
     });
 
-    // Presets rápidos de proveedores
+    // Presets rápidos de proveedores (enfocados en SeriesFlix y CineCalidad para pruebas)
     document.getElementById('btnPresetRecommended').addEventListener('click', () => {
-      state.providers.movie = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
-      state.providers.series = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
+      state.providers.movie = ['cinecalidad'];
+      state.providers.series = ['seriesflix', 'cinecalidad'];
       setActiveQuickPreset('btnPresetRecommended');
       applySavedOrderToDOM();
       syncUI();
     });
 
     document.getElementById('btnPresetMoviesOnly').addEventListener('click', () => {
-      state.providers.movie = ['cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct'];
+      state.providers.movie = ['cinecalidad'];
       state.providers.series = [];
       setActiveQuickPreset('btnPresetMoviesOnly');
       applySavedOrderToDOM();
@@ -1189,7 +1190,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     document.getElementById('btnPresetSeriesOnly').addEventListener('click', () => {
       state.providers.movie = [];
-      state.providers.series = ['seriesflix', 'cuevana', 'cinecalidad', 'lamovie', 'pelisplus', 'hackstore_direct', 'tioanime', 'lacartoons'];
+      state.providers.series = ['seriesflix', 'cinecalidad'];
       setActiveQuickPreset('btnPresetSeriesOnly');
       applySavedOrderToDOM();
       syncUI();

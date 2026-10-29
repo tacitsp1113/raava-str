@@ -9,35 +9,24 @@ const { getCuevanaStreams } = require('./services/providers/cuevana');
 const { getPelisplusStreams } = require('./services/providers/pelisplus');
 const { getHackstoreStreams } = require('./services/providers/hackstore');
 const { getTioanimeStreams } = require('./services/providers/tioanime');
+const { addLog } = require('./services/logger');
 
 const DEFAULT_CONFIG = {
   mode: 'balanced', // 'cloud' | 'balanced' | 'full'
   providers: {
     movie: [
-      'cuevana',
-      'cinecalidad',
-      'lamovie',
-      'pelisplus',
-      'hackstore_direct',
-      'hackstore_torrent'
+      'cinecalidad'
     ],
     series: [
       'seriesflix',
-      'cuevana',
-      'cinecalidad',
-      'lamovie',
-      'pelisplus',
-      'hackstore_direct',
-      'hackstore_torrent',
-      'tioanime',
-      'lacartoons'
+      'cinecalidad'
     ]
   },
   qualities: ['4k', '1080p', '720p', '480p'],
-  disableTorrents: false,
+  disableTorrents: true,
   priority: 'direct', // 'direct' | 'torrent'
   maxCloudStreams: 10,
-  maxWebStreamsPerProvider: 2, // Límite por sitio
+  maxWebStreamsPerProvider: 3, // Límite por sitio
   maxTotalWebStreams: 6,       // Límite total web combinado
   minSeeders: 1
 };
@@ -152,6 +141,8 @@ async function resolveStreams(type, id, rawConfig) {
       return { streams: [] };
     }
 
+    addLog('info', 'Stremio', `Petición: "${media.title}" (${isSeries ? 'T' + season + ' · E' + episode : 'Película'}) [ID: ${id}]`);
+
     const isAnime = Boolean(
       (media.genres && (media.genres.includes('Animación') || media.genres.includes('Animation'))) &&
       (media.country === 'JP' || media.originalLanguage === 'ja')
@@ -164,9 +155,9 @@ async function resolveStreams(type, id, rawConfig) {
       try {
         const cloudStreams = await getYandexStreams(media, season, episode, config);
         finalStreams = processAndFilterStreams(cloudStreams, config, isSeries);
-        console.log(`[TACIT Solo Nube] ${finalStreams.length} enlace(s) entregados desde SQLite.`);
+        addLog('info', 'TACIT Cloud', `Entregados ${finalStreams.length} stream(s) desde SQLite`);
       } catch (e) {
-        console.error('[TACIT Error Solo Nube]:', e.message);
+        addLog('error', 'TACIT Cloud', `Error: ${e.message}`);
       }
     }
     // MODO 2: EQUILIBRADO (Nube primero; si no existe, activa contingencia de páginas web)
@@ -180,10 +171,10 @@ async function resolveStreams(type, id, rawConfig) {
 
       const filteredCloud = processAndFilterStreams(cloudStreams, config, isSeries);
       if (filteredCloud.length > 0) {
-        console.log(`[TACIT Equilibrado] Encontrado en la nube (${filteredCloud.length} enlaces). Respondiendo al instante.`);
+        addLog('success', 'TACIT Cloud', `Encontrado en nube (${filteredCloud.length} enlaces). Respondiendo instantáneo.`);
         finalStreams = filteredCloud;
       } else {
-        console.log(`[TACIT Equilibrado] No encontrado en la nube. Activando páginas web de respaldo...`);
+        addLog('info', 'Scrapers', `No encontrado en nube. Activando CineCalidad y SeriesFlix...`);
         const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
         const settled = await Promise.allSettled(providerTasks);
         const webStreams = [];
@@ -197,7 +188,7 @@ async function resolveStreams(type, id, rawConfig) {
     }
     // MODO 3: CATÁLOGO COMPLETO (Nube y páginas web consultadas en paralelo a la par)
     else {
-      console.log(`[TACIT Catálogo Completo] Consultando nube y páginas web a la par...`);
+      addLog('info', 'Scrapers', `Consultando nube, CineCalidad y SeriesFlix en paralelo...`);
       const allTasks = [
         getYandexStreams(media, season, episode, config)
           .catch(e => { console.error('[TACIT Error Nube Full]:', e.message); return []; }),
@@ -213,14 +204,14 @@ async function resolveStreams(type, id, rawConfig) {
       finalStreams = processAndFilterStreams(combined, config, isSeries);
     }
 
-    console.log(`[TACIT] Returning ${finalStreams.length} stream(s) for "${media.title}"`);
+    addLog('success', 'TACIT', `Finalizado: entregando ${finalStreams.length} stream(s) para "${media.title}"`, finalStreams.map(f => ({ name: f.name, title: f.title?.split('\n')[0] })));
     const result = { streams: finalStreams };
     if (finalStreams.length > 0) {
       setCachedStreams(cacheKey, result);
     }
     return result;
   } catch (error) {
-    console.error(`[TACIT Error] Failed to handle stream for ${id}:`, error);
+    addLog('error', 'TACIT', `Error procesando stream para ${id}: ${error.message}`);
     return { streams: [] };
   }
 }
@@ -234,6 +225,7 @@ function taskWithTimeout(taskPromise, ms = 11000) {
 
 /**
  * Genera las tareas de consulta para proveedores web externos según el tipo de contenido
+ * [MODO AISLADO]: Únicamente SeriesFlix y CineCalidad activos. Los demás proveedores pausados temporalmente.
  */
 function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   const providerTasks = [];
@@ -241,106 +233,57 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
     ? (config.providers?.series || [])
     : (config.providers?.movie || []);
 
-  const allowTorrents = !config.disableTorrents;
-
-  // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / Vimeos sin bloqueo de IP)
+  // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / StreamWish)
   if (isSeries && activeProviders.includes('seriesflix')) {
     providerTasks.push(
       taskWithTimeout(
-        getSeriesFlixStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error SeriesFlix]:', e.message); return []; }),
+        (async () => {
+          const t0 = Date.now();
+          addLog('info', 'SeriesFlix', `Buscando serie "${media.title}" T${season}E${episode}...`);
+          const s = await getSeriesFlixStreams(media, season, episode, config);
+          const elapsed = Date.now() - t0;
+          if (s.length > 0) {
+            addLog('success', 'SeriesFlix', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey, audio: x.audio })));
+          } else {
+            addLog('warn', 'SeriesFlix', `Sin resultados en ${elapsed}ms`);
+          }
+          return s;
+        })().catch(e => {
+          addLog('error', 'SeriesFlix', `Error: ${e.message}`);
+          return [];
+        }),
         11000
       )
     );
   }
 
-  // 2. LaMovie — Películas y Series
-  if (activeProviders.includes('lamovie')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getLaMovieStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error LaMovie]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 3. Cuevana — Películas y Series
-  if (activeProviders.includes('cuevana')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getCuevanaStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Cuevana]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 4. CineCalidad — Principalmente Películas
+  // 2. CineCalidad — Películas y Series en 1080p (VOE / Vimeos)
   if (activeProviders.includes('cinecalidad')) {
     providerTasks.push(
       taskWithTimeout(
-        getCinecalidadStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Cinecalidad]:', e.message); return []; }),
+        (async () => {
+          const t0 = Date.now();
+          addLog('info', 'CineCalidad', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
+          const s = await getCinecalidadStreams(media, season, episode, config);
+          const elapsed = Date.now() - t0;
+          if (s.length > 0) {
+            addLog('success', 'CineCalidad', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
+          } else {
+            addLog('warn', 'CineCalidad', `Sin resultados en ${elapsed}ms`);
+          }
+          return s;
+        })().catch(e => {
+          addLog('error', 'CineCalidad', `Error: ${e.message}`);
+          return [];
+        }),
         11000
       )
     );
   }
 
-  // 5. PelisPlus HD — Películas y Series
-  if (activeProviders.includes('pelisplus')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getPelisplusStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Pelisplus]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 6. Hackstore Directo — Películas
-  if (activeProviders.includes('hackstore_direct')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getHackstoreStreams(media, season, episode, { ...config, wantDirect: true, wantTorrents: false })
-          .catch(e => { console.error('[TACIT Error Hackstore Direct]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 7. Hackstore Torrents — Películas y Series P2P
-  if (allowTorrents && activeProviders.includes('hackstore_torrent')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getHackstoreStreams(media, season, episode, { ...config, wantDirect: false, wantTorrents: true, allowTorrents: true })
-          .catch(e => { console.error('[TACIT Error Hackstore Torrent]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 8. TioAnime — Anime / Series
-  if (activeProviders.includes('tioanime') && (isAnime || isSeries)) {
-    providerTasks.push(
-      taskWithTimeout(
-        getTioanimeStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Tioanime]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
-
-  // 9. LACartoons — Series Animadas y Caricaturas Retro
-  if (isSeries && activeProviders.includes('lacartoons')) {
-    providerTasks.push(
-      taskWithTimeout(
-        getLACartoonsStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error LACartoons]:', e.message); return []; }),
-        11000
-      )
-    );
-  }
+  // --- PROVEEDORES PAUSADOS TEMPORALMENTE A PETICIÓN DEL USUARIO ---
+  // (LaMovie, Cuevana, PelisPlus, Hackstore Direct, Hackstore Torrents, TioAnime, LACartoons)
+  // Se mantienen desconectados para probar en aislamiento puro SeriesFlix y CineCalidad.
 
   return providerTasks;
 }

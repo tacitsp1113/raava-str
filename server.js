@@ -115,7 +115,18 @@ app.get('/:configuration/configure', handleConfigPage);
 
 // --- DIAGNÓSTICO Y ESTADO DE PROVEEDORES ---
 const { handleStatusPage } = require('./services/health');
+const { renderLogsHtml, getLogs } = require('./services/logger');
 app.get('/status', handleStatusPage);
+
+// --- MONITOR DE LOGS EN VIVO ---
+app.get('/logs', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(renderLogsHtml());
+});
+app.get('/api/logs', (req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.json(getLogs());
+});
 
 
 
