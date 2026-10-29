@@ -242,12 +242,9 @@ function taskWithTimeout(taskPromise, ms = 11000) {
  */
 function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   const providerTasks = [];
-  const activeProviders = isSeries
-    ? (config.providers?.series || [])
-    : (config.providers?.movie || []);
 
   // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / StreamWish)
-  if (isSeries && activeProviders.includes('seriesflix')) {
+  if (isSeries) {
     providerTasks.push(
       taskWithTimeout(
         (async () => {
@@ -271,28 +268,26 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
   }
 
   // 2. CineCalidad — Películas y Series en 1080p (VOE / Vimeos)
-  if (activeProviders.includes('cinecalidad')) {
-    providerTasks.push(
-      taskWithTimeout(
-        (async () => {
-          const t0 = Date.now();
-          addLog('info', 'CineCalidad', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
-          const s = await getCinecalidadStreams(media, season, episode, config);
-          const elapsed = Date.now() - t0;
-          if (s.length > 0) {
-            addLog('success', 'CineCalidad', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
-          } else {
-            addLog('warn', 'CineCalidad', `Sin resultados en ${elapsed}ms`);
-          }
-          return s;
-        })().catch(e => {
-          addLog('error', 'CineCalidad', `Error: ${e.message}`);
-          return [];
-        }),
-        11000
-      )
-    );
-  }
+  providerTasks.push(
+    taskWithTimeout(
+      (async () => {
+        const t0 = Date.now();
+        addLog('info', 'CineCalidad', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
+        const s = await getCinecalidadStreams(media, season, episode, config);
+        const elapsed = Date.now() - t0;
+        if (s.length > 0) {
+          addLog('success', 'CineCalidad', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
+        } else {
+          addLog('warn', 'CineCalidad', `Sin resultados en ${elapsed}ms`);
+        }
+        return s;
+      })().catch(e => {
+        addLog('error', 'CineCalidad', `Error: ${e.message}`);
+        return [];
+      }),
+      11000
+    )
+  );
 
   // --- PROVEEDORES PAUSADOS TEMPORALMENTE A PETICIÓN DEL USUARIO ---
   // (LaMovie, Cuevana, PelisPlus, Hackstore Direct, Hackstore Torrents, TioAnime, LACartoons)
