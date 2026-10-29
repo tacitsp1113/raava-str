@@ -12,19 +12,10 @@ const { getTioanimeStreams } = require('./services/providers/tioanime');
 const { addLog } = require('./services/logger');
 
 const DEFAULT_CONFIG = {
-  mode: 'balanced', // 'cloud' | 'balanced' | 'full'
+  mode: 'cloud', // Exclusivo SQLite
   providers: {
-    movie: [
-      'cinecalidad',
-      'cuevana',
-      'pelisplus'
-    ],
-    series: [
-      'seriesflix',
-      'cinecalidad',
-      'cuevana',
-      'pelisplus'
-    ]
+    movie: [],
+    series: []
   },
   qualities: ['4k', '1080p', '720p', '480p'],
   disableTorrents: true,
@@ -154,71 +145,19 @@ async function resolveStreams(type, id, rawConfig) {
 
     let finalStreams = [];
 
-    // MODO 0: SOLO RASPADORES (Omite SQLite al 100% para pruebas puras de CineCalidad y SeriesFlix)
-    if (config.mode === 'scrapers' || config.maxCloudStreams === 0) {
-      addLog('info', 'Scrapers', `Modo Solo Raspadores activo. Omitiendo SQLite y consultando páginas web...`);
-      const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
-      const settled = await Promise.allSettled(providerTasks);
-      const webStreams = [];
-      for (const res of settled) {
-        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-          webStreams.push(...res.value);
-        }
-      }
-      finalStreams = processAndFilterStreams(webStreams, config, isSeries);
-    }
-    // MODO 1: SOLO NUBE (Exclusivamente biblioteca interna SQLite, cero peticiones web)
-    else if (config.mode === 'cloud') {
-      try {
-        const cloudStreams = await getYandexStreams(media, season, episode, config);
-        finalStreams = processAndFilterStreams(cloudStreams, config, isSeries);
-        addLog('info', 'TACIT Cloud', `Entregados ${finalStreams.length} stream(s) desde SQLite`);
-      } catch (e) {
-        addLog('error', 'TACIT Cloud', `Error: ${e.message}`);
-      }
-    }
-    // MODO 2: EQUILIBRADO (Nube primero; si no existe, activa contingencia de páginas web)
-    else if (config.mode === 'balanced') {
-      let cloudStreams = [];
-      try {
-        cloudStreams = await getYandexStreams(media, season, episode, config);
-      } catch (e) {
-        console.error('[TACIT Error Nube Equilibrado]:', e.message);
-      }
-
-      const filteredCloud = processAndFilterStreams(cloudStreams, config, isSeries);
-      if (filteredCloud.length > 0) {
-        addLog('success', 'TACIT Cloud', `Encontrado en nube (${filteredCloud.length} enlaces). Respondiendo instantáneo.`);
-        finalStreams = filteredCloud;
+    // --- MODO EXCLUSIVO: BIBLIOTECA NUBE DIRECTA (SQLITE) ---
+    // Raspadores web desactivados temporalmente a petición del usuario.
+    try {
+      addLog('info', 'TACIT Cloud', `Buscando en biblioteca SQLite para "${media.title}"...`);
+      const cloudStreams = await getYandexStreams(media, season, episode, config);
+      finalStreams = processAndFilterStreams(cloudStreams, config, isSeries);
+      if (finalStreams.length > 0) {
+        addLog('success', 'TACIT Cloud', `Entregados ${finalStreams.length} stream(s) directos desde SQLite`);
       } else {
-        addLog('info', 'Scrapers', `No encontrado en nube. Activando CineCalidad y SeriesFlix...`);
-        const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
-        const settled = await Promise.allSettled(providerTasks);
-        const webStreams = [];
-        for (const res of settled) {
-          if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-            webStreams.push(...res.value);
-          }
-        }
-        finalStreams = processAndFilterStreams(webStreams, config, isSeries);
+        addLog('warn', 'TACIT Cloud', `No disponible en biblioteca SQLite`);
       }
-    }
-    // MODO 3: CATÁLOGO COMPLETO (Nube y páginas web consultadas en paralelo a la par)
-    else {
-      addLog('info', 'Scrapers', `Consultando nube, CineCalidad y SeriesFlix en paralelo...`);
-      const allTasks = [
-        getYandexStreams(media, season, episode, config)
-          .catch(e => { console.error('[TACIT Error Nube Full]:', e.message); return []; }),
-        ...buildWebTasks(media, season, episode, isSeries, isAnime, config)
-      ];
-      const settled = await Promise.allSettled(allTasks);
-      const combined = [];
-      for (const res of settled) {
-        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-          combined.push(...res.value);
-        }
-      }
-      finalStreams = processAndFilterStreams(combined, config, isSeries);
+    } catch (e) {
+      addLog('error', 'TACIT Cloud', `Error consultando SQLite: ${e.message}`);
     }
 
     addLog('success', 'TACIT', `Finalizado: entregando ${finalStreams.length} stream(s) para "${media.title}"`, finalStreams.map(f => ({ name: f.name, title: f.title?.split('\n')[0] })));
@@ -241,106 +180,12 @@ function taskWithTimeout(taskPromise, ms = 11000) {
 }
 
 /**
- * Genera las tareas de consulta para proveedores web externos según el tipo de contenido
- * [MODO AISLADO]: Únicamente SeriesFlix y CineCalidad activos. Los demás proveedores pausados temporalmente.
+ * Genera las tareas de consulta para proveedores web externos
+ * [DESACTIVADOS TEMPORALMENTE]: Modo 100% SQLite activo a petición del usuario.
  */
 function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
-  const providerTasks = [];
-
-  // 1. SeriesFlix — Especialista en Series de TV en Audio Latino (VOE / StreamWish)
-  if (isSeries) {
-    providerTasks.push(
-      taskWithTimeout(
-        (async () => {
-          const t0 = Date.now();
-          addLog('info', 'SeriesFlix', `Buscando serie "${media.title}" T${season}E${episode}...`);
-          const s = await getSeriesFlixStreams(media, season, episode, config);
-          const elapsed = Date.now() - t0;
-          if (s.length > 0) {
-            addLog('success', 'SeriesFlix', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey, audio: x.audio })));
-          } else {
-            addLog('warn', 'SeriesFlix', `Sin resultados en ${elapsed}ms`);
-          }
-          return s;
-        })().catch(e => {
-          addLog('error', 'SeriesFlix', `Error: ${e.message}`);
-          return [];
-        }),
-        11000
-      )
-    );
-  }
-
-  // 2. CineCalidad — Películas y Series en 1080p (VOE / Vimeos)
-  providerTasks.push(
-    taskWithTimeout(
-      (async () => {
-        const t0 = Date.now();
-        addLog('info', 'CineCalidad', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
-        const s = await getCinecalidadStreams(media, season, episode, config);
-        const elapsed = Date.now() - t0;
-        if (s.length > 0) {
-          addLog('success', 'CineCalidad', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
-        } else {
-          addLog('warn', 'CineCalidad', `Sin resultados en ${elapsed}ms`);
-        }
-        return s;
-      })().catch(e => {
-        addLog('error', 'CineCalidad', `Error: ${e.message}`);
-        return [];
-      }),
-      11000
-    )
-  );
-
-  // 3. Cuevana — Respaldo general para Series y Películas (Vimeos / FileLions / StreamWish)
-  providerTasks.push(
-    taskWithTimeout(
-      (async () => {
-        const t0 = Date.now();
-        addLog('info', 'Cuevana', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
-        const s = await getCuevanaStreams(media, season, episode, config);
-        const elapsed = Date.now() - t0;
-        if (s.length > 0) {
-          addLog('success', 'Cuevana', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
-        } else {
-          addLog('warn', 'Cuevana', `Sin resultados en ${elapsed}ms`);
-        }
-        return s;
-      })().catch(e => {
-        addLog('error', 'Cuevana', `Error: ${e.message}`);
-        return [];
-      }),
-      11000
-    )
-  );
-
-  // 4. PelisPlus — Respaldo para Series y Películas (StreamWish / Vidhide / Directo)
-  providerTasks.push(
-    taskWithTimeout(
-      (async () => {
-        const t0 = Date.now();
-        addLog('info', 'PelisPlus', `Buscando "${media.title}" ${isSeries ? `(T${season}E${episode})` : ''}...`);
-        const s = await getPelisplusStreams(media, season, episode, config);
-        const elapsed = Date.now() - t0;
-        if (s.length > 0) {
-          addLog('success', 'PelisPlus', `Encontrados ${s.length} streams en ${elapsed}ms`, s.map(x => ({ server: x.server, quality: x.qualityKey })));
-        } else {
-          addLog('warn', 'PelisPlus', `Sin resultados en ${elapsed}ms`);
-        }
-        return s;
-      })().catch(e => {
-        addLog('error', 'PelisPlus', `Error: ${e.message}`);
-        return [];
-      }),
-      11000
-    )
-  );
-
-  // --- PROVEEDORES PAUSADOS TEMPORALMENTE ---
-  // (LaMovie, Hackstore Direct, Hackstore Torrents, TioAnime, LACartoons)
-
-  return providerTasks;
+  // Raspadores web desactivados temporalmente.
+  return [];
 }
 
 /**

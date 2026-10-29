@@ -1034,7 +1034,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     const DEFAULT_SERIES = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
 
     const state = {
-      mode: initialServerConfig?.mode || 'balanced',
+      mode: initialServerConfig?.mode || 'cloud',
       providers: {
         movie: Array.isArray(initialServerConfig?.providers?.movie) ? initialServerConfig.providers.movie : [...DEFAULT_MOVIES],
         series: Array.isArray(initialServerConfig?.providers?.series) ? initialServerConfig.providers.series : [...DEFAULT_SERIES]
