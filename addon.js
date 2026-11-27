@@ -11,6 +11,17 @@ const { getHackstoreStreams } = require('./services/providers/hackstore');
 const { getTioanimeStreams } = require('./services/providers/tioanime');
 const { addLog } = require('./services/logger');
 
+const DEFAULT_ACTIVE_8 = [
+  'pelispanda',
+  'cinecalidad',
+  'cuevana',
+  'seriesflix',
+  'hackstore',
+  'uhdmovies',
+  'tioanime',
+  'doramasflix'
+];
+
 const TOP_PROVIDERS = [
   'pelispanda',
   'cinecalidad',
@@ -26,11 +37,13 @@ const TOP_PROVIDERS = [
   'lacartoons'
 ];
 
+const MAX_ACTIVE_PROVIDERS = 8;
+
 const DEFAULT_CONFIG = {
   mode: 'scrapers',
   providers: {
-    movie: [...TOP_PROVIDERS],
-    series: [...TOP_PROVIDERS]
+    movie: [...DEFAULT_ACTIVE_8],
+    series: [...DEFAULT_ACTIVE_8]
   },
   qualities: ['4k', '1080p', '720p'],
   disableTorrents: false,
@@ -50,6 +63,21 @@ function setCachedStreams(key, data) {
   // Desactivado intencionalmente para garantizar enlaces frescos en cada reproducción
 }
 
+function capProvidersList(list) {
+  if (!Array.isArray(list)) return [...DEFAULT_ACTIVE_8];
+  if (list.length <= MAX_ACTIVE_PROVIDERS) return [...list];
+
+  // Si la petición trae más de 8 (por ejemplo URLs viejas con 24 o 53), priorizar fuentes TOP y recortar estrictamente a 8
+  const sorted = [...list].sort((a, b) => {
+    const aRank = TOP_PROVIDERS.indexOf(a);
+    const bRank = TOP_PROVIDERS.indexOf(b);
+    const aVal = aRank === -1 ? 999 : aRank;
+    const bVal = bRank === -1 ? 999 : bRank;
+    return aVal - bVal;
+  });
+  return sorted.slice(0, MAX_ACTIVE_PROVIDERS);
+}
+
 function parseConfig(raw) {
   let fallback = DEFAULT_CONFIG;
   if (!raw || typeof raw !== 'string' || raw === 'manifest.json') return fallback;
@@ -64,19 +92,20 @@ function parseConfig(raw) {
     const cfg = { ...DEFAULT_CONFIG, ...parsed };
 
     if (Array.isArray(cfg.providers)) {
+      const capped = capProvidersList(cfg.providers);
       cfg.providers = {
-        movie: [...cfg.providers],
-        series: [...cfg.providers]
+        movie: [...capped],
+        series: [...capped]
       };
     } else if (!cfg.providers || typeof cfg.providers !== 'object') {
       cfg.providers = {
-        movie: [...DEFAULT_CONFIG.providers.movie],
-        series: [...DEFAULT_CONFIG.providers.series]
+        movie: [...DEFAULT_ACTIVE_8],
+        series: [...DEFAULT_ACTIVE_8]
       };
     } else {
       cfg.providers = {
-        movie: Array.isArray(cfg.providers.movie) ? cfg.providers.movie : [...DEFAULT_CONFIG.providers.movie],
-        series: Array.isArray(cfg.providers.series) ? cfg.providers.series : [...DEFAULT_CONFIG.providers.series]
+        movie: capProvidersList(cfg.providers.movie),
+        series: capProvidersList(cfg.providers.series)
       };
     }
 

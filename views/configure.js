@@ -132,7 +132,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   <aside id="menu">
     <div class="marca"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
     <button class="item activo" data-vista="inicio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path></svg></span>Inicio</button>
-    <button class="item" data-vista="fuentes"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>Sitios<span class="num" id="num-fuentes">12/53</span></button>
+    <button class="item" data-vista="fuentes"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>Sitios<span class="num" id="num-fuentes">8/8</span></button>
     <button class="item" data-vista="calidad"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15V9l3 3 3-3v6M17 9v6"></path></svg></span>Calidad<span class="num" id="num-calidad">3</span></button>
     <div class="seccion-menu">Herramientas</div>
     <button class="item" data-vista="nuvio"><span class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"></rect><path d="M11 18h2"></path></svg></span>Plugin de Nuvio</button>
@@ -163,7 +163,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
           </div>
         </div>
         <div class="chips">
-          <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">12 de 53 (⭐ TOP)</b> sitios activos</span>
+          <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">8 de 8 fuentes (⭐ Recomendadas)</b></span>
           <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080P · 720P</b></span>
           <span class="chip" data-ir="calidad"><i></i><b id="chip-torrents">🧲 Torrents Activos</b></span>
           <span class="chip" data-ir="calidad"><i></i><span id="chip-muertos">Links muertos ocultos</span></span>
@@ -176,11 +176,12 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
       <!-- VISTA FUENTES / SITIOS -->
       <section class="vista" id="v-fuentes">
-        <div class="encabezado"><h1>Sitios</h1><p>Elige en qué páginas busca tu addon. Entre más sitios activos, más enlaces tendrás disponibles.</p></div>
-        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b> o <b>TACIT STR 🧲</b>, con audio Latino preferente y sin bloqueos de IP. Las fuentes con insignia <b>⭐ TOP</b> son las más estables, de mejor calidad y resolución rápida.</div></div>
-        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
-          <button class="btn btn-claro" id="btn-solo-top" style="font-size:13px;padding:8px 14px;">⭐ Activar solo fuentes TOP recomendadas</button>
-          <button class="btn btn-claro" id="btn-activar-todas" style="font-size:13px;padding:8px 14px;">Activar todas</button>
+        <div class="encabezado"><h1>Sitios</h1><p>Selecciona hasta 8 fuentes activas. Mantener un máximo de 8 fuentes garantiza respuestas veloces en menos de 4 segundos sin saturación.</p></div>
+        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b> o <b>TACIT STR 🧲</b>, con audio Latino preferente y sin bloqueos de IP. Las fuentes con insignia <b>⭐ TOP</b> son las más estables y rápidas.</div></div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-claro" id="btn-solo-top" style="font-size:13px;padding:8px 14px;">⭐ Activar 8 fuentes recomendadas</button>
+          <button class="btn btn-claro" id="btn-desactivar-todas" style="font-size:13px;padding:8px 14px;">Desactivar todas</button>
+          <span style="font-size:13px;color:var(--suave);margin-left:auto;" id="lbl-cupo">Cupo: <b>8 de 8</b></span>
         </div>
         <div id="lista-fuentes"></div>
       </section>
@@ -325,10 +326,21 @@ const CALIDADES = [
 const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>';
 const BASE_URL = ${JSON.stringify(baseUrl)} || location.origin;
 
-const TOP_IDS = PROVEEDORES_LISTA.filter(p => p.top).map(p => p.id);
+const DEFAULT_ACTIVE_8 = [
+  'pelispanda',
+  'cinecalidad',
+  'cuevana',
+  'seriesflix',
+  'hackstore',
+  'uhdmovies',
+  'tioanime',
+  'doramasflix'
+];
+
+const MAX_FUENTES = 8;
 
 const DEFAULT_CONFIG = {
-  proveedores: [...TOP_IDS],
+  proveedores: [...DEFAULT_ACTIVE_8],
   calidades: ['4k', '1080p', '720p'],
   disableTorrents: false,
   filtrarMuertos: true
@@ -358,12 +370,17 @@ function toast(t) {
   toast.t = setTimeout(() => el.classList.remove('ver'), 2000);
 }
 
-const activos = () => (Array.isArray(config.proveedores) ? config.proveedores : TOP_IDS);
+const activos = () => {
+  if (Array.isArray(config.proveedores)) {
+    return config.proveedores.slice(0, MAX_FUENTES);
+  }
+  return [...DEFAULT_ACTIVE_8];
+};
 
 function generarUrlManifest() {
   const currentProvs = activos();
-  const isDefaultProvs = currentProvs.length === TOP_IDS.length &&
-    TOP_IDS.every(id => currentProvs.includes(id));
+  const isDefaultProvs = currentProvs.length === DEFAULT_ACTIVE_8.length &&
+    DEFAULT_ACTIVE_8.every(id => currentProvs.includes(id));
 
   const isDefault = isDefaultProvs &&
     config.calidades.length === 3 &&
@@ -390,12 +407,14 @@ function generarUrlManifest() {
 function pintarResumen() {
   const current = activos();
   const n = current.length;
-  const total = PROVEEDORES_LISTA.length;
-  const esTop = n === TOP_IDS.length && TOP_IDS.every(id => current.includes(id));
+  const esDefault = n === DEFAULT_ACTIVE_8.length && DEFAULT_ACTIVE_8.every(id => current.includes(id));
 
-  $('num-fuentes').textContent = n + '/' + total;
+  $('num-fuentes').textContent = n + '/' + MAX_FUENTES;
   $('num-calidad').textContent = config.calidades.length;
-  $('chip-sitios').textContent = n + ' de ' + total + (esTop ? ' (⭐ TOP)' : '');
+  $('chip-sitios').textContent = n + ' de ' + MAX_FUENTES + ' fuentes' + (esDefault ? ' (⭐ Recomendadas)' : '');
+  if ($('lbl-cupo')) {
+    $('lbl-cupo').innerHTML = 'Cupo: <b>' + n + ' de ' + MAX_FUENTES + '</b>' + (n >= MAX_FUENTES ? ' <span style="color:#38bdf8;">(Lleno)</span>' : '');
+  }
   $('chip-calidades').textContent = config.calidades.map(c => c.toUpperCase()).join(' · ') || 'Sin calidades';
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
   $('chip-torrents').textContent = config.disableTorrents ? '🚫 Solo Streaming Directo' : '🧲 Torrents Activos';
@@ -425,7 +444,7 @@ function pintarFuentes() {
 
     return '<div class="tarjeta grupo-prov">' +
       '<header><h3>' + nombre + torrentNotice + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
-      '<div class="botones-grupo"><button class="pastilla" data-todos="' + g + '">Todos</button><button class="pastilla" data-top="' + g + '">⭐ TOP</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
+      '<div class="botones-grupo"><button class="pastilla" data-top="' + g + '">⭐ TOP</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
       '<div class="opciones">' +
       lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + (p.top ? '<span class="badge-top">⭐ TOP</span>' : '') + '</div>').join('') +
       '</div></div>';
@@ -434,7 +453,15 @@ function pintarFuentes() {
 
 function cambiarProveedores(ids, encender) {
   const act = new Set(activos());
-  ids.forEach(id => encender ? act.add(id) : act.delete(id));
+  if (encender) {
+    const toAdd = ids.filter(id => !act.has(id));
+    if (act.size + toAdd.length > MAX_FUENTES) {
+      return toast('Máximo ' + MAX_FUENTES + ' fuentes activas. Desactiva una primero.');
+    }
+    toAdd.forEach(id => act.add(id));
+  } else {
+    ids.forEach(id => act.delete(id));
+  }
   config.proveedores = [...act];
   pintarFuentes();
   guardar();
@@ -445,19 +472,21 @@ $('lista-fuentes').addEventListener('click', (e) => {
   if (op) {
     return cambiarProveedores([op.dataset.prov], !op.classList.contains('on'));
   }
-  const todos = e.target.dataset.todos;
   const top = e.target.dataset.top;
   const ninguno = e.target.dataset.ninguno;
-  if (todos) {
-    cambiarProveedores(PROVEEDORES_LISTA.filter(p => p.grupo === todos).map(p => p.id), true);
-  } else if (top) {
-    const grupoProvs = PROVEEDORES_LISTA.filter(p => p.grupo === top);
-    const topIds = new Set(grupoProvs.filter(p => p.top).map(p => p.id));
+  if (top) {
+    const grupoProvs = PROVEEDORES_LISTA.filter(p => p.grupo === top && p.top);
     const act = new Set(activos());
+    let agregados = 0;
     grupoProvs.forEach(p => {
-      if (topIds.has(p.id)) act.add(p.id);
-      else act.delete(p.id);
+      if (!act.has(p.id) && act.size < MAX_FUENTES) {
+        act.add(p.id);
+        agregados++;
+      }
     });
+    if (grupoProvs.length > agregados && act.size >= MAX_FUENTES) {
+      toast('Cupo máximo de ' + MAX_FUENTES + ' fuentes alcanzado.');
+    }
     config.proveedores = [...act];
     pintarFuentes();
     guardar();
@@ -469,20 +498,20 @@ $('lista-fuentes').addEventListener('click', (e) => {
 const btnSoloTop = $('btn-solo-top');
 if (btnSoloTop) {
   btnSoloTop.addEventListener('click', () => {
-    config.proveedores = [...TOP_IDS];
+    config.proveedores = [...DEFAULT_ACTIVE_8];
     pintarFuentes();
     guardar();
-    toast('Activadas únicamente fuentes ⭐ TOP (' + TOP_IDS.length + ')');
+    toast('Activadas las 8 fuentes recomendadas');
   });
 }
 
-const btnActivarTodas = $('btn-activar-todas');
-if (btnActivarTodas) {
-  btnActivarTodas.addEventListener('click', () => {
-    config.proveedores = PROVEEDORES_LISTA.map(p => p.id);
+const btnDesactivarTodas = $('btn-desactivar-todas');
+if (btnDesactivarTodas) {
+  btnDesactivarTodas.addEventListener('click', () => {
+    config.proveedores = [];
     pintarFuentes();
     guardar();
-    toast('Activadas todas las fuentes (' + PROVEEDORES_LISTA.length + ')');
+    toast('Desactivadas todas las fuentes');
   });
 }
 
