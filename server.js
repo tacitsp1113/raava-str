@@ -3,13 +3,26 @@ const path = require('path');
 const { getRouter } = require('stremio-addon-sdk');
 const { addonInterface, manifest, resolveStreams, parseConfig, DEFAULT_CONFIG } = require('./addon');
 const { renderConfigPage } = require('./views/configure');
+const { saveStoredConfig, getConfig } = require('./services/config_store');
 
 const app = express();
 const PORT = process.env.PORT || 7000;
 
+app.use(express.json());
+
 // Logo estático
 app.get('/logo.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'logo.png'));
+});
+
+// API de sincronización en vivo (para actualizar configuración sin reinstalar)
+app.post('/api/config', (req, res) => {
+  const ok = saveStoredConfig(req.body);
+  res.json({ ok, config: getConfig() });
+});
+
+app.get('/api/config', (req, res) => {
+  res.json(getConfig());
 });
 
 // --- ENDPOINTS CONFIGURABLES DE STREMIO ---

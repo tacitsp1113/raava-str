@@ -41,33 +41,32 @@ const DEFAULT_CONFIG = {
   minSeeders: 1
 };
 
-// In-memory cache for resolved streams (TTL: 30 minutes)
-const streamCache = new Map();
-const CACHE_TTL_MS = 30 * 60 * 1000;
-
+// Enlaces 100% en vivo: sin caché de streams para evitar tokens HLS caducados
 function getCachedStreams(key) {
-  const item = streamCache.get(key);
-  if (!item) return null;
-  if (Date.now() > item.expiresAt) {
-    streamCache.delete(key);
-    return null;
-  }
-  return item.data;
+  return null;
 }
 
 function setCachedStreams(key, data) {
-  if (streamCache.size > 500) {
-    const oldestKey = streamCache.keys().next().value;
-    streamCache.delete(oldestKey);
-  }
-  streamCache.set(key, {
-    data,
-    expiresAt: Date.now() + CACHE_TTL_MS
-  });
+  // Desactivado intencionalmente para garantizar enlaces frescos en cada reproducción
 }
 
 function parseConfig(raw) {
-  if (!raw || typeof raw !== 'string') return DEFAULT_CONFIG;
+  let fallback = DEFAULT_CONFIG;
+  try {
+    const { getConfig } = require('./services/config_store');
+    const stored = getConfig();
+    if (stored) {
+      fallback = {
+        ...DEFAULT_CONFIG,
+        ...stored,
+        providers: stored.proveedores ? { movie: stored.proveedores, series: stored.proveedores } : DEFAULT_CONFIG.providers,
+        qualities: stored.calidades || DEFAULT_CONFIG.qualities,
+        disableTorrents: stored.disableTorrents !== undefined ? stored.disableTorrents : DEFAULT_CONFIG.disableTorrents
+      };
+    }
+  } catch(_) {}
+
+  if (!raw || typeof raw !== 'string' || raw === 'manifest.json') return fallback;
   try {
     let parsed;
     try {

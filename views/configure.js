@@ -366,12 +366,26 @@ function pintarResumen() {
   $('instalar-web').href = 'https://web.stremio.com/#/addons?addon=' + encodeURIComponent(manifestUrl);
 }
 
+let saveTimer;
 function guardar() {
   pintarResumen();
   try {
     localStorage.setItem('tacit_config', JSON.stringify(config));
   } catch(_) {}
-  toast('Cambios guardados ✓');
+
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      toast('Sincronizado con tus dispositivos ✓');
+    } catch(_) {
+      toast('Cambios guardados ✓');
+    }
+  }, 350);
 }
 
 function pintarFuentes() {
@@ -489,6 +503,19 @@ pintarFuentes();
 pintarCalidades();
 pintarResumen();
 mostrarVista(location.hash.slice(1) || 'inicio');
+
+// Sincronizar configuración remota desde el servidor
+fetch('/api/config')
+  .then(r => r.json())
+  .then(serverCfg => {
+    if (serverCfg && typeof serverCfg === 'object') {
+      config = { ...config, ...serverCfg };
+      pintarFuentes();
+      pintarCalidades();
+      pintarResumen();
+    }
+  })
+  .catch(() => {});
 </script>
 </body>
 </html>`;
