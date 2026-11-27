@@ -63,7 +63,7 @@ function parseConfig(raw) {
           disableTorrents: u.config.disableTorrents !== undefined ? u.config.disableTorrents : false
         };
       }
-    } catch(_) {}
+    } catch (_) { }
   }
 
   let fallback = DEFAULT_CONFIG;

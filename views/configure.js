@@ -203,6 +203,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="chips">
           <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">53 de 53</b> sitios activos</span>
           <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080p · 720p</b></span>
+          <span class="chip" data-ir="calidad"><i></i><b id="chip-torrents">🧲 Torrents Activos</b></span>
           <span class="chip" data-ir="calidad"><i></i><span id="chip-muertos">Links muertos ocultos</span></span>
         </div>
         <div class="rejilla2">
@@ -223,16 +224,22 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="encabezado"><h1>Calidad</h1><p>Solo te saldrán las calidades que tengas marcadas aquí.</p></div>
         <div class="tarjeta"><div class="opciones" id="lista-calidades"></div></div>
         <div class="tarjeta">
+          <h3>🧲 Enlaces Torrents (P2P 4K / 1080p)</h3>
+          <p style="margin-bottom:14px">Permite buscar y reproducir enlaces torrent para máxima fidelidad 4K/1080p.</p>
+          <div class="opciones">
+            <div class="opcion grande on" id="op-torrents">
+              <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
+              <div><b id="txt-torrents-title">Torrents Habilitados 🧲</b><small id="txt-torrents-desc">Incluye torrents 4K/1080p con seeders + streaming directo</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="tarjeta">
           <h3>Filtro de compatibilidad</h3>
           <p style="margin-bottom:14px">Descarta servidores problemáticos para evitar pantallas negras en Smart TV.</p>
           <div class="opciones">
             <div class="opcion grande on" id="op-muertos">
               <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
               <div><b>Ocultar links muertos y servidores con bloqueo de IP</b><small>Recomendado (Vimeos y VOE)</small></div>
-            </div>
-            <div class="opcion grande" id="op-torrents">
-              <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
-              <div><b>Desactivar Torrents</b><small>Solo streaming directo HTTPS</small></div>
             </div>
           </div>
         </div>
@@ -383,6 +390,7 @@ function pintarResumen() {
   $('chip-sitios').textContent = n + ' de ' + PROVEEDORES_LISTA.length;
   $('chip-calidades').textContent = config.calidades.join(' · ') || 'Sin calidades';
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
+  $('chip-torrents').textContent = config.disableTorrents ? '🚫 Solo Streaming Directo' : '🧲 Torrents Activos';
 
   if (currentUser) {
     $('saludo-nombre').textContent = currentUser.username;
@@ -461,7 +469,12 @@ function pintarCalidades() {
   }).join('');
 
   $('op-muertos').classList.toggle('on', config.filtrarMuertos);
-  $('op-torrents').classList.toggle('on', config.disableTorrents);
+  const torrentsActivos = !config.disableTorrents;
+  $('op-torrents').classList.toggle('on', torrentsActivos);
+  if ($('txt-torrents-title')) {
+    $('txt-torrents-title').textContent = torrentsActivos ? 'Torrents Habilitados 🧲' : 'Torrents Desactivados 🚫';
+    $('txt-torrents-desc').textContent = torrentsActivos ? 'Incluye torrents 4K/1080p con seeders + streaming directo' : 'Solo streaming directo HTTPS (sin descargas P2P)';
+  }
 }
 
 $('lista-calidades').addEventListener('click', (e) => {

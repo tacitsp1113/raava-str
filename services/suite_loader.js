@@ -84,30 +84,42 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 
         const mapped = [];
         for (const s of rawStreams) {
-          if (!s || !s.url) continue;
+          if (!s || (!s.url && !s.infoHash)) continue;
 
-          // Descartar servidores con amarre de IP problemáticos
-          const urlLower = s.url.toLowerCase();
-          const nameLower = (s.name || '').toLowerCase();
-          if (urlLower.includes('vidhide') || nameLower.includes('vidhide') ||
-              urlLower.includes('streamwish') || nameLower.includes('streamwish') ||
-              urlLower.includes('doodstream') || nameLower.includes('doodstream')) {
-            continue;
+          const isTorrent = Boolean(s.infoHash || (s.url && s.url.startsWith('magnet:')));
+
+          // Descartar servidores con amarre de IP problemáticos en streaming directo
+          if (!isTorrent && s.url) {
+            const urlLower = s.url.toLowerCase();
+            const nameLower = (s.name || '').toLowerCase();
+            if (urlLower.includes('vidhide') || nameLower.includes('vidhide') ||
+                urlLower.includes('streamwish') || nameLower.includes('streamwish') ||
+                urlLower.includes('doodstream') || nameLower.includes('doodstream')) {
+              continue;
+            }
           }
 
           const qKey = normalizeQuality(s.quality);
+          const srv = extractServer(s.name || s.title);
+          const lang = s.language || '🇲🇽 Latino';
+          const cleanLang = lang.includes('Latino') ? '🇲🇽 ES' : (lang.includes('Castellano') ? '🇪🇸 ES' : '🌐 Multi');
+
           mapped.push({
             provider: scraper.id,
-            server: extractServer(s.name || s.title),
+            server: isTorrent ? 'Torrent' : srv,
             serverTier: 1,
-            isDirect: true,
+            isDirect: !isTorrent,
             qualityKey: qKey,
-            seeders: 999,
-            name: 'TACIT STR · WEB',
-            title: formatTacitTitle(s, scraper.name),
+            seeders: s.seeders || (isTorrent ? 20 : 999),
+            name: isTorrent ? 'TACIT STR 🧲' : 'TACIT STR · WEB',
+            title: isTorrent
+              ? `🧲 ${qKey.toUpperCase()} · P2P (${s.seeders || 15} 👥)\n${cleanLang}\n⚡ ${scraper.name}`
+              : `🎬 ${qKey.toUpperCase()} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}`,
             url: s.url,
+            infoHash: s.infoHash,
+            fileIdx: s.fileIdx,
             behaviorHints: {
-              proxyHeaders: s.headers ? { request: s.headers } : undefined,
+              proxyHeaders: (!isTorrent && s.headers) ? { request: s.headers } : undefined,
               notWebReady: false
             }
           });
