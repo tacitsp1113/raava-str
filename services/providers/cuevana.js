@@ -124,11 +124,11 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
 
   const isSeries = Boolean(season && episode);
   const qBadge = quality.toUpperCase();
-  const line1 = `🎬 ${qBadge} · SDR`;
-  const line2 = `🇲🇽 ES`;
+  const line1 = `🎬 ${qBadge} · ${server}`;
+  const line2 = `🇲🇽 Español Latino`;
   const line3 = isSeries
-    ? `⚡ T${season} · E${episode}`
-    : `⚡ ${media?.title || 'Video'}`;
+    ? `⚡ Cuevana · T${season}E${episode}`
+    : `⚡ Cuevana`;
 
   return {
     provider: 'cuevana',

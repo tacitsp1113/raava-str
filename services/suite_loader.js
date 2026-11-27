@@ -102,7 +102,7 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
           const qKey = normalizeQuality(s.quality);
           const srv = extractServer(s.name || s.title);
           const lang = s.language || '🇲🇽 Latino';
-          const cleanLang = lang.includes('Latino') ? '🇲🇽 ES' : (lang.includes('Castellano') ? '🇪🇸 ES' : '🌐 Multi');
+          const cleanLang = lang.includes('Latino') ? '🇲🇽 Español Latino' : (lang.includes('Castellano') ? '🇪🇸 Castellano' : '🌐 Multi Audio');
 
           const seeds = s.seeders && s.seeders > 0 ? s.seeders : 18;
           const seedText = `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`;

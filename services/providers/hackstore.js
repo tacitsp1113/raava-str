@@ -300,9 +300,9 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
   else if (/720p|hd/i.test(rawQuality)) { qualityBadge = '720p'; qualityKey = '720p'; }
   else { qualityBadge = 'SD'; qualityKey = '480p'; }
 
-  const line1 = `🎬 ${qualityBadge.toUpperCase()} · SDR`;
-  const line2 = `🇲🇽 ES`;
-  const line3 = (season && episode) ? `⚡ T${season} · E${episode}` : `⚡ ${media?.title || 'Video'}`;
+  const line1 = `🎬 ${qualityBadge.toUpperCase()} · ${serverName}`;
+  const line2 = `🇲🇽 Español Latino`;
+  const line3 = (season && episode) ? `⚡ HackStore · T${season}E${episode}` : `⚡ HackStore`;
 
   return {
     provider: 'hackstore_direct',
