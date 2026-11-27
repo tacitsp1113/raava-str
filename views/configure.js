@@ -101,6 +101,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .opcion.on .marca-op svg { opacity: 1; stroke: #040914; }
   .opcion.grande { border-radius: 18px; padding: 14px 18px 14px 14px; flex: 1 1 200px; }
   .opcion.grande div b { display: block; color: inherit; }
+  .badge-top { font-size: 10px; font-weight: 800; background: rgba(0, 210, 255, 0.18); border: 1px solid var(--cian); color: #38bdf8; padding: 2px 7px; border-radius: 999px; margin-left: 6px; letter-spacing: 0.04em; display: inline-flex; align-items: center; vertical-align: middle; }
   .caja-url { display: flex; gap: 10px; align-items: center; background: #040813; border: 1px solid var(--borde); border-radius: 16px; padding: 8px 8px 8px 16px; margin-top: 14px; }
   .caja-url code { flex: 1; color: #7dd3fc; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .caja-url .btn { padding: 10px 16px; font-size: 14px; border-radius: 12px; }
@@ -176,7 +177,11 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <!-- VISTA FUENTES / SITIOS -->
       <section class="vista" id="v-fuentes">
         <div class="encabezado"><h1>Sitios</h1><p>Elige en qué páginas busca tu addon. Entre más sitios activos, más enlaces tendrás disponibles.</p></div>
-        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b> o <b>TACIT STR 🧲</b>, con audio Latino preferente y sin bloqueos de IP.</div></div>
+        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b> o <b>TACIT STR 🧲</b>, con audio Latino preferente y sin bloqueos de IP. Las fuentes con insignia <b>⭐ TOP</b> son las más estables, de mejor calidad y resolución rápida.</div></div>
+        <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <button class="btn btn-claro" id="btn-solo-top" style="font-size:13px;padding:8px 14px;">⭐ Activar solo fuentes TOP recomendadas</button>
+          <button class="btn btn-claro" id="btn-activar-todas" style="font-size:13px;padding:8px 14px;">Activar todas</button>
+        </div>
         <div id="lista-fuentes"></div>
       </section>
 
@@ -233,9 +238,9 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 <script>
 const PROVEEDORES_LISTA = [
   // 🧲 FUENTES TORRENT (P2P 4K / 1080P)
-  { id: 'hackstore', nombre: 'HackStore (P2P / Directo)', grupo: 'torrents' },
-  { id: '4khdhub', nombre: '4kHDHub (4K UHD / P2P)', grupo: 'torrents' },
-  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR / P2P)', grupo: 'torrents' },
+  { id: 'hackstore', nombre: 'HackStore (P2P / Directo)', grupo: 'torrents', top: true },
+  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR / P2P)', grupo: 'torrents', top: true },
+  { id: '4khdhub', nombre: '4kHDHub (4K UHD / P2P)', grupo: 'torrents', top: true },
   { id: 'hdhub4u', nombre: 'HDHub4u (P2P)', grupo: 'torrents' },
   { id: 'showbox', nombre: 'ShowBox (P2P)', grupo: 'torrents' },
   { id: 'videasy', nombre: 'Videasy (P2P / Web)', grupo: 'torrents' },
@@ -243,8 +248,10 @@ const PROVEEDORES_LISTA = [
   { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' },
 
   // 🎬 PELÍCULAS Y SERIES (STREAMING DIRECTO HTTPS)
-  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'peliculas' },
-  { id: 'cuevana', nombre: 'Cuevana', grupo: 'peliculas' },
+  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'peliculas', top: true },
+  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'peliculas', top: true },
+  { id: 'cuevana', nombre: 'Cuevana', grupo: 'peliculas', top: true },
+  { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'peliculas', top: true },
   { id: 'cuevana3', nombre: 'Cuevana 3', grupo: 'peliculas' },
   { id: 'cuevana8', nombre: 'Cuevana 8', grupo: 'peliculas' },
   { id: 'cuevanabiz', nombre: 'Cuevana Biz', grupo: 'peliculas' },
@@ -253,9 +260,7 @@ const PROVEEDORES_LISTA = [
   { id: 'pelispluslat', nombre: 'PelisPlus Lat', grupo: 'peliculas' },
   { id: 'pelispluslatino', nombre: 'PelisPlus Latino', grupo: 'peliculas' },
   { id: 'pelisplusto', nombre: 'PelisPlus TO', grupo: 'peliculas' },
-  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'peliculas' },
   { id: 'pelisflix2', nombre: 'PelisFlix 2', grupo: 'peliculas' },
-  { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'peliculas' },
   { id: 'series24', nombre: 'Series24', grupo: 'peliculas' },
   { id: 'repelis', nombre: 'RePelis', grupo: 'peliculas' },
   { id: 'repelishd', nombre: 'RePelis HD', grupo: 'peliculas' },
@@ -268,8 +273,8 @@ const PROVEEDORES_LISTA = [
   { id: 'vidsrcto', nombre: 'VidSrc TO', grupo: 'peliculas' },
 
   // ⛩️ ANIME
-  { id: 'animeflv', nombre: 'AnimeFLV', grupo: 'anime' },
-  { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime' },
+  { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime', top: true },
+  { id: 'animeflv', nombre: 'AnimeFLV', grupo: 'anime', top: true },
   { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
   { id: 'monoschinos', nombre: 'MonosChinos', grupo: 'anime' },
   { id: 'animeonline', nombre: 'AnimeOnline', grupo: 'anime' },
@@ -278,16 +283,16 @@ const PROVEEDORES_LISTA = [
   { id: 'animeshd', nombre: 'AnimesHD', grupo: 'anime' },
 
   // 🐉 DONGHUA
+  { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua', top: true },
   { id: 'luciferdonghua', nombre: 'LuciferDonghua', grupo: 'donghua' },
-  { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua' },
 
   // 🎭 DORAMAS
-  { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'doramas' },
+  { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'doramas', top: true },
   { id: 'doramasmp4', nombre: 'DoramasMP4', grupo: 'doramas' },
   { id: 'estrenosdoramas', nombre: 'EstrenosDoramas', grupo: 'doramas' },
 
   // 📺 CARICATURAS Y RETRO
-  { id: 'lacartoons', nombre: 'LACartoons (Retro)', grupo: 'caricaturas' },
+  { id: 'lacartoons', nombre: 'LACartoons (Retro)', grupo: 'caricaturas', top: true },
 
   // 🌐 ESPECIALES
   { id: 'tokyvideo', nombre: 'TokyVideo', grupo: 'especiales' },
@@ -410,9 +415,9 @@ function pintarFuentes() {
 
     return '<div class="tarjeta grupo-prov">' +
       '<header><h3>' + nombre + torrentNotice + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
-      '<div class="botones-grupo"><button class="pastilla" data-todos="' + g + '">Todos</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
+      '<div class="botones-grupo"><button class="pastilla" data-todos="' + g + '">Todos</button><button class="pastilla" data-top="' + g + '">⭐ TOP</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
       '<div class="opciones">' +
-      lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + '</div>').join('') +
+      lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + (p.top ? '<span class="badge-top">⭐ TOP</span>' : '') + '</div>').join('') +
       '</div></div>';
   }).join('');
 }
@@ -431,13 +436,45 @@ $('lista-fuentes').addEventListener('click', (e) => {
     return cambiarProveedores([op.dataset.prov], !op.classList.contains('on'));
   }
   const todos = e.target.dataset.todos;
+  const top = e.target.dataset.top;
   const ninguno = e.target.dataset.ninguno;
   if (todos) {
     cambiarProveedores(PROVEEDORES_LISTA.filter(p => p.grupo === todos).map(p => p.id), true);
+  } else if (top) {
+    const grupoProvs = PROVEEDORES_LISTA.filter(p => p.grupo === top);
+    const topIds = new Set(grupoProvs.filter(p => p.top).map(p => p.id));
+    const act = new Set(activos());
+    grupoProvs.forEach(p => {
+      if (topIds.has(p.id)) act.add(p.id);
+      else act.delete(p.id);
+    });
+    config.proveedores = act.size === PROVEEDORES_LISTA.length ? null : [...act];
+    pintarFuentes();
+    guardar();
   } else if (ninguno) {
     cambiarProveedores(PROVEEDORES_LISTA.filter(p => p.grupo === ninguno).map(p => p.id), false);
   }
 });
+
+const btnSoloTop = $('btn-solo-top');
+if (btnSoloTop) {
+  btnSoloTop.addEventListener('click', () => {
+    config.proveedores = PROVEEDORES_LISTA.filter(p => p.top).map(p => p.id);
+    pintarFuentes();
+    guardar();
+    toast('Activadas únicamente fuentes ⭐ TOP');
+  });
+}
+
+const btnActivarTodas = $('btn-activar-todas');
+if (btnActivarTodas) {
+  btnActivarTodas.addEventListener('click', () => {
+    config.proveedores = null;
+    pintarFuentes();
+    guardar();
+    toast('Activadas todas las fuentes');
+  });
+}
 
 function pintarCalidades() {
   const cSet = new Set(config.calidades.map(c => c.toLowerCase()));
