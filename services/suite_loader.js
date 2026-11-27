@@ -182,9 +182,19 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
     return TOP_PROVIDERS_SET.has(s.id);
   });
 
-  addLog('info', 'Suite', `Consultando ${targetScrapers.length} raspadores para ${manifestType} TMDB:${tmdbId}...`);
+  // Priorizar siempre las fuentes TOP y limitar la concurrencia a un máximo seguro (6) para no saturar la CPU de Render
+  targetScrapers.sort((a, b) => {
+    const aTop = TOP_PROVIDERS_SET.has(a.id) ? 1 : 0;
+    const bTop = TOP_PROVIDERS_SET.has(b.id) ? 1 : 0;
+    return bTop - aTop;
+  });
 
-  const tasks = targetScrapers.map((scraper) => {
+  const MAX_SUITE_CONCURRENCY = 6;
+  const scrapersToRun = targetScrapers.slice(0, MAX_SUITE_CONCURRENCY);
+
+  addLog('info', 'Suite', `Consultando ${scrapersToRun.length} raspadores prioritarios para ${manifestType} TMDB:${tmdbId}...`);
+
+  const tasks = scrapersToRun.map((scraper) => {
     return runProviderSafe(scraper, tmdbId, manifestType, season, episode, 9500);
   });
 
