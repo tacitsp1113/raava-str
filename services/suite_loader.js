@@ -180,7 +180,7 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
   addLog('info', 'Suite', `Consultando ${targetScrapers.length} raspadores para ${manifestType} TMDB:${tmdbId}...`);
 
   const tasks = targetScrapers.map((scraper) => {
-    return runProviderSafe(scraper, tmdbId, manifestType, season, episode, 10000);
+    return runProviderSafe(scraper, tmdbId, manifestType, season, episode, 6000);
   });
 
   const settled = await Promise.allSettled(tasks);

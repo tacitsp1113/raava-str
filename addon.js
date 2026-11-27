@@ -146,36 +146,36 @@ async function resolveStreams(type, id, rawConfig) {
       (media.country === 'JP' || media.originalLanguage === 'ja')
     );
 
-    addLog('info', 'Scrapers', `Buscando en suite de raspadores para "${media.title}"...`);
+    addLog('info', 'Scrapers', `Buscando en paralelo para "${media.title}"...`);
     const collectedStreams = [];
 
-    // 1. Ejecutar Suite completa de 54 raspadores
+    // Ejecutar simultáneamente los proveedores locales probados y la suite externa
+    const parallelTasks = [];
+
+    // A. Raspadores directos probados (HackStore, CineCalidad, Cuevana, PelisPlus, SeriesFlix, TioAnime)
+    parallelTasks.push(...buildWebTasks(media, season, episode, isSeries, isAnime, config));
+
+    // B. Suite de raspadores adicionales
     if (media.tmdbId) {
-      try {
-        const suiteStreams = await fetchSuiteStreams(
-          media.tmdbId,
-          isSeries ? 'series' : 'movie',
-          season,
-          episode,
-          isAnime,
-          config
-        );
-        if (Array.isArray(suiteStreams) && suiteStreams.length > 0) {
-          collectedStreams.push(...suiteStreams);
-        }
-      } catch (err) {
-        addLog('warn', 'Suite', `Error en suite: ${err.message}`);
-      }
+      parallelTasks.push(
+        taskWithTimeout(
+          fetchSuiteStreams(
+            media.tmdbId,
+            isSeries ? 'series' : 'movie',
+            season,
+            episode,
+            isAnime,
+            config
+          ),
+          6500
+        )
+      );
     }
 
-    // 2. Si se necesitan más resultados o como respaldo, ejecutar raspadores locales
-    if (collectedStreams.length < 3) {
-      const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
-      const settled = await Promise.allSettled(providerTasks);
-      for (const res of settled) {
-        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-          collectedStreams.push(...res.value);
-        }
+    const settled = await Promise.allSettled(parallelTasks);
+    for (const res of settled) {
+      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+        collectedStreams.push(...res.value);
       }
     }
 
@@ -199,7 +199,7 @@ async function resolveStreams(type, id, rawConfig) {
   }
 }
 
-function taskWithTimeout(taskPromise, ms = 10000) {
+function taskWithTimeout(taskPromise, ms = 6000) {
   return Promise.race([
     taskPromise,
     new Promise(resolve => setTimeout(() => resolve([]), ms))
