@@ -1,1427 +1,495 @@
 /**
- * Plantilla y renderizador interactivo de la página de configuración (/configure)
+ * Plantilla del panel interactivo de configuración de TACIT STR
  */
 
 function renderConfigPage(initialConfig = null, baseUrl = '') {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TACIT STR - Configuración</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0b0f17;
-      --card-bg: rgba(16, 22, 34, 0.85);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --accent: #0ea5e9;
-      --accent-hover: #0284c7;
-      --accent-glow: rgba(14, 165, 233, 0.3);
-      --cyan: #06b6d4;
-      --green: #10b981;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    body {
-      background: radial-gradient(circle at 50% 0%, #152238 0%, #0b0f17 50%, #06090e 100%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 44px 20px;
-    }
-
-    .container {
-      max-width: 760px;
-      width: 100%;
-      background: var(--card-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
-      border-radius: 24px;
-      padding: 40px 36px;
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(14, 165, 233, 0.08);
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .logo-img {
-      width: 84px;
-      height: 84px;
-      border-radius: 20px;
-      object-fit: cover;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(14, 165, 233, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      margin-bottom: 14px;
-    }
-
-    .badge-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background: rgba(14, 165, 233, 0.12);
-      border: 1px solid rgba(14, 165, 233, 0.35);
-      color: #7dd3fc;
-      padding: 5px 14px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      margin-bottom: 12px;
-      letter-spacing: 0.8px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .dot {
-      width: 7px;
-      height: 7px;
-      background: #38bdf8;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #38bdf8;
-    }
-
-    h1 {
-      font-size: 2.3rem;
-      font-weight: 800;
-      color: #ffffff;
-      margin-bottom: 6px;
-      letter-spacing: -0.5px;
-    }
-
-    p.subtitle {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .section-block {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.075);
-      border-radius: 18px;
-      padding: 22px 20px;
-      margin-bottom: 22px;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .section-block.disabled-block {
-      opacity: 0.38;
-      pointer-events: none;
-      filter: grayscale(0.2);
-    }
-
-    .section-block-header {
-      margin-bottom: 14px;
-    }
-
-    .section-block-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .section-block-desc {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-      line-height: 1.45;
-    }
-
-    .mode-explanation {
-      background: rgba(14, 165, 233, 0.08);
-      border: 1px solid rgba(14, 165, 233, 0.22);
-      border-radius: 12px;
-      padding: 13px 15px;
-      font-size: 0.84rem;
-      color: #e0f2fe;
-      line-height: 1.5;
-      margin-top: 14px;
-    }
-
-    .preset-pills-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .btn-quick-preset {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #cbd5e1;
-      padding: 7px 14px;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      font-family: inherit;
-    }
-
-    .btn-quick-preset:hover {
-      background: rgba(14, 165, 233, 0.15);
-      border-color: rgba(14, 165, 233, 0.4);
-      color: #38bdf8;
-    }
-
-    .btn-quick-preset.active-quick {
-      background: rgba(14, 165, 233, 0.22);
-      border-color: var(--accent);
-      color: #38bdf8;
-      box-shadow: 0 0 12px rgba(14, 165, 233, 0.2);
-    }
-
-    /* Tabla de Proveedores y Checkboxes */
-    .providers-table-card {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 14px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .category-separator {
-      background: rgba(255, 255, 255, 0.035);
-      padding: 8px 14px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: #7dd3fc;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .provider-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-      transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
-      gap: 12px;
-      user-select: none;
-    }
-
-    .provider-row.dragging {
-      opacity: 0.35;
-      background: rgba(14, 165, 233, 0.12);
-    }
-
-    .provider-row.drag-over {
-      border-top: 2px solid var(--accent);
-      background: rgba(14, 165, 233, 0.06);
-    }
-
-    .order-controls {
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      flex-shrink: 0;
-    }
-
-    .drag-handle {
-      cursor: grab;
-      color: #64748b;
-      font-size: 1.15rem;
-      padding: 4px 3px;
-      transition: color 0.15s;
-    }
-
-    .drag-handle:hover {
-      color: #38bdf8;
-    }
-
-    .drag-handle:active {
-      cursor: grabbing;
-    }
-
-    .btn-order {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
-      border-radius: 6px;
-      width: 22px;
-      height: 22px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.65rem;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .btn-order:hover {
-      background: rgba(14, 165, 233, 0.2);
-      border-color: #0ea5e9;
-      color: #38bdf8;
-    }
-
-    .provider-meta {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .provider-name-line {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .provider-title {
-      font-weight: 600;
-      font-size: 0.92rem;
-      color: #f8fafc;
-    }
-
-    .tag-badge {
-      font-size: 0.68rem;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    .tag-recommended {
-      background: rgba(16, 185, 129, 0.18);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.35);
-    }
-
-    .tag-fast {
-      background: rgba(14, 165, 233, 0.18);
-      color: #38bdf8;
-      border: 1px solid rgba(14, 165, 233, 0.35);
-    }
-
-    .tag-retro {
-      background: rgba(245, 158, 11, 0.18);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
-    }
-
-    .provider-desc {
-      font-size: 0.74rem;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .toggle-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .btn-toggle-type {
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #94a3b8;
-      padding: 7px 11px;
-      border-radius: 9px;
-      font-size: 0.76rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      user-select: none;
-    }
-
-    .btn-toggle-type:hover {
-      border-color: rgba(255, 255, 255, 0.25);
-      color: #e2e8f0;
-    }
-
-    .btn-toggle-type.active {
-      background: rgba(14, 165, 233, 0.18);
-      border-color: var(--accent);
-      color: #38bdf8;
-      box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
-    }
-
-    .btn-toggle-type.active svg {
-      stroke: #38bdf8;
-    }
-
-    .btn-toggle-type.na {
-      opacity: 0.3;
-      cursor: not-allowed;
-      pointer-events: none;
-      border-color: transparent;
-      background: transparent;
-    }
-
-    .toggle-icon {
-      width: 14px;
-      height: 14px;
-      stroke: #94a3b8;
-      stroke-width: 2.2;
-      fill: none;
-    }
-
-    .options-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    @media (max-width: 640px) {
-      .options-grid { grid-template-columns: 1fr; }
-      .container { padding: 26px 16px; }
-      h1 { font-size: 1.85rem; }
-      .provider-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-      }
-      .toggle-group {
-        width: 100%;
-        justify-content: flex-end;
-      }
-    }
-
-    .card-checkbox {
-      background: rgba(255, 255, 255, 0.025);
-      border: 1px solid rgba(255, 255, 255, 0.07);
-      border-radius: 14px;
-      padding: 14px 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .card-checkbox:hover {
-      border-color: rgba(14, 165, 233, 0.4);
-      background: rgba(14, 165, 233, 0.05);
-    }
-
-    .card-checkbox.active {
-      border-color: var(--accent);
-      background: rgba(14, 165, 233, 0.12);
-    }
-
-    .btn-preset {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #e2e8f0;
-      padding: 10px 12px;
-      border-radius: 11px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      text-align: center;
-    }
-
-    .btn-preset:hover {
-      background: rgba(14, 165, 233, 0.15);
-      border-color: #0ea5e9;
-      color: #38bdf8;
-    }
-
-    .btn-preset.active-preset {
-      background: rgba(14, 165, 233, 0.25);
-      border-color: #0ea5e9;
-      color: #38bdf8;
-    }
-
-    .card-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .card-info .name {
-      font-weight: 600;
-      font-size: 0.94rem;
-      color: #f8fafc;
-    }
-
-    .card-info .desc {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-    }
-
-    .custom-check {
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-
-    .card-checkbox.active .custom-check {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .custom-check svg {
-      width: 12px;
-      height: 12px;
-      stroke: white;
-      stroke-width: 3;
-      fill: none;
-      display: none;
-    }
-
-    .card-checkbox.active .custom-check svg {
-      display: block;
-    }
-
-    .slider-container {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 14px;
-      padding: 14px 18px;
-    }
-
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .slider-title {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: #f1f5f9;
-    }
-
-    .slider-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.84rem;
-      color: var(--cyan);
-      font-weight: 600;
-      background: rgba(6, 182, 212, 0.12);
-      padding: 3px 9px;
-      border-radius: 6px;
-      border: 1px solid rgba(6, 182, 212, 0.3);
-    }
-
-    input[type=range] {
-      width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      cursor: pointer;
-    }
-
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--accent-glow);
-      border: 2px solid #ffffff;
-    }
-
-    .btn-install {
-      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-      color: #ffffff;
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      font-size: 1.05rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      text-decoration: none;
-      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.4);
-      transition: all 0.2s ease;
-      margin-top: 10px;
-      margin-bottom: 12px;
-    }
-
-    .btn-install:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 30px rgba(14, 165, 233, 0.5);
-      background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-    }
-
-    .btn-copy {
-      background: transparent;
-      color: var(--text-muted);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .btn-copy:hover {
-      border-color: rgba(255, 255, 255, 0.3);
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    .copied-toast {
-      display: none;
-      text-align: center;
-      color: #34d399;
-      font-size: 0.82rem;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi panel — TACIT STR</title>
+<link rel="icon" href="/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --rojo: #e50914; --rojo-hover: #f40612; --rojo-suave: rgba(229,9,20,0.14); --rojo-borde: rgba(229,9,20,0.45);
+    --fondo: #070707; --capa: #111112; --tarjeta: #151517; --borde: #232327; --borde-fuerte: #303036;
+    --texto: #f5f5f5; --suave: #b3b3b3; --tenue: #7a7a80; --verde: #4ade80; --amarillo: #fbbf24;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--fondo); color: var(--texto); min-height: 100vh; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 85% -10%, rgba(229,9,20,0.18), transparent 45%), radial-gradient(circle at -10% 110%, rgba(229,9,20,0.10), transparent 40%); pointer-events: none; z-index: 0; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+  .app { position: relative; display: grid; grid-template-columns: 270px 1fr; gap: 18px; padding: 18px; min-height: 100vh; }
+  aside { background: rgba(17,17,18,0.92); border: 1px solid var(--borde); border-radius: 24px; display: flex; flex-direction: column; position: sticky; top: 18px; height: calc(100vh - 36px); overflow-y: auto; padding: 18px 14px 40px; }
+  .marca { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 14px; border-bottom: 1px solid var(--borde); margin-bottom: 14px; }
+  .marca img { width: 50px; height: 50px; border-radius: 16px; box-shadow: 0 0 30px rgba(229,9,20,0.35); object-fit: cover; }
+  .marca b { font-size: 19px; font-weight: 900; color: var(--rojo); letter-spacing: -0.5px; }
+  .seccion-menu { color: var(--tenue); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 12px 12px 6px; }
+  .item { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; color: var(--suave); padding: 9px 12px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; transition: background .15s, color .15s; margin-bottom: 3px; }
+  .item .ico { width: 34px; height: 34px; border-radius: 11px; background: #1b1b1e; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+  .item svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .item:hover { color: var(--texto); background: #18181b; }
+  .item.activo { color: #fff; background: linear-gradient(90deg, rgba(229,9,20,0.22), rgba(229,9,20,0.04)); }
+  .item.activo .ico { background: var(--rojo); }
+  .item .num { margin-left: auto; font-size: 12px; color: var(--tenue); font-weight: 700; }
+  .pie-menu { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--borde); }
+  .yo { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; }
+  .yo .avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--rojo-borde); background: #222; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--rojo); }
+  .yo div { min-width: 0; }
+  .yo b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .yo small { color: var(--tenue); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  main { min-width: 0; }
+  .movil { display: none; align-items: center; justify-content: space-between; padding: 6px 4px 14px; }
+  .movil .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--rojo); font-size: 18px; }
+  .movil .logo img { width: 32px; height: 32px; border-radius: 9px; object-fit: cover; }
+  .icono-btn { width: 42px; height: 42px; border-radius: 14px; border: 1px solid var(--borde); background: var(--capa); color: var(--texto); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .icono-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+  .contenido { max-width: 940px; padding: 10px 14px 120px; }
+  .vista { display: none; animation: aparecer .25s ease; }
+  .vista.activa { display: block; }
+  @keyframes aparecer { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .encabezado { margin: 6px 0 20px; }
+  .encabezado h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.8px; }
+  .encabezado p { color: var(--suave); font-size: 15px; margin-top: 4px; }
+  .bienvenida { position: relative; overflow: hidden; border-radius: 26px; padding: 30px; border: 1px solid var(--rojo-borde); background: linear-gradient(135deg, #2a0306 0%, #140405 45%, #0e0e10 100%); margin-bottom: 18px; }
+  .bienvenida small { color: #ff8a8f; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+  .bienvenida h2 { font-size: clamp(24px, 4vw, 34px); font-weight: 900; letter-spacing: -1px; margin: 6px 0 8px; }
+  .bienvenida p { color: #d4d4d8; max-width: 520px; line-height: 1.6; font-size: 15px; }
+  .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; position: relative; z-index: 1; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: none; border-radius: 16px; font-weight: 800; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; font-size: 15px; padding: 14px 22px; }
+  .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-rojo { background: var(--rojo); color: #fff; box-shadow: 0 10px 30px rgba(229,9,20,0.35); }
+  .btn-rojo:hover { background: var(--rojo-hover); transform: translateY(-1px); }
+  .btn-claro { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.14); }
+  .btn-claro:hover { border-color: var(--rojo-borde); background: rgba(229,9,20,0.10); }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; background: var(--capa); border: 1px solid var(--borde); padding: 10px 16px; border-radius: 999px; font-size: 14px; color: var(--suave); cursor: pointer; transition: border-color .15s; }
+  .chip:hover { border-color: var(--rojo-borde); }
+  .chip b { color: #fff; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); display: inline-block; }
+  .tarjeta { background: rgba(21,21,23,0.92); border: 1px solid var(--borde); border-radius: 22px; padding: 22px; margin-bottom: 16px; }
+  .tarjeta h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+  .tarjeta > p { color: var(--suave); font-size: 14px; line-height: 1.6; }
+  .rejilla2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .rejilla2 .tarjeta { margin-bottom: 0; }
+  .mini { display: flex; gap: 14px; align-items: flex-start; }
+  .mini p { color: var(--suave); font-size: 14px; line-height: 1.55; margin: 4px 0 12px; }
+  .enlace { color: #ff6b70; font-weight: 700; font-size: 14px; cursor: pointer; background: none; border: none; padding: 0; }
+  .enlace:hover { color: #fff; }
+  .aviso { display: flex; gap: 12px; align-items: flex-start; background: rgba(229,9,20,0.07); border: 1px solid rgba(229,9,20,0.28); color: #fecdd3; border-radius: 18px; padding: 16px 18px; font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
+  .aviso b { color: #fff; }
+  .grupo-prov { margin-bottom: 26px; }
+  .grupo-prov header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .grupo-prov h3 { font-size: 17px; font-weight: 800; }
+  .grupo-prov h3 small { color: var(--tenue); font-size: 13px; font-weight: 500; margin-left: 8px; }
+  .botones-grupo { display: flex; gap: 6px; }
+  .pastilla { background: var(--capa); border: 1px solid var(--borde); color: var(--suave); font-size: 12px; font-weight: 700; cursor: pointer; padding: 6px 12px; border-radius: 999px; }
+  .pastilla:hover { color: #fff; border-color: var(--rojo-borde); }
+  .opciones { display: flex; flex-wrap: wrap; gap: 10px; }
+  .opcion { display: inline-flex; align-items: center; gap: 10px; background: var(--capa); border: 1.5px solid var(--borde); border-radius: 999px; padding: 9px 16px 9px 10px; cursor: pointer; user-select: none; transition: all .15s; font-size: 14px; font-weight: 600; color: var(--suave); }
+  .opcion .marca-op { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #3a3a40; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
+  .opcion .marca-op svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+  .opcion small { color: var(--tenue); font-weight: 500; font-size: 12px; }
+  .opcion:hover { border-color: var(--borde-fuerte); color: #fff; }
+  .opcion.on { border-color: var(--rojo-borde); background: var(--rojo-suave); color: #fff; }
+  .opcion.on .marca-op { background: var(--rojo); border-color: var(--rojo); }
+  .opcion.on .marca-op svg { opacity: 1; }
+  .opcion.grande { border-radius: 18px; padding: 14px 18px 14px 14px; flex: 1 1 200px; }
+  .opcion.grande div b { display: block; color: inherit; }
+  .caja-url { display: flex; gap: 10px; align-items: center; background: #0c0c0d; border: 1px solid var(--borde); border-radius: 16px; padding: 8px 8px 8px 16px; margin-top: 14px; }
+  .caja-url code { flex: 1; color: #fca5a5; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .caja-url .btn { padding: 10px 16px; font-size: 14px; border-radius: 12px; }
+  .pasos { counter-reset: paso; list-style: none; margin-top: 14px; }
+  .pasos li { counter-increment: paso; position: relative; padding: 0 0 14px 42px; color: var(--suave); font-size: 14px; line-height: 1.55; }
+  .pasos li::before { content: counter(paso); position: absolute; left: 0; top: -2px; width: 28px; height: 28px; border-radius: 50%; background: var(--rojo-suave); color: #ff8a8f; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .pasos b { color: #fff; }
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(120px); background: #18181b; border: 1px solid var(--rojo-borde); padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: transform .25s, opacity .25s; z-index: 200; opacity: 0; pointer-events: none; }
+  .toast.ver { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .cortina { display: none; }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; padding: 12px; }
+    aside { position: fixed; left: 10px; top: 10px; bottom: 10px; height: auto; width: 278px; padding-bottom: 18px; background: #111112; z-index: 60; transform: translateX(-120%); transition: transform .25s; }
+    aside.abierto { transform: translateX(0); }
+    .cortina.ver { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 55; }
+    .movil { display: flex; }
+    .contenido { padding: 0 2px 120px; }
+    .rejilla2 { grid-template-columns: 1fr; }
+    .bienvenida { padding: 24px 20px; }
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="${baseUrl}/logo.png" alt="TACIT STR" class="logo-img">
-      <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
-        <span class="badge-tag"><span class="dot"></span> EDICIÓN TACIT RONIN</span>
-        <a href="/logs" target="_blank" class="badge-tag" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399; text-decoration: none;">📡 MONITOR DE LOGS EN VIVO</a>
-      </div>
-      <h1>TACIT STR</h1>
-      <p class="subtitle">Streaming en Español Latino para Stremio: Raspadores Web en Vivo (Vimeos / VOE) y Torrents P2P.</p>
-    </div>
+<div class="app" id="app">
+  <div class="cortina" id="cortina"></div>
+  <aside id="menu">
+    <div class="marca"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
+    <button class="item activo" data-vista="inicio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path></svg></span>Inicio</button>
+    <button class="item" data-vista="fuentes"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>Sitios<span class="num" id="num-fuentes">53/53</span></button>
+    <button class="item" data-vista="calidad"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15V9l3 3 3-3v6M17 9v6"></path></svg></span>Calidad<span class="num" id="num-calidad">4</span></button>
+    <div class="seccion-menu">Herramientas</div>
+    <button class="item" data-vista="nuvio"><span class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"></rect><path d="M11 18h2"></path></svg></span>Plugin de Nuvio</button>
+    <a class="item" href="/status" target="_blank"><span class="ico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span>Diagnóstico</a>
 
-    <!-- 2. BLOQUE: PÁGINAS WEB (SELECCIÓN MATRIZ DE 2 COLUMNAS) -->
-    <div class="section-block" id="webSectionBlock">
-      <div class="section-block-header">
-        <div class="section-block-title">🌐 Proveedores Web en Vivo</div>
-        <div class="section-block-desc">Selecciona de forma independiente qué sitios consultar para <strong>🎬 Películas</strong> y cuáles para <strong>📺 Series</strong>.</div>
-      </div>
-
-      <!-- Presets de Sugerencia Rápida -->
-      <div class="preset-pills-bar">
-        <button type="button" class="btn-quick-preset active-quick" id="btnPresetRecommended">⭐ Recomendados</button>
-        <button type="button" class="btn-quick-preset" id="btnPresetMoviesOnly">🎬 Solo Películas</button>
-        <button type="button" class="btn-quick-preset" id="btnPresetSeriesOnly">📺 Solo Series</button>
-        <button type="button" class="btn-quick-preset" id="btnPresetAll">🚀 Marcar Todo</button>
-      </div>
-
-      <div class="providers-table-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(14,165,233,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.76rem; color: #7dd3fc;">
-          <span style="display:flex; align-items:center; gap:6px;">↕️ <strong>Prioridad de Proveedores:</strong> Arrastra (⠿) o pulsa ▲ ▼ para ordenar qué sitio tiene prioridad</span>
-          <span style="font-size: 0.72rem; color: #94a3b8;">Arriba = Más prioridad</span>
-        </div>
-
-        <div id="providersList">
-          <!-- 0. PelisPanda -->
-          <div class="provider-row" draggable="true" data-prov-id="pelispanda">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">PelisPanda</span>
-                <span class="tag-badge tag-recommended">⭐ Suite Top</span>
-                <span class="tag-badge tag-fast">⚡ Vimeos 1080p</span>
-              </div>
-              <div class="provider-desc">Líder en enlaces directos Full HD sin bloqueos de IP para estrenos de películas y series.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="pelispanda" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="pelispanda" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 0b. AllCalidad -->
-          <div class="provider-row" draggable="true" data-prov-id="allcalidad">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">AllCalidad</span>
-                <span class="tag-badge tag-recommended">⭐ Suite Top</span>
-              </div>
-              <div class="provider-desc">Estrenos de cine y series completas con audio Latino dual y enlaces directos HD.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="allcalidad" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="allcalidad" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 0c. PelisPedia -->
-          <div class="provider-row" draggable="true" data-prov-id="pelispedia">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">PelisPedia</span>
-                <span class="tag-badge tag-fast">⚡ Multi-Server</span>
-              </div>
-              <div class="provider-desc">Catálogo extenso de películas y series con servidores directos Fastream y VOE.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="pelispedia" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="pelispedia" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 0d. JKAnime -->
-          <div class="provider-row" draggable="true" data-prov-id="jkanime">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">JKAnime</span>
-                <span class="tag-badge tag-recommended">⭐ Anime Top</span>
-              </div>
-              <div class="provider-desc">El portal más grande de anime clásico, películas y episodios en emisión con audio Latino.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="jkanime" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="jkanime" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 0e. DoramasFlix -->
-          <div class="provider-row" draggable="true" data-prov-id="doramasflix">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">DoramasFlix</span>
-                <span class="tag-badge tag-recommended">⭐ Doramas</span>
-              </div>
-              <div class="provider-desc">K-Dramas coreanos, doramas asiáticos y series dobladas al español latino.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="doramasflix" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="doramasflix" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 1. SeriesFlix -->
-          <div class="provider-row" draggable="true" data-prov-id="seriesflix">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">SeriesFlix</span>
-                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-                <span class="tag-badge tag-fast">⚡ VOE / Vimeos</span>
-              </div>
-              <div class="provider-desc">Capítulos completos y estrenos de series en Audio Latino con servidores directos sin bloqueos de IP.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type na" title="Exclusivo de series">
-                —
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="seriesflix" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 2. Cuevana -->
-          <div class="provider-row" draggable="true" data-prov-id="cuevana">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">Cuevana</span>
-                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-              </div>
-              <div class="provider-desc">La biblioteca web más extensa de internet. Excelente respaldo general para cine y series.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="cuevana" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 3. CineCalidad -->
-          <div class="provider-row" draggable="true" data-prov-id="cinecalidad">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">CineCalidad</span>
-                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-              </div>
-              <div class="provider-desc">El estándar de oro en 1080p con audio Latino dual (Vimeos/VOE) para películas y series.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="cinecalidad" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="cinecalidad" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 4. LaMovie -->
-          <div class="provider-row" draggable="true" data-prov-id="lamovie">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">LaMovie</span>
-                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-              </div>
-              <div class="provider-desc">Estrenos recientes y catálogo en audio Latino con servidores Vimeos y Goodstream.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="lamovie" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 5. PelisPlus HD -->
-          <div class="provider-row" draggable="true" data-prov-id="pelisplus">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">PelisPlus HD</span>
-              </div>
-              <div class="provider-desc">Capítulos completos y estrenos con resolución criptográfica Embed69.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="pelisplus" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 6. Hackstore Directo -->
-          <div class="provider-row" draggable="true" data-prov-id="hackstore_direct">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">Hackstore Directo</span>
-                <span class="tag-badge tag-recommended">⭐ Recomendado</span>
-                <span class="tag-badge tag-fast">⚡ API REST Vimeos</span>
-              </div>
-              <div class="provider-desc">Streaming directo Full HD (Vimeos) para películas y series mediante API REST limpia sin bloqueos de IP.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="hackstore_direct" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 7. Hackstore Torrents -->
-          <div class="provider-row" draggable="true" data-prov-id="hackstore_torrent" id="rowHackstoreTorrent">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">Hackstore Torrents 🧲</span>
-                <span class="tag-badge tag-fast">P2P 4K/1080p</span>
-              </div>
-              <div class="provider-desc">Enlaces magnet con más de 10 trackers UDP/WSS activos para máxima fidelidad 4K/1080p en películas y series.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="movie">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                🎬 Pelis
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="hackstore_torrent" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 8. TioAnime -->
-          <div class="provider-row" draggable="true" data-prov-id="tioanime">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">TioAnime</span>
-                <span class="tag-badge tag-recommended">⭐ Anime</span>
-              </div>
-              <div class="provider-desc">Especialista líder en animación japonesa en audio Latino y subtitulado.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type na" title="Exclusivo de anime y series">
-                —
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="tioanime" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-
-          <!-- 9. LACartoons -->
-          <div class="provider-row" draggable="true" data-prov-id="lacartoons">
-            <div class="order-controls">
-              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
-              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
-              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
-            </div>
-            <div class="provider-meta">
-              <div class="provider-name-line">
-                <span class="provider-title">LACartoons</span>
-                <span class="tag-badge tag-retro">⭐ Retro / Cartoons</span>
-              </div>
-              <div class="provider-desc">Series animadas clásicas de Nickelodeon, Cartoon Network y Fox Kids en Latino.</div>
-            </div>
-            <div class="toggle-group">
-              <button type="button" class="btn-toggle-type na" title="Exclusivo de series animadas">
-                —
-              </button>
-              <button type="button" class="btn-toggle-type active" data-prov="lacartoons" data-type="series">
-                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                📺 Series
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Los 2 Sliders: Límite por sitio y Límite total web -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-        <div class="slider-container">
-          <div class="slider-header">
-            <span class="slider-title">Opciones por sitio</span>
-            <span class="slider-value" id="webPerProvLabel">2 por sitio</span>
-          </div>
-          <input type="range" id="webPerProvSlider" min="1" max="5" value="2">
-          <p style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">Tope de enlaces que aportará cada raspador individual.</p>
-        </div>
-
-        <div class="slider-container">
-          <div class="slider-header">
-            <span class="slider-title">Límite total web</span>
-            <span class="slider-value" id="webTotalLabel">6 en total</span>
-          </div>
-          <input type="range" id="webTotalSlider" min="3" max="12" value="6">
-          <p style="font-size: 0.74rem; color: var(--text-muted); margin-top: 6px;">Tope general combinado de streams web entregados a Stremio.</p>
-        </div>
-      </div>
-
-      <!-- Prioridad Directo vs Torrents -->
-      <div id="priorityContainer">
-        <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">Prioridad de orden</div>
-        <div class="options-grid">
-          <div class="card-checkbox active" data-type="priority" data-val="direct">
-            <div class="card-info">
-              <span class="name">Directo Primero</span>
-              <span class="desc">Muestra los reproductores web al inicio</span>
-            </div>
-            <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-          </div>
-          <div class="card-checkbox" data-type="priority" data-val="torrent">
-            <div class="card-info">
-              <span class="name">Torrents Primero</span>
-              <span class="desc">Muestra enlaces P2P con mayor calidad al inicio</span>
-            </div>
-            <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-          </div>
-        </div>
+    <div class="pie-menu">
+      <div class="yo">
+        <div class="avatar">T</div>
+        <div><b>TACIT STR</b><small>Servidor Personal</small></div>
       </div>
     </div>
+  </aside>
 
-    <!-- 4. BLOQUE: CALIDAD DE VIDEO Y FILTROS -->
-    <div class="section-block" id="qualitySectionBlock">
-      <div class="section-block-header">
-        <div class="section-block-title">🎬 Calidad de Video y Filtros</div>
-        <div class="section-block-desc">Estas preferencias se aplican tanto a los enlaces de la nube como a las páginas web.</div>
-      </div>
-
-      <div class="options-grid" style="margin-bottom: 14px;">
-        <div class="card-checkbox active" data-type="quality" data-val="4k">
-          <div class="card-info">
-            <span class="name">4K Ultra HD</span>
-            <span class="desc">2160p HDR y Remux</span>
-          </div>
-          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-        </div>
-
-        <div class="card-checkbox active" data-type="quality" data-val="1080p">
-          <div class="card-info">
-            <span class="name">1080p Full HD</span>
-            <span class="desc">Calidad recomendada estándar</span>
-          </div>
-          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-        </div>
-
-        <div class="card-checkbox active" data-type="quality" data-val="720p">
-          <div class="card-info">
-            <span class="name">720p HD</span>
-            <span class="desc">Conexiones moderadas</span>
-          </div>
-          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-        </div>
-
-        <div class="card-checkbox active" data-type="quality" data-val="480p">
-          <div class="card-info">
-            <span class="name">480p SD</span>
-            <span class="desc">Datos móviles o ahorro</span>
-          </div>
-          <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-        </div>
-      </div>
-
-      <!-- Filtro exclusivo para desactivar torrents -->
-      <div class="card-checkbox" data-type="disableTorrents" style="border-color: rgba(239, 68, 68, 0.25);">
-        <div class="card-info">
-          <span class="name" style="color: #fca5a5;">🚫 Desactivar Enlaces Torrent (Solo Streaming Directo HTTPS)</span>
-          <span class="desc">Oculta todos los enlaces P2P. Ideal si estás en Smart TV o no utilizas VPN.</span>
-        </div>
-        <div class="custom-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-      </div>
+  <main>
+    <div class="movil">
+      <div class="logo"><img src="/logo.png" alt="">TACIT STR</div>
+      <button class="icono-btn" id="abrir-menu" aria-label="Menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
     </div>
+    <div class="contenido">
+      <!-- VISTA INICIO -->
+      <section class="vista activa" id="v-inicio">
+        <div class="bienvenida">
+          <small>Tu addon está listo</small>
+          <h2 id="saludo">Hola, Familia</h2>
+          <p>Instálalo una vez y listo. Si cambias tus sitios o calidades, copia o instala el nuevo enlace en tu Stremio.</p>
+          <div class="acciones">
+            <a class="btn btn-rojo" id="instalar" href="#"><svg viewBox="0 0 24 24"><path d="m6 4 14 8-14 8z"></path></svg>Instalar en Stremio</a>
+            <button class="btn btn-claro" id="copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>Copiar URL del addon</button>
+            <a class="btn btn-claro" id="instalar-web" target="_blank" rel="noopener" href="#">Stremio Web</a>
+          </div>
+        </div>
+        <div class="chips">
+          <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">53 de 53</b> sitios activos</span>
+          <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080p · 720p</b></span>
+          <span class="chip" data-ir="calidad"><i></i><span id="chip-muertos">Links muertos ocultos</span></span>
+        </div>
+        <div class="rejilla2">
+          <div class="tarjeta mini"><div><h3>Plugin de Nuvio</h3><p>¿Usas Nuvio en celular o TV? Agrega el repositorio oficial de TACIT STR.</p><button class="enlace" data-ir="nuvio">Ver instrucciones →</button></div></div>
+          <div class="tarjeta mini"><div><h3>Diagnóstico en Vivo</h3><p>Revisa qué sitios web y servidores están respondiendo activamente.</p><a class="enlace" href="/status" target="_blank">Ver diagnóstico →</a></div></div>
+        </div>
+      </section>
 
-    <!-- BOTONES DE INSTALACIÓN -->
-    <div style="margin-top: 14px;">
-      <a href="#" id="installBtn" class="btn-install">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        Instalar en Stremio
-      </a>
-      <button type="button" id="copyBtn" class="btn-copy">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        Copiar Enlace de Instalación
-      </button>
-      <div class="copied-toast" id="toast">¡Enlace copiado al portapapeles!</div>
+      <!-- VISTA FUENTES / SITIOS -->
+      <section class="vista" id="v-fuentes">
+        <div class="encabezado"><h1>Sitios</h1><p>Elige en qué páginas busca tu addon. Entre más sitios activos, más enlaces tendrás disponibles.</p></div>
+        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b>, con audio Latino preferente y sin bloqueos de IP.</div></div>
+        <div id="lista-fuentes"></div>
+      </section>
+
+      <!-- VISTA CALIDAD -->
+      <section class="vista" id="v-calidad">
+        <div class="encabezado"><h1>Calidad</h1><p>Solo te saldrán las calidades que tengas marcadas aquí.</p></div>
+        <div class="tarjeta"><div class="opciones" id="lista-calidades"></div></div>
+        <div class="tarjeta">
+          <h3>Filtro de compatibilidad</h3>
+          <p style="margin-bottom:14px">Descarta servidores problemáticos para evitar pantallas negras en Smart TV.</p>
+          <div class="opciones">
+            <div class="opcion grande on" id="op-muertos">
+              <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
+              <div><b>Ocultar links muertos y servidores con bloqueo de IP</b><small>Recomendado (Vimeos y VOE)</small></div>
+            </div>
+            <div class="opcion grande" id="op-torrents">
+              <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
+              <div><b>Desactivar Torrents</b><small>Solo streaming directo HTTPS</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA NUVIO -->
+      <section class="vista" id="v-nuvio">
+        <div class="encabezado"><h1>Plugin de Nuvio</h1><p>Para la aplicación Nuvio en celular Android y Nuvio TV.</p></div>
+        <div class="tarjeta">
+          <h3>Instálalo en Nuvio</h3>
+          <p>Usa este enlace para agregar el plugin oficial de TACIT STR en Nuvio:</p>
+          <div class="caja-url"><code id="url-plugin">https://raw.githubusercontent.com/tacitsp1113/raava-str/main/pluggin-latino-main/manifest.json</code><button class="btn btn-rojo" id="copiar-plugin">Copiar</button></div>
+          <ol class="pasos" style="margin-top:20px">
+            <li>Abre <b>Nuvio</b> y entra a <b>Ajustes</b>.</li>
+            <li>Busca la sección de <b>Plugins</b> y presiona <b>Agregar repositorio</b>.</li>
+            <li>Pega el enlace que copiaste y pulsa <b>Guardar</b>.</li>
+            <li>Activa los sitios que desees y disfruta del contenido en Latino.</li>
+          </ol>
+        </div>
+      </section>
     </div>
-  </div>
+  </main>
+</div>
 
-  <script>
-    const baseUrl = ${JSON.stringify(baseUrl)} || window.location.origin;
+<div class="toast" id="toast"></div>
 
-    const initialServerConfig = ${JSON.stringify(initialConfig)};
+<script>
+const BASE_URL = ${JSON.stringify(baseUrl)} || window.location.origin;
 
-    const DEFAULT_MOVIES = ['pelispanda', 'cinecalidad', 'allcalidad', 'cuevana', 'pelispedia', 'hackstore', 'pelisplus'];
-    const DEFAULT_SERIES = ['seriesflix', 'pelispanda', 'cuevana', 'cinecalidad', 'pelisplus', 'tioanime', 'jkanime', 'doramasflix'];
+const GRUPOS = {
+  general: ['Películas y series', 'Los principales'],
+  anime: ['Anime', 'Latino y subtitulado'],
+  donghua: ['Donghua', 'Animación china'],
+  dorama: ['Doramas', 'Series asiáticas'],
+  caricaturas: ['Caricaturas', 'Clásicas y nuevas'],
+  especiales: ['Multi / 4K / Internacional', 'Fuentes especiales']
+};
 
-    const state = {
-      mode: 'scrapers',
-      providers: {
-        movie: Array.isArray(initialServerConfig?.providers?.movie) ? initialServerConfig.providers.movie : [...DEFAULT_MOVIES],
-        series: Array.isArray(initialServerConfig?.providers?.series) ? initialServerConfig.providers.series : [...DEFAULT_SERIES]
-      },
-      qualities: initialServerConfig?.qualities || ['4k', '1080p', '720p', '480p'],
-      priority: initialServerConfig?.priority || 'direct',
-      disableTorrents: initialServerConfig?.disableTorrents !== undefined ? Boolean(initialServerConfig.disableTorrents) : false,
-      maxWebStreamsPerProvider: initialServerConfig?.maxWebStreamsPerProvider || 3,
-      maxTotalWebStreams: initialServerConfig?.maxTotalWebStreams || 8,
-      minSeeders: 1
-    };
+const PROVEEDORES_LISTA = [
+  // Películas y Series
+  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'general' },
+  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'general' },
+  { id: 'allcalidad', nombre: 'AllCalidad', grupo: 'general' },
+  { id: 'cuevana', nombre: 'Cuevana', grupo: 'general' },
+  { id: 'pelispedia', nombre: 'PelisPedia', grupo: 'general' },
+  { id: 'pelisplus', nombre: 'PelisPlus', grupo: 'general' },
+  { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'general' },
+  { id: 'lamovie', nombre: 'LaMovie', grupo: 'general' },
+  { id: 'hackstore', nombre: 'HackStore', grupo: 'general' },
+  { id: 'peliserieshoy', nombre: 'PelisSeriesHoy', grupo: 'general' },
+  { id: 'seriesmetro', nombre: 'SeriesMetro', grupo: 'general' },
+  { id: 'pelisgo', nombre: 'PelisGo', grupo: 'general' },
+  { id: 'sololatino', nombre: 'SoloLatino', grupo: 'general' },
+  { id: 'tioplus', nombre: 'TioPlus', grupo: 'general' },
+  { id: 'videasy', nombre: 'VidEasy', grupo: 'general' },
+  { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasYSeries', grupo: 'general' },
+  { id: 'peliculasflix', nombre: 'PeliculasFlix', grupo: 'general' },
+  { id: 'vitaminagg', nombre: 'VitaminaGG', grupo: 'general' },
+  { id: 'vimeus', nombre: 'Vimeus', grupo: 'general' },
+  { id: 'homecine', nombre: 'HomeCine', grupo: 'general' },
+  { id: 'allpeliculasse', nombre: 'AllpeliculasSE', grupo: 'general' },
+  { id: 'plutotv', nombre: 'Pluto TV', grupo: 'general' },
+  { id: 'gnula', nombre: 'Gnula', grupo: 'general' },
+  { id: 'pelishax', nombre: 'PelisHax', grupo: 'general' },
+  { id: 'unlimplay', nombre: 'UnlimPlay', grupo: 'general' },
+  { id: 'cinehdplus', nombre: 'CineHdPlus', grupo: 'general' },
 
-    function updateProviderOrderFromDOM() {
-      const rows = document.querySelectorAll('#providersList .provider-row');
-      const orderedIds = Array.from(rows).map(r => r.dataset.provId).filter(Boolean);
+  // Anime
+  { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
+  { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime' },
+  { id: 'animeav1', nombre: 'AnimeAV1', grupo: 'anime' },
+  { id: 'animejl', nombre: 'AnimeJL', grupo: 'anime' },
+  { id: 'latanime', nombre: 'LatAnime', grupo: 'anime' },
+  { id: 'monoschinos', nombre: 'Monoschinos', grupo: 'anime' },
+  { id: 'katanime', nombre: 'KatAnime', grupo: 'anime' },
+  { id: 'henaojara', nombre: 'Henaojara', grupo: 'anime' },
 
-      const newMovies = [];
-      const newSeries = [];
+  // Donghua
+  { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua' },
+  { id: 'donghualife', nombre: 'DonghuaLife', grupo: 'donghua' },
+  { id: 'reydonghua', nombre: 'ReyDonghua', grupo: 'donghua' },
 
-      orderedIds.forEach(id => {
-        const movieBtn = document.querySelector('.btn-toggle-type[data-prov="' + id + '"][data-type="movie"]');
-        if (movieBtn && movieBtn.classList.contains('active')) {
-          newMovies.push(id);
-        }
-        const seriesBtn = document.querySelector('.btn-toggle-type[data-prov="' + id + '"][data-type="series"]');
-        if (seriesBtn && seriesBtn.classList.contains('active')) {
-          newSeries.push(id);
-        }
-      });
+  // Doramas
+  { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'dorama' },
+  { id: 'doramasyt', nombre: 'DoramasYT', grupo: 'dorama' },
 
-      state.providers.movie = newMovies;
-      state.providers.series = newSeries;
-      updateUrls();
-    }
+  // Caricaturas
+  { id: 'lacartoons', nombre: 'LACartoons', grupo: 'caricaturas' },
+  { id: 'danimados', nombre: 'Danimados', grupo: 'caricaturas' },
 
-    function applySavedOrderToDOM() {
-      const container = document.getElementById('providersList');
-      if (!container) return;
-      const combined = [
-        ...(state.providers.series || []),
-        ...(state.providers.movie || [])
-      ];
-      const uniqueOrder = [...new Set(combined)];
-      uniqueOrder.reverse().forEach(provId => {
-        const row = container.querySelector('.provider-row[data-prov-id="' + provId + '"]');
-        if (row) {
-          container.prepend(row);
-        }
-      });
-    }
+  // Fuentes especiales / 4K / Multi
+  { id: 'embed69', nombre: 'Embed69', grupo: 'especiales' },
+  { id: '4khdhub', nombre: '4KHDHub', grupo: 'especiales' },
+  { id: 'hdhub4u', nombre: 'HDHub4u', grupo: 'especiales' },
+  { id: 'uhdmovies', nombre: 'UHDMovies', grupo: 'especiales' },
+  { id: 'showbox', nombre: 'ShowBox', grupo: 'especiales' },
+  { id: 'moviebox', nombre: 'MovieBox', grupo: 'especiales' },
+  { id: 'vidfast', nombre: 'VidFast', grupo: 'especiales' },
+  { id: 'vidlink', nombre: 'VidLink', grupo: 'especiales' },
+  { id: 'areadocumental', nombre: 'Area Documental', grupo: 'especiales' },
+  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' },
+  { id: 'rcn', nombre: 'RCN', grupo: 'especiales' }
+];
 
-    function syncUI() {
-      // Prioridad y fila de torrents según disableTorrents
-      document.getElementById('priorityContainer').style.display = (!state.disableTorrents) ? 'block' : 'none';
-      const rowTorrent = document.getElementById('rowHackstoreTorrent');
-      if (rowTorrent) {
-        rowTorrent.style.display = state.disableTorrents ? 'none' : 'flex';
-      }
+const CALIDADES = [
+  ['4K', '2160p Ultra HD'],
+  ['1080p', 'Full HD Recomendado'],
+  ['720p', 'HD Estándar'],
+  ['SD', '480p y menos'],
+  ['Desconocida', 'Sin calidad indicada']
+];
 
-      // Toggles de la matriz de proveedores (Películas / Series)
-      document.querySelectorAll('.btn-toggle-type').forEach(btn => {
-        const prov = btn.dataset.prov;
-        const type = btn.dataset.type;
-        if (!prov || !type) return;
+const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span>';
 
-        const isChecked = state.providers[type]?.includes(prov);
-        btn.classList.toggle('active', Boolean(isChecked));
-      });
+// Estado de configuración
+let config = {
+  proveedores: null, // null = todos activos
+  calidades: ['4k', '1080p', '720p'],
+  disableTorrents: false,
+  filtrarMuertos: true
+};
 
-      // Checkboxes individuales (calidad, prioridad, disableTorrents)
-      document.querySelectorAll('.card-checkbox').forEach(card => {
-        const type = card.dataset.type;
-        const val = card.dataset.val;
+// Cargar config previa si existe en URL o localStorage
+try {
+  const saved = localStorage.getItem('tacit_config');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (parsed) config = { ...config, ...parsed };
+  }
+} catch(_) {}
 
-        if (type === 'priority') {
-          card.classList.toggle('active', state.priority === val);
-        } else if (type === 'quality') {
-          card.classList.toggle('active', state.qualities.includes(val));
-        } else if (type === 'disableTorrents') {
-          card.classList.toggle('active', Boolean(state.disableTorrents));
-        }
-      });
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-      // Sliders
-      const webPerProvSlider = document.getElementById('webPerProvSlider');
-      const webPerProvLabel = document.getElementById('webPerProvLabel');
-      webPerProvSlider.value = state.maxWebStreamsPerProvider;
-      webPerProvLabel.textContent = state.maxWebStreamsPerProvider === 1 ? '1 por sitio' : state.maxWebStreamsPerProvider + ' por sitio';
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t;
+  el.classList.add('ver');
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove('ver'), 2000);
+}
 
-      const webTotalSlider = document.getElementById('webTotalSlider');
-      const webTotalLabel = document.getElementById('webTotalLabel');
-      webTotalSlider.value = state.maxTotalWebStreams;
-      webTotalLabel.textContent = state.maxTotalWebStreams + ' en total';
+const activos = () => (config.proveedores === null ? PROVEEDORES_LISTA.map(p => p.id) : config.proveedores);
 
-      updateUrls();
-    }
+function generarUrlManifest() {
+  const act = activos();
+  const cfgPayload = {
+    providers: act.length === PROVEEDORES_LISTA.length ? null : act,
+    qualities: config.calidades.map(q => q.toLowerCase()),
+    disableTorrents: config.disableTorrents,
+    maxWebStreamsPerProvider: 3,
+    maxTotalWebStreams: 8
+  };
 
-    // Presets rápidos de proveedores
-    document.getElementById('btnPresetRecommended').addEventListener('click', () => {
-      state.providers.movie = ['cinecalidad', 'cuevana', 'pelisplus'];
-      state.providers.series = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
-      setActiveQuickPreset('btnPresetRecommended');
-      applySavedOrderToDOM();
-      syncUI();
-    });
+  const jsonStr = JSON.stringify(cfgPayload);
+  let b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+  return BASE_URL + '/' + encodeURIComponent(b64) + '/manifest.json';
+}
 
-    document.getElementById('btnPresetMoviesOnly').addEventListener('click', () => {
-      state.providers.movie = ['cinecalidad', 'cuevana', 'pelisplus'];
-      state.providers.series = [];
-      setActiveQuickPreset('btnPresetMoviesOnly');
-      applySavedOrderToDOM();
-      syncUI();
-    });
+function pintarResumen() {
+  const n = activos().length;
+  $('num-fuentes').textContent = n + '/' + PROVEEDORES_LISTA.length;
+  $('num-calidad').textContent = config.calidades.length;
+  $('chip-sitios').textContent = n + ' de ' + PROVEEDORES_LISTA.length;
+  $('chip-calidades').textContent = config.calidades.join(' · ') || 'Sin calidades';
+  $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
 
-    document.getElementById('btnPresetSeriesOnly').addEventListener('click', () => {
-      state.providers.movie = [];
-      state.providers.series = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
-      setActiveQuickPreset('btnPresetSeriesOnly');
-      applySavedOrderToDOM();
-      syncUI();
-    });
+  const manifestUrl = generarUrlManifest();
+  $('instalar').href = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
+  $('instalar-web').href = 'https://web.stremio.com/#/addons?addon=' + encodeURIComponent(manifestUrl);
+}
 
-    document.getElementById('btnPresetAll').addEventListener('click', () => {
-      state.providers.movie = [...DEFAULT_MOVIES];
-      state.providers.series = [...DEFAULT_SERIES];
-      setActiveQuickPreset('btnPresetAll');
-      applySavedOrderToDOM();
-      syncUI();
-    });
+function guardar() {
+  pintarResumen();
+  try {
+    localStorage.setItem('tacit_config', JSON.stringify(config));
+  } catch(_) {}
+  toast('Cambios guardados ✓');
+}
 
-    function setActiveQuickPreset(id) {
-      document.querySelectorAll('.btn-quick-preset').forEach(b => b.classList.remove('active-quick'));
-      const target = document.getElementById(id);
-      if (target) target.classList.add('active-quick');
-    }
+function pintarFuentes() {
+  const act = new Set(activos());
+  $('lista-fuentes').innerHTML = Object.entries(GRUPOS).map(([g, [nombre, desc]]) => {
+    const lista = PROVEEDORES_LISTA.filter(p => p.grupo === g);
+    if (!lista.length) return '';
+    const on = lista.filter(p => act.has(p.id)).length;
+    return '<div class="tarjeta grupo-prov">' +
+      '<header><h3>' + nombre + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
+      '<div class="botones-grupo"><button class="pastilla" data-todos="' + g + '">Todos</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
+      '<div class="opciones">' +
+      lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + '</div>').join('') +
+      '</div></div>';
+  }).join('');
+}
 
-    // Click en los botones de tipo (Películas / Series) de cada proveedor
-    document.querySelectorAll('.btn-toggle-type').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.classList.contains('na')) return;
-        const prov = btn.dataset.prov;
-        const type = btn.dataset.type; // 'movie' | 'series'
-        if (!prov || !type) return;
+function cambiarProveedores(ids, encender) {
+  const act = new Set(activos());
+  ids.forEach(id => encender ? act.add(id) : act.delete(id));
+  config.proveedores = act.size === PROVEEDORES_LISTA.length ? null : [...act];
+  pintarFuentes();
+  guardar();
+}
 
-        btn.classList.toggle('active');
-        document.querySelectorAll('.btn-quick-preset').forEach(b => b.classList.remove('active-quick'));
-        updateProviderOrderFromDOM();
-        syncUI();
-      });
-    });
+$('lista-fuentes').addEventListener('click', (e) => {
+  const op = e.target.closest('[data-prov]');
+  if (op) {
+    return cambiarProveedores([op.dataset.prov], !op.classList.contains('on'));
+  }
+  const todos = e.target.dataset.todos;
+  const ninguno = e.target.dataset.ninguno;
+  if (todos) {
+    cambiarProveedores(PROVEEDORES_LISTA.filter(p => p.grupo === todos).map(p => p.id), true);
+  } else if (ninguno) {
+    cambiarProveedores(PROVEEDORES_LISTA.filter(p => p.grupo === ninguno).map(p => p.id), false);
+  }
+});
 
-    // Drag and Drop & flechas de orden
-    let draggedRow = null;
-    const providerListEl = document.getElementById('providersList');
+function pintarCalidades() {
+  const cSet = new Set(config.calidades.map(c => c.toLowerCase()));
+  $('lista-calidades').innerHTML = CALIDADES.map(([c, d]) => {
+    const isOn = cSet.has(c.toLowerCase());
+    return '<div class="opcion grande ' + (isOn ? 'on' : '') + '" data-cal="' + c + '">' +
+      CHECK + '<div><b>' + (c === 'Desconocida' ? 'Calidad desconocida' : c) + '</b><small>' + d + '</small></div></div>';
+  }).join('');
 
-    document.querySelectorAll('#providersList .provider-row').forEach(row => {
-      row.addEventListener('dragstart', (e) => {
-        draggedRow = row;
-        row.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
+  $('op-muertos').classList.toggle('on', config.filtrarMuertos);
+  $('op-torrents').classList.toggle('on', config.disableTorrents);
+}
 
-      row.addEventListener('dragend', () => {
-        if (draggedRow) draggedRow.classList.remove('dragging');
-        document.querySelectorAll('#providersList .provider-row').forEach(r => r.classList.remove('drag-over'));
-        draggedRow = null;
-        updateProviderOrderFromDOM();
-      });
+$('lista-calidades').addEventListener('click', (e) => {
+  const op = e.target.closest('[data-cal]');
+  if (!op) return;
+  const c = op.dataset.cal;
+  const cLower = c.toLowerCase();
+  let arr = config.calidades.map(x => x.toLowerCase());
+  if (arr.includes(cLower)) {
+    arr = arr.filter(x => x !== cLower);
+  } else {
+    arr.push(cLower);
+  }
+  if (!arr.length) {
+    return toast('Deja al menos una calidad marcada');
+  }
+  config.calidades = arr;
+  pintarCalidades();
+  guardar();
+});
 
-      row.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        if (draggedRow && draggedRow !== row) {
-          row.classList.add('drag-over');
-        }
-      });
+$('op-muertos').addEventListener('click', () => {
+  config.filtrarMuertos = !config.filtrarMuertos;
+  pintarCalidades();
+  guardar();
+});
 
-      row.addEventListener('dragleave', () => {
-        row.classList.remove('drag-over');
-      });
+$('op-torrents').addEventListener('click', () => {
+  config.disableTorrents = !config.disableTorrents;
+  pintarCalidades();
+  guardar();
+});
 
-      row.addEventListener('drop', (e) => {
-        e.preventDefault();
-        row.classList.remove('drag-over');
-        if (draggedRow && draggedRow !== row) {
-          const allRows = Array.from(providerListEl.querySelectorAll('.provider-row'));
-          const draggedIdx = allRows.indexOf(draggedRow);
-          const targetIdx = allRows.indexOf(row);
+function mostrarVista(v) {
+  if (!$('v-' + v)) v = 'inicio';
+  document.querySelectorAll('.vista').forEach(s => s.classList.toggle('activa', s.id === 'v-' + v));
+  document.querySelectorAll('.item[data-vista]').forEach(b => b.classList.toggle('activo', b.dataset.vista === v));
+  $('menu').classList.remove('abierto');
+  $('cortina').classList.remove('ver');
+  window.scrollTo(0, 0);
+}
 
-          if (draggedIdx < targetIdx) {
-            providerListEl.insertBefore(draggedRow, row.nextSibling);
-          } else {
-            providerListEl.insertBefore(draggedRow, row);
-          }
-          updateProviderOrderFromDOM();
-        }
-      });
-    });
+document.querySelectorAll('.item[data-vista]').forEach(b => b.addEventListener('click', () => mostrarVista(b.dataset.vista)));
+document.addEventListener('click', (e) => {
+  const ir = e.target.closest('[data-ir]');
+  if (ir) mostrarVista(ir.dataset.ir);
+});
 
-    // Botones flecha ▲ y ▼
-    document.addEventListener('click', (e) => {
-      const upBtn = e.target.closest('.btn-move-up');
-      if (upBtn) {
-        const row = upBtn.closest('.provider-row');
-        const prev = row.previousElementSibling;
-        if (prev && prev.classList.contains('provider-row')) {
-          row.parentNode.insertBefore(row, prev);
-          updateProviderOrderFromDOM();
-        }
-        return;
-      }
-      const downBtn = e.target.closest('.btn-move-down');
-      if (downBtn) {
-        const row = downBtn.closest('.provider-row');
-        const next = row.nextElementSibling;
-        if (next && next.classList.contains('provider-row')) {
-          row.parentNode.insertBefore(next, row);
-          updateProviderOrderFromDOM();
-        }
-        return;
-      }
-    });
+$('abrir-menu').addEventListener('click', () => { $('menu').classList.add('abierto'); $('cortina').classList.add('ver'); });
+$('cortina').addEventListener('click', () => { $('menu').classList.remove('abierto'); $('cortina').classList.remove('ver'); });
 
-    // Checkboxes interaction (calidad, prioridad, disableTorrents)
-    document.querySelectorAll('.card-checkbox').forEach(card => {
-      card.addEventListener('click', () => {
-        const type = card.dataset.type;
-        const val = card.dataset.val;
+async function copiar(texto, aviso) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    toast(aviso);
+  } catch(e) {
+    prompt('Copia este enlace:', texto);
+  }
+}
 
-        if (type === 'priority') {
-          document.querySelectorAll('[data-type="priority"]').forEach(c => c.classList.remove('active'));
-          card.classList.add('active');
-          state.priority = val;
-        } else if (type === 'quality') {
-          card.classList.toggle('active');
-          if (card.classList.contains('active')) {
-            if (!state.qualities.includes(val)) state.qualities.push(val);
-          } else {
-            state.qualities = state.qualities.filter(q => q !== val);
-          }
-          if (state.qualities.length === 0) {
-            state.qualities = ['1080p'];
-          }
-        } else if (type === 'disableTorrents') {
-          state.disableTorrents = !state.disableTorrents;
-        }
+$('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL de TACIT STR copiada ✓'));
+$('copiar-plugin').addEventListener('click', () => copiar($('url-plugin').textContent, 'Enlace de Nuvio copiado ✓'));
 
-        syncUI();
-      });
-    });
-
-    // Sliders listeners
-    document.getElementById('webPerProvSlider').addEventListener('input', (e) => {
-      state.maxWebStreamsPerProvider = parseInt(e.target.value, 10);
-      document.getElementById('webPerProvLabel').textContent = state.maxWebStreamsPerProvider === 1 ? '1 por sitio' : state.maxWebStreamsPerProvider + ' por sitio';
-      updateUrls();
-    });
-
-    document.getElementById('webTotalSlider').addEventListener('input', (e) => {
-      state.maxTotalWebStreams = parseInt(e.target.value, 10);
-      document.getElementById('webTotalLabel').textContent = state.maxTotalWebStreams + ' en total';
-      updateUrls();
-    });
-
-    function getEncodedConfig() {
-      return btoa(JSON.stringify(state));
-    }
-
-    function updateUrls() {
-      const configB64 = getEncodedConfig();
-      const manifestUrl = \`\${baseUrl}/\${configB64}/manifest.json\`;
-      const stremioProtocolUrl = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
-
-      document.getElementById('installBtn').setAttribute('href', stremioProtocolUrl);
-      window.currentManifestUrl = manifestUrl;
-    }
-
-    // Copiar al portapapeles
-    document.getElementById('copyBtn').addEventListener('click', () => {
-      const configB64 = getEncodedConfig();
-      const manifestUrl = \`\${baseUrl}/\${configB64}/manifest.json\`;
-      navigator.clipboard.writeText(manifestUrl).then(() => {
-        const toast = document.getElementById('toast');
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 2500);
-      });
-    });
-
-    // Iniciar UI
-    applySavedOrderToDOM();
-    syncUI();
-  </script>
+// Iniciar interfaz
+pintarFuentes();
+pintarCalidades();
+pintarResumen();
+mostrarVista(location.hash.slice(1) || 'inicio');
+</script>
 </body>
 </html>`;
 }

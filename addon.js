@@ -78,7 +78,12 @@ function parseConfig(raw) {
     }
     const cfg = { ...DEFAULT_CONFIG, ...parsed };
 
-    if (!cfg.providers || typeof cfg.providers !== 'object' || Array.isArray(cfg.providers)) {
+    if (Array.isArray(cfg.providers)) {
+      cfg.providers = {
+        movie: [...cfg.providers],
+        series: [...cfg.providers]
+      };
+    } else if (!cfg.providers || typeof cfg.providers !== 'object') {
       cfg.providers = {
         movie: [...DEFAULT_CONFIG.providers.movie],
         series: [...DEFAULT_CONFIG.providers.series]
