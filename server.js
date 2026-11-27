@@ -3,7 +3,6 @@ const path = require('path');
 const { getRouter } = require('stremio-addon-sdk');
 const { addonInterface, manifest, resolveStreams, parseConfig, DEFAULT_CONFIG } = require('./addon');
 const { renderConfigPage } = require('./views/configure');
-const { authenticateOrCreate, updateUserConfig, getUserConfigByToken } = require('./services/config_store');
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -13,25 +12,6 @@ app.use(express.json());
 // Logo estático
 app.get('/logo.png', (req, res) => {
   res.sendFile(path.join(__dirname, 'logo.png'));
-});
-
-// --- API DE PERFILES Y SINCRONIZACIÓN EN VIVO ---
-app.post('/api/auth/login', (req, res) => {
-  const { username, pin } = req.body || {};
-  const result = authenticateOrCreate(username, pin);
-  res.json(result);
-});
-
-app.post('/api/user/config', (req, res) => {
-  const { token, config } = req.body || {};
-  const result = updateUserConfig(token, config);
-  res.json(result);
-});
-
-app.get('/api/user/:token', (req, res) => {
-  const data = getUserConfigByToken(req.params.token);
-  if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
-  res.json(data);
 });
 
 // --- ENDPOINTS CONFIGURABLES DE STREMIO ---

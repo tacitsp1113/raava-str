@@ -1,5 +1,6 @@
 /**
- * Plantilla del panel interactivo de configuración de TACIT STR con soporte multi-perfil (Usuario + PIN)
+ * Panel interactivo de configuración de TACIT STR
+ * Arquitectura sin estado (Stateless): la configuración se codifica directamente en el manifiesto de Stremio.
  */
 
 function renderConfigPage(initialConfig = null, baseUrl = '') {
@@ -28,7 +29,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   a { color: inherit; text-decoration: none; }
   button { font-family: inherit; }
   .app { position: relative; display: grid; grid-template-columns: 270px 1fr; gap: 18px; padding: 18px; min-height: 100vh; }
-  aside { background: rgba(9,16,31,0.96); border: 1.5px solid var(--borde); border-radius: 24px; display: flex; flex-direction: column; position: sticky; top: 18px; height: calc(100vh - 36px); overflow-y: auto; padding: 18px 14px 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+  aside { background: rgba(9,16,31,0.96); border: 1.5px solid var(--borde); border-radius: 24px; display: flex; flex-direction: column; position: sticky; top: 18px; height: calc(100vh - 36px); overflow-y: auto; padding: 18px 14px 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
   .marca { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 14px; border-bottom: 1px solid var(--borde); margin-bottom: 14px; }
   .marca img { width: 50px; height: 50px; border-radius: 16px; box-shadow: 0 0 35px rgba(0,210,255,0.45); object-fit: cover; }
   .marca b { font-size: 19px; font-weight: 900; color: var(--cian); letter-spacing: -0.5px; text-shadow: 0 0 20px rgba(0,210,255,0.4); }
@@ -40,12 +41,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .item.activo { color: #fff; background: linear-gradient(90deg, rgba(0,210,255,0.25), rgba(0,210,255,0.05)); }
   .item.activo .ico { background: var(--cian); box-shadow: 0 0 20px rgba(0,210,255,0.6); color: #000; }
   .item .num { margin-left: auto; font-size: 12px; color: var(--tenue); font-weight: 700; }
-  .pie-menu { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--borde); }
-  .yo { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; }
-  .yo .avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--cian-borde); background: #111e3b; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: var(--cian); }
-  .yo div { min-width: 0; }
-  .yo b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f8fafc; }
-  .yo small { color: var(--tenue); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-family: monospace; }
+  .pie-menu { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--borde); font-size: 12px; color: var(--tenue); text-align: center; }
+  .pie-menu b { color: var(--cian); font-size: 13px; display: block; margin-bottom: 2px; }
   main { min-width: 0; }
   .movil { display: none; align-items: center; justify-content: space-between; padding: 6px 4px 14px; }
   .movil .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--cian); font-size: 18px; }
@@ -114,27 +111,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(120px); background: #0e172e; border: 1px solid var(--cian-borde); color: #f8fafc; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: transform .25s, opacity .25s; z-index: 200; opacity: 0; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
   .toast.ver { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-  /* BARRA SUPERIOR DE PERFIL ACTIVO (CONFIRMACIÓN VISUAL) */
-  .barra-perfil { display: none; align-items: center; justify-content: space-between; gap: 14px; background: rgba(14,23,46,0.95); border: 1.5px solid var(--cian-borde); border-radius: 20px; padding: 12px 18px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); flex-wrap: wrap; }
-  .perfil-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .badge-conectado { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 4px 10px; border-radius: 999px; }
-  .dot-verde { width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981; }
-  .token-pill { font-family: monospace; font-size: 11px; background: #060a14; border: 1px solid var(--borde-fuerte); padding: 4px 10px; border-radius: 8px; color: #7dd3fc; }
-  .btn-logout { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px; cursor: pointer; transition: all .15s; }
-  .btn-logout:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.6); color: #fff; }
-
-  /* MODAL DE PERFIL / LOGIN */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(3,6,14,0.92); backdrop-filter: blur(10px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal-overlay.oculto { display: none; }
-  .modal-card { max-width: 440px; width: 100%; background: #09101f; border: 1.5px solid var(--cian-borde); border-radius: 26px; padding: 34px 26px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 40px rgba(0,210,255,0.2); }
-  .modal-card h2 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-  .modal-card p { font-size: 14px; color: var(--suave); margin-bottom: 22px; line-height: 1.5; }
-  .campo { text-align: left; margin-bottom: 16px; }
-  .campo label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
-  .campo input { width: 100%; background: #040813; border: 1.5px solid var(--borde); border-radius: 12px; padding: 12px 14px; color: #fff; font-size: 14px; font-family: inherit; transition: border-color .15s; }
-  .campo input:focus { outline: none; border-color: var(--cian); }
-  .btn-submit { width: 100%; margin-top: 10px; }
-
   .cortina { display: none; }
   @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; padding: 12px; }
@@ -150,27 +126,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 </head>
 <body>
 
-<!-- MODAL DE ACCESO A PERFIL (USUARIO + PIN) -->
-<div class="modal-overlay" id="modal-login">
-  <div class="modal-card">
-    <div class="marca" style="border:none;margin-bottom:0;padding-bottom:12px;"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
-    <h2>Acceso al Panel</h2>
-    <p>Ingresa tu usuario y PIN para cargar tu configuración.</p>
-    <form id="form-login" onsubmit="return false;">
-      <div class="campo">
-        <label>Usuario:</label>
-        <input type="text" id="inp-user" placeholder="Ej: TV-Sala" autocomplete="username" required>
-      </div>
-      <div class="campo">
-        <label>PIN:</label>
-        <input type="password" id="inp-pin" placeholder="Ej: 1234" autocomplete="current-password" required>
-      </div>
-      <button type="submit" class="btn btn-rojo btn-submit" id="btn-entrar">Ingresar</button>
-      <div id="login-error" style="color:#fca5a5;font-size:13px;margin-top:12px;display:none;"></div>
-    </form>
-  </div>
-</div>
-
 <div class="app" id="app">
   <div class="cortina" id="cortina"></div>
   <aside id="menu">
@@ -183,14 +138,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     <a class="item" href="/status" target="_blank"><span class="ico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span>Diagnóstico</a>
 
     <div class="pie-menu">
-      <div class="yo">
-        <div class="avatar" id="avatar-user">T</div>
-        <div>
-          <b id="perfil-nombre">TACIT STR</b>
-          <small id="perfil-token">ID de perfil</small>
-          <button type="button" class="enlace" id="btn-cambiar-perfil" style="font-size:11px;margin-top:2px;">Cambiar usuario</button>
-        </div>
-      </div>
+      <b>TACIT STR</b>
+      <span>v2.0 · Addon Latino</span>
     </div>
   </aside>
 
@@ -200,24 +149,12 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <button class="icono-btn" id="abrir-menu" aria-label="Menú"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
     </div>
     <div class="contenido">
-      <!-- BARRA SUPERIOR DE PERFIL ACTIVO (VALIDACIÓN VISUAL) -->
-      <div class="barra-perfil" id="barra-perfil">
-        <div class="perfil-info">
-          <span class="badge-conectado"><span class="dot-verde"></span> ACTIVO</span>
-          <span style="font-size:14px;color:#cbd5e1">Usuario: <b id="top-nombre" style="color:var(--cian);font-size:15px;">...</b></span>
-          <span class="token-pill" id="top-token">tacit_...</span>
-        </div>
-        <div>
-          <button type="button" class="btn-logout" id="btn-logout">Cerrar sesión</button>
-        </div>
-      </div>
-
       <!-- VISTA INICIO -->
       <section class="vista activa" id="v-inicio">
         <div class="bienvenida">
           <small>Configuración del Addon</small>
           <h2>Panel de Control</h2>
-          <p>Configura las fuentes y calidades deseadas. Tus preferencias se sincronizan automáticamente con tu reproductor.</p>
+          <p>Configura las fuentes, calidades y enlaces deseados. Al ajustar tus opciones, haz clic en Instalar para aplicar los cambios a tu reproductor.</p>
           <div class="acciones">
             <a class="btn btn-rojo" id="instalar" href="#"><svg viewBox="0 0 24 24"><path d="m6 4 14 8-14 8z"></path></svg>Instalar en Stremio</a>
             <button class="btn btn-claro" id="copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>Copiar URL del addon</button>
@@ -239,7 +176,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <!-- VISTA FUENTES / SITIOS -->
       <section class="vista" id="v-fuentes">
         <div class="encabezado"><h1>Sitios</h1><p>Elige en qué páginas busca tu addon. Entre más sitios activos, más enlaces tendrás disponibles.</p></div>
-        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b>, con audio Latino preferente y sin bloqueos de IP.</div></div>
+        <div class="aviso"><span>ⓘ</span><div>Todos los raspadores entregan enlaces limpios bajo el nombre <b>TACIT STR · WEB</b> o <b>TACIT STR 🧲</b>, con audio Latino preferente y sin bloqueos de IP.</div></div>
         <div id="lista-fuentes"></div>
       </section>
 
@@ -249,7 +186,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="tarjeta"><div class="opciones" id="lista-calidades"></div></div>
         <div class="tarjeta">
           <h3>🧲 Enlaces Torrents (P2P 4K / 1080p)</h3>
-          <p style="margin-bottom:14px">Permite buscar y reproducir enlaces torrent para máxima fidelidad 4K/1080p.</p>
+          <p style="margin-bottom:14px">Permite buscar y reproducir enlaces torrent para máxima fidelidad 4K/1080p con recuento de personas transmitiendo (semillas).</p>
           <div class="opciones">
             <div class="opcion grande on" id="op-torrents">
               <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
@@ -263,7 +200,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
           <div class="opciones">
             <div class="opcion grande on" id="op-muertos">
               <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
-              <div><b>Ocultar links muertos y servidores con bloqueo de IP</b><small>Recomendado (Vimeos y VOE)</small></div>
+              <div><b>Ocultar links muertos y servidores con bloqueo de IP</b><small>Recomendado (Vimeos y VOE directos)</small></div>
             </div>
           </div>
         </div>
@@ -271,16 +208,19 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
       <!-- VISTA NUVIO -->
       <section class="vista" id="v-nuvio">
-        <div class="encabezado"><h1>Plugin de Nuvio</h1><p>Para la aplicación Nuvio en celular Android y Nuvio TV.</p></div>
+        <div class="encabezado"><h1>Plugin de Nuvio</h1><p>Usa TACIT STR directamente en la aplicación Nuvio en Android TV o teléfono.</p></div>
         <div class="tarjeta">
-          <h3>Instálalo en Nuvio</h3>
+          <h3>Repositorio del Plugin</h3>
           <p>Usa este enlace para agregar el plugin oficial de TACIT STR en Nuvio:</p>
           <div class="caja-url"><code id="url-plugin">https://raw.githubusercontent.com/tacitsp1113/raava-str/main/pluggin-latino-main/manifest.json</code><button class="btn btn-rojo" id="copiar-plugin">Copiar</button></div>
-          <ol class="pasos" style="margin-top:20px">
-            <li>Abre <b>Nuvio</b> y entra a <b>Ajustes</b>.</li>
-            <li>Busca la sección de <b>Plugins</b> y presiona <b>Agregar repositorio</b>.</li>
-            <li>Pega el enlace que copiaste y pulsa <b>Guardar</b>.</li>
-            <li>Activa los sitios que desees y disfruta del contenido en Latino.</li>
+        </div>
+        <div class="tarjeta">
+          <h3>Cómo instalarlo en Nuvio</h3>
+          <ol class="pasos">
+            <li>Abre <b>Nuvio</b> en tu dispositivo.</li>
+            <li>Entra en <b>Ajustes</b> o <b>Plugins / Complementos</b>.</li>
+            <li>Selecciona <b>Agregar repositorio</b> o <b>Instalar desde URL</b>.</li>
+            <li>Pega el enlace de arriba y guarda los cambios.</li>
           </ol>
         </div>
       </section>
@@ -291,101 +231,100 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 <div class="toast" id="toast"></div>
 
 <script>
-const BASE_URL = ${JSON.stringify(baseUrl)} || window.location.origin;
+const PROVEEDORES_LISTA = [
+  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'peliculas' },
+  { id: 'cuevana', nombre: 'Cuevana', grupo: 'peliculas' },
+  { id: 'cuevana3', nombre: 'Cuevana 3', grupo: 'peliculas' },
+  { id: 'cuevana8', nombre: 'Cuevana 8', grupo: 'peliculas' },
+  { id: 'cuevanabiz', nombre: 'Cuevana Biz', grupo: 'peliculas' },
+  { id: 'pelisplus', nombre: 'PelisPlus', grupo: 'peliculas' },
+  { id: 'pelisplushd', nombre: 'PelisPlus HD', grupo: 'peliculas' },
+  { id: 'pelispluslat', nombre: 'PelisPlus Lat', grupo: 'peliculas' },
+  { id: 'pelispluslatino', nombre: 'PelisPlus Latino', grupo: 'peliculas' },
+  { id: 'pelisplusto', nombre: 'PelisPlus TO', grupo: 'peliculas' },
+  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'peliculas' },
+  { id: 'pelisflix2', nombre: 'PelisFlix 2', grupo: 'peliculas' },
+  { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'peliculas' },
+  { id: 'series24', nombre: 'Series24', grupo: 'peliculas' },
+  { id: 'repelis', nombre: 'RePelis', grupo: 'peliculas' },
+  { id: 'repelishd', nombre: 'RePelis HD', grupo: 'peliculas' },
+  { id: 'pedropolis', nombre: 'Pedropolis', grupo: 'peliculas' },
+  { id: 'gnula', nombre: 'Gnula', grupo: 'peliculas' },
+  { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasySeries', grupo: 'peliculas' },
+  { id: 'miradetodo', nombre: 'MiraDeTodo', grupo: 'peliculas' },
+  { id: 'hackstore', nombre: 'HackStore', grupo: 'peliculas' },
+  { id: '4khdhub', nombre: '4kHDHub (4K/P2P)', grupo: 'peliculas' },
+  { id: 'hdhub4u', nombre: 'HDHub4u', grupo: 'peliculas' },
+  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR)', grupo: 'peliculas' },
+  { id: 'showbox', nombre: 'ShowBox', grupo: 'peliculas' },
+  { id: 'videasy', nombre: 'Videasy', grupo: 'peliculas' },
+  { id: 'vidfast', nombre: 'VidFast', grupo: 'peliculas' },
+  { id: 'vidlink', nombre: 'VidLink', grupo: 'peliculas' },
+  { id: 'vidsrc', nombre: 'VidSrc', grupo: 'peliculas' },
+  { id: 'vidsrcicu', nombre: 'VidSrc ICU', grupo: 'peliculas' },
+  { id: 'vidsrcto', nombre: 'VidSrc TO', grupo: 'peliculas' },
+  { id: 'animeflv', nombre: 'AnimeFLV', grupo: 'anime' },
+  { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime' },
+  { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
+  { id: 'monoschinos', nombre: 'MonosChinos', grupo: 'anime' },
+  { id: 'animeonline', nombre: 'AnimeOnline', grupo: 'anime' },
+  { id: 'animefenix', nombre: 'AnimeFenix', grupo: 'anime' },
+  { id: 'animelatinohd', nombre: 'AnimeLatinoHD', grupo: 'anime' },
+  { id: 'animeshd', nombre: 'AnimesHD', grupo: 'anime' },
+  { id: 'luciferdonghua', nombre: 'LuciferDonghua', grupo: 'donghua' },
+  { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua' },
+  { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'doramas' },
+  { id: 'doramasmp4', nombre: 'DoramasMP4', grupo: 'doramas' },
+  { id: 'estrenosdoramas', nombre: 'EstrenosDoramas', grupo: 'doramas' },
+  { id: 'lacartoons', nombre: 'LACartoons (Retro)', grupo: 'caricaturas' },
+  { id: 'tokyvideo', nombre: 'TokyVideo', grupo: 'especiales' },
+  { id: 'playdede', nombre: 'PlayDede', grupo: 'especiales' },
+  { id: 'sololatino', nombre: 'SoloLatino', grupo: 'especiales' },
+  { id: 'verlatino', nombre: 'VerLatino', grupo: 'especiales' },
+  { id: 'cinelatino', nombre: 'CineLatino', grupo: 'especiales' },
+  { id: 'cinecalidadlatam', nombre: 'CineCalidad Latam', grupo: 'especiales' },
+  { id: 'latamstream', nombre: 'LatamStream', grupo: 'especiales' }
+];
 
 const GRUPOS = {
-  general: ['Películas y series', 'Los principales'],
-  anime: ['Anime', 'Latino y subtitulado'],
-  donghua: ['Donghua', 'Animación china'],
-  dorama: ['Doramas', 'Series asiáticas'],
-  caricaturas: ['Caricaturas', 'Clásicas y nuevas'],
-  especiales: ['Multi / 4K / Internacional', 'Fuentes especiales']
+  peliculas: ['Películas y series', 'Cine, series y estrenos'],
+  anime: ['Anime', 'Animación japonesa en audio latino y subtitulado'],
+  donghua: ['Donghua', 'Animación china subtitulada'],
+  doramas: ['Doramas', 'Dramas asiáticos'],
+  caricaturas: ['Caricaturas y retro', 'Series animadas clásicas de TV'],
+  especiales: ['Especiales y respaldo', 'Fuentes adicionales de streaming directo']
 };
 
-const PROVEEDORES_LISTA = [
-  // Películas y Series
-  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'general' },
-  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'general' },
-  { id: 'allcalidad', nombre: 'AllCalidad', grupo: 'general' },
-  { id: 'cuevana', nombre: 'Cuevana', grupo: 'general' },
-  { id: 'pelispedia', nombre: 'PelisPedia', grupo: 'general' },
-  { id: 'pelisplus', nombre: 'PelisPlus', grupo: 'general' },
-  { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'general' },
-  { id: 'lamovie', nombre: 'LaMovie', grupo: 'general' },
-  { id: 'hackstore', nombre: 'HackStore', grupo: 'general' },
-  { id: 'peliserieshoy', nombre: 'PelisSeriesHoy', grupo: 'general' },
-  { id: 'seriesmetro', nombre: 'SeriesMetro', grupo: 'general' },
-  { id: 'pelisgo', nombre: 'PelisGo', grupo: 'general' },
-  { id: 'sololatino', nombre: 'SoloLatino', grupo: 'general' },
-  { id: 'tioplus', nombre: 'TioPlus', grupo: 'general' },
-  { id: 'videasy', nombre: 'VidEasy', grupo: 'general' },
-  { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasYSeries', grupo: 'general' },
-  { id: 'peliculasflix', nombre: 'PeliculasFlix', grupo: 'general' },
-  { id: 'vitaminagg', nombre: 'VitaminaGG', grupo: 'general' },
-  { id: 'vimeus', nombre: 'Vimeus', grupo: 'general' },
-  { id: 'homecine', nombre: 'HomeCine', grupo: 'general' },
-  { id: 'allpeliculasse', nombre: 'AllpeliculasSE', grupo: 'general' },
-  { id: 'plutotv', nombre: 'Pluto TV', grupo: 'general' },
-  { id: 'gnula', nombre: 'Gnula', grupo: 'general' },
-  { id: 'pelishax', nombre: 'PelisHax', grupo: 'general' },
-  { id: 'unlimplay', nombre: 'UnlimPlay', grupo: 'general' },
-  { id: 'cinehdplus', nombre: 'CineHdPlus', grupo: 'general' },
-
-  // Anime
-  { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
-  { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime' },
-  { id: 'animeav1', nombre: 'AnimeAV1', grupo: 'anime' },
-  { id: 'animejl', nombre: 'AnimeJL', grupo: 'anime' },
-  { id: 'latanime', nombre: 'LatAnime', grupo: 'anime' },
-  { id: 'monoschinos', nombre: 'Monoschinos', grupo: 'anime' },
-  { id: 'katanime', nombre: 'KatAnime', grupo: 'anime' },
-  { id: 'henaojara', nombre: 'Henaojara', grupo: 'anime' },
-
-  // Donghua
-  { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua' },
-  { id: 'donghualife', nombre: 'DonghuaLife', grupo: 'donghua' },
-  { id: 'reydonghua', nombre: 'ReyDonghua', grupo: 'donghua' },
-
-  // Doramas
-  { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'dorama' },
-  { id: 'doramasyt', nombre: 'DoramasYT', grupo: 'dorama' },
-
-  // Caricaturas
-  { id: 'lacartoons', nombre: 'LACartoons', grupo: 'caricaturas' },
-  { id: 'danimados', nombre: 'Danimados', grupo: 'caricaturas' },
-
-  // Fuentes especiales / 4K / Multi
-  { id: 'embed69', nombre: 'Embed69', grupo: 'especiales' },
-  { id: '4khdhub', nombre: '4KHDHub', grupo: 'especiales' },
-  { id: 'hdhub4u', nombre: 'HDHub4u', grupo: 'especiales' },
-  { id: 'uhdmovies', nombre: 'UHDMovies', grupo: 'especiales' },
-  { id: 'showbox', nombre: 'ShowBox', grupo: 'especiales' },
-  { id: 'moviebox', nombre: 'MovieBox', grupo: 'especiales' },
-  { id: 'vidfast', nombre: 'VidFast', grupo: 'especiales' },
-  { id: 'vidlink', nombre: 'VidLink', grupo: 'especiales' },
-  { id: 'areadocumental', nombre: 'Area Documental', grupo: 'especiales' },
-  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' },
-  { id: 'rcn', nombre: 'RCN', grupo: 'especiales' }
-];
-
 const CALIDADES = [
-  ['4K', '2160p Ultra HD'],
-  ['1080p', 'Full HD Recomendado'],
-  ['720p', 'HD Estándar'],
-  ['SD', '480p y menos'],
-  ['Desconocida', 'Sin calidad indicada']
+  ['4k', 'Máxima fidelidad para pantallas compatibles (UHD/2160p)'],
+  ['1080p', 'Alta definición recomendada para televisores y monitores'],
+  ['720p', 'Definición estándar para conexiones moderadas'],
+  ['480p', 'Bajo consumo para conexiones móviles o lentas'],
+  ['Desconocida', 'Enlaces sin resolución explícita en su título']
 ];
 
-const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span>';
+const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>';
+const BASE_URL = ${JSON.stringify(baseUrl)} || location.origin;
 
-// Estado de usuario y configuración
-let currentUser = null;
-let config = {
+const DEFAULT_CONFIG = {
   proveedores: null,
   calidades: ['4k', '1080p', '720p'],
   disableTorrents: false,
   filtrarMuertos: true
 };
+
+let config = { ...DEFAULT_CONFIG };
+
+// Inicializar desde props o localStorage
+${initialConfig ? `config = ${JSON.stringify(initialConfig)};` : `
+try {
+  const saved = localStorage.getItem('tacit_config');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (parsed) config = { ...config, ...parsed };
+  }
+} catch (_) {}
+`}
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -401,10 +340,26 @@ function toast(t) {
 const activos = () => (config.proveedores === null ? PROVEEDORES_LISTA.map(p => p.id) : config.proveedores);
 
 function generarUrlManifest() {
-  if (currentUser && currentUser.token) {
-    return BASE_URL + '/' + encodeURIComponent(currentUser.token) + '/manifest.json';
+  const isDefault = (config.proveedores === null || config.proveedores.length === PROVEEDORES_LISTA.length) &&
+    config.calidades.length === 3 &&
+    config.calidades.includes('4k') &&
+    config.calidades.includes('1080p') &&
+    config.calidades.includes('720p') &&
+    !config.disableTorrents &&
+    config.filtrarMuertos;
+
+  if (isDefault) {
+    return BASE_URL + '/manifest.json';
   }
-  return BASE_URL + '/manifest.json';
+
+  const payload = {
+    providers: config.proveedores,
+    qualities: config.calidades,
+    disableTorrents: Boolean(config.disableTorrents),
+    filtrarMuertos: Boolean(config.filtrarMuertos)
+  };
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  return BASE_URL + '/' + b64 + '/manifest.json';
 }
 
 function pintarResumen() {
@@ -416,44 +371,16 @@ function pintarResumen() {
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
   $('chip-torrents').textContent = config.disableTorrents ? '🚫 Solo Streaming Directo' : '🧲 Torrents Activos';
 
-  if (currentUser) {
-    $('saludo-nombre').textContent = currentUser.username;
-    $('perfil-nombre').textContent = currentUser.username;
-    $('perfil-token').textContent = currentUser.token;
-    $('avatar-user').textContent = (currentUser.username[0] || 'T').toUpperCase();
-    if ($('top-nombre')) $('top-nombre').textContent = currentUser.username;
-    if ($('top-token')) $('top-token').textContent = currentUser.token;
-    if ($('barra-perfil')) $('barra-perfil').style.display = 'flex';
-  } else {
-    $('saludo-nombre').textContent = 'Invitado';
-    $('perfil-nombre').textContent = 'Invitado';
-    $('perfil-token').textContent = 'Sin iniciar sesión';
-    $('avatar-user').textContent = '?';
-    if ($('barra-perfil')) $('barra-perfil').style.display = 'none';
-  }
-
   const manifestUrl = generarUrlManifest();
   $('instalar').href = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
   $('instalar-web').href = 'https://web.stremio.com/#/addons?addon=' + encodeURIComponent(manifestUrl);
 }
 
-let saveTimer;
 function guardar() {
+  try {
+    localStorage.setItem('tacit_config', JSON.stringify(config));
+  } catch (_) {}
   pintarResumen();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    if (!currentUser || !currentUser.token) return;
-    try {
-      await fetch('/api/user/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: currentUser.token, config })
-      });
-      toast('Sincronizado con tu perfil ✓');
-    } catch(_) {
-      toast('Cambios guardados localmente');
-    }
-  }, 350);
 }
 
 function pintarFuentes() {
@@ -568,118 +495,14 @@ async function copiar(texto, aviso) {
   }
 }
 
-$('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL personal de TACIT STR copiada ✓'));
+$('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL de TACIT STR copiada ✓'));
 $('copiar-plugin').addEventListener('click', () => copiar($('url-plugin').textContent, 'Enlace de Nuvio copiado ✓'));
 
-// --- GESTIÓN DE PERFIL (LOGIN / CAMBIAR PERFIL) ---
-function abrirModalLogin() {
-  $('modal-login').classList.remove('oculto');
-  $('inp-user').value = '';
-  $('inp-pin').value = '';
-  $('login-error').style.display = 'none';
-  setTimeout(() => $('inp-user').focus(), 100);
-}
-
-function cerrarModalLogin() {
-  $('modal-login').classList.add('oculto');
-}
-
-$('btn-cambiar-perfil').addEventListener('click', () => {
-  abrirModalLogin();
-});
-
-if ($('btn-logout')) {
-  $('btn-logout').addEventListener('click', () => {
-    localStorage.removeItem('tacit_active_user');
-    currentUser = null;
-    config = { ...DEFAULT_CONFIG };
-    pintarResumen();
-    abrirModalLogin();
-    toast('Sesión cerrada');
-  });
-}
-
-$('form-login').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = $('inp-user').value.trim();
-  const pin = $('inp-pin').value.trim();
-  const errBox = $('login-error');
-
-  errBox.style.display = 'none';
-
-  if (!username || !pin) {
-    errBox.textContent = 'Por favor completa ambos campos.';
-    errBox.style.display = 'block';
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, pin })
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      errBox.textContent = data.error || 'Error al autenticar.';
-      errBox.style.display = 'block';
-      return;
-    }
-
-    currentUser = data.user;
-    if (data.user.config) {
-      config = { ...config, ...data.user.config };
-    }
-    localStorage.setItem('tacit_active_user', JSON.stringify({ username, pin, token: currentUser.token }));
-
-    cerrarModalLogin();
-    pintarFuentes();
-    pintarCalidades();
-    pintarResumen();
-    toast(data.created ? '¡Perfil creado con éxito! ✓' : '¡Bienvenido de vuelta! ✓');
-  } catch(err) {
-    errBox.textContent = 'Error de conexión con el servidor.';
-    errBox.style.display = 'block';
-  }
-});
-
-// Inicialización de la sesión del usuario
-async function initSession() {
-  try {
-    const saved = localStorage.getItem('tacit_active_user');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && parsed.username && parsed.pin) {
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: parsed.username, pin: parsed.pin })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          currentUser = data.user;
-          if (data.user.config) {
-            config = { ...config, ...data.user.config };
-          }
-          cerrarModalLogin();
-          pintarFuentes();
-          pintarCalidades();
-          pintarResumen();
-          mostrarVista(location.hash.slice(1) || 'inicio');
-          return;
-        }
-      }
-    }
-  } catch(_) {}
-
-  // Si no hay sesión previa, abrir modal de perfil
-  pintarFuentes();
-  pintarCalidades();
-  pintarResumen();
-  abrirModalLogin();
-}
-
-initSession();
+// Iniciar interfaz
+pintarFuentes();
+pintarCalidades();
+pintarResumen();
+mostrarVista(location.hash.slice(1) || 'inicio');
 </script>
 </body>
 </html>`;
