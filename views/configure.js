@@ -622,50 +622,14 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <a href="/logs" target="_blank" class="badge-tag" style="background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.4); color: #34d399; text-decoration: none;">📡 MONITOR DE LOGS EN VIVO</a>
       </div>
       <h1>TACIT STR</h1>
-      <p class="subtitle">Streaming híbrido en Español Latino para Stremio: Catálogo en Nube, Proveedores Web y Torrents P2P.</p>
+      <p class="subtitle">Streaming en Español Latino para Stremio: Raspadores Web en Vivo (Vimeos / VOE) y Torrents P2P.</p>
     </div>
 
-    <!-- 1. BLOQUE: MODO DE FUNCIONAMIENTO -->
-    <div class="section-block">
-      <div class="section-block-header">
-        <div class="section-block-title">🎯 Modo de Funcionamiento</div>
-        <div class="section-block-desc">Define cómo interactúa el addon entre la biblioteca en la nube y las páginas web externas.</div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
-        <button type="button" class="btn-preset" data-preset="cloud" id="presetCloud">☁️ Solo Nube</button>
-        <button type="button" class="btn-preset active-preset" data-preset="balanced" id="presetBalanced">⚡ Equilibrado</button>
-        <button type="button" class="btn-preset" data-preset="full" id="presetFull">🚀 Completo</button>
-        <button type="button" class="btn-preset" data-preset="scrapers" id="presetScrapers">🌐 Solo Web</button>
-      </div>
-
-      <div class="mode-explanation" id="modeDescBox">
-        ⚡ <strong>Equilibrado (Recomendado):</strong> Primero busca en nuestra biblioteca en la nube; si el título está disponible, te lo entrega de inmediato en &lt;1 seg. Si no lo encuentra, activa como respaldo los sitios web seleccionados abajo.
-      </div>
-    </div>
-
-    <!-- 2. BLOQUE: BIBLIOTECA CLOUD DIRECTA (SQLITE) -->
-    <div class="section-block" id="cloudSectionBlock">
-      <div class="section-block-header">
-        <div class="section-block-title">☁️ Biblioteca Cloud Directa</div>
-        <div class="section-block-desc">Más de 24,500 películas y 10,700 series alojadas en discos privados de alta velocidad con respuesta instantánea.</div>
-      </div>
-
-      <div class="slider-container">
-        <div class="slider-header">
-          <span class="slider-title">Enlaces de la Nube</span>
-          <span class="slider-value" id="cloudLabel">10 enlaces</span>
-        </div>
-        <input type="range" id="cloudSlider" min="0" max="15" value="10">
-        <p style="font-size: 0.76rem; color: var(--text-muted); margin-top: 8px;">Cantidad máxima de opciones de la nube directa que se mostrarán en Stremio.</p>
-      </div>
-    </div>
-
-    <!-- 3. BLOQUE: PÁGINAS WEB DE RESPALDO (SELECCIÓN MATRIZ DE 2 COLUMNAS) -->
+    <!-- 2. BLOQUE: PÁGINAS WEB (SELECCIÓN MATRIZ DE 2 COLUMNAS) -->
     <div class="section-block" id="webSectionBlock">
       <div class="section-block-header">
-        <div class="section-block-title">🌐 Páginas Web de Respaldo</div>
-        <div class="section-block-desc">Selecciona de forma independiente qué sitios raspar para <strong>🎬 Películas</strong> y cuáles para <strong>📺 Series</strong>.</div>
+        <div class="section-block-title">🌐 Proveedores Web en Vivo</div>
+        <div class="section-block-desc">Selecciona de forma independiente qué sitios consultar para <strong>🎬 Películas</strong> y cuáles para <strong>📺 Series</strong>.</div>
       </div>
 
       <!-- Presets de Sugerencia Rápida -->
@@ -1030,29 +994,21 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     const initialServerConfig = ${JSON.stringify(initialConfig)};
 
-    const DEFAULT_MOVIES = ['cinecalidad', 'cuevana', 'pelisplus'];
-    const DEFAULT_SERIES = ['seriesflix', 'cinecalidad', 'cuevana', 'pelisplus'];
+    const DEFAULT_MOVIES = ['cinecalidad', 'cuevana', 'hackstore', 'pelisplus'];
+    const DEFAULT_SERIES = ['seriesflix', 'cuevana', 'cinecalidad', 'pelisplus', 'tioanime'];
 
     const state = {
-      mode: initialServerConfig?.mode || 'cloud',
+      mode: 'scrapers',
       providers: {
         movie: Array.isArray(initialServerConfig?.providers?.movie) ? initialServerConfig.providers.movie : [...DEFAULT_MOVIES],
         series: Array.isArray(initialServerConfig?.providers?.series) ? initialServerConfig.providers.series : [...DEFAULT_SERIES]
       },
       qualities: initialServerConfig?.qualities || ['4k', '1080p', '720p', '480p'],
       priority: initialServerConfig?.priority || 'direct',
-      disableTorrents: initialServerConfig?.disableTorrents !== undefined ? Boolean(initialServerConfig.disableTorrents) : true,
-      maxCloudStreams: initialServerConfig?.maxCloudStreams || 10,
+      disableTorrents: initialServerConfig?.disableTorrents !== undefined ? Boolean(initialServerConfig.disableTorrents) : false,
       maxWebStreamsPerProvider: initialServerConfig?.maxWebStreamsPerProvider || 3,
-      maxTotalWebStreams: initialServerConfig?.maxTotalWebStreams || 6,
+      maxTotalWebStreams: initialServerConfig?.maxTotalWebStreams || 8,
       minSeeders: 1
-    };
-
-    const MODE_DESCRIPTIONS = {
-      cloud: '☁️ <strong>Solo Nube:</strong> Consulta únicamente nuestra biblioteca interna. Cero esperas, enlaces directos en menos de 1 segundo y sin depender de páginas web externas.',
-      balanced: '⚡ <strong>Equilibrado (Recomendado):</strong> Lo mejor de ambos mundos. Primero busca en nuestra biblioteca en la nube; si el título está disponible, te lo entrega de inmediato en &lt;1 seg. Si no lo encuentra, activa como respaldo los sitios web seleccionados abajo.',
-      full: '🚀 <strong>Catálogo Completo:</strong> Consulta nuestra biblioteca y las páginas web al mismo tiempo en paralelo, reuniendo la mayor cantidad posible de opciones.',
-      scrapers: '🌐 <strong>Solo Páginas Web:</strong> Omite por completo la biblioteca en la nube y consulta exclusivamente a <strong>CineCalidad</strong> y <strong>SeriesFlix</strong>. Perfecto para probar raspadores en aislamiento.'
     };
 
     function updateProviderOrderFromDOM() {
@@ -1095,36 +1051,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     }
 
     function syncUI() {
-      const isCloud = (state.mode === 'cloud');
-      const isBalanced = (state.mode === 'balanced');
-      const isFull = (state.mode === 'full');
-      const isScrapers = (state.mode === 'scrapers');
-
-      // Botones de presets de modo
-      document.getElementById('presetCloud').classList.toggle('active-preset', isCloud);
-      document.getElementById('presetBalanced').classList.toggle('active-preset', isBalanced);
-      document.getElementById('presetFull').classList.toggle('active-preset', isFull);
-      document.getElementById('presetScrapers').classList.toggle('active-preset', isScrapers);
-
-      // Texto explicativo dinámico según modo
-      document.getElementById('modeDescBox').innerHTML = MODE_DESCRIPTIONS[state.mode] || MODE_DESCRIPTIONS.balanced;
-
-      // Deshabilitar bloque web en modo Solo Nube o bloque nube en modo Solo Web
-      const webBlock = document.getElementById('webSectionBlock');
-      const cloudBlock = document.getElementById('cloudSectionBlock');
-      if (isCloud) {
-        webBlock.classList.add('disabled-block');
-      } else {
-        webBlock.classList.remove('disabled-block');
-      }
-      if (isScrapers) {
-        cloudBlock.classList.add('disabled-block');
-      } else {
-        cloudBlock.classList.remove('disabled-block');
-      }
-
       // Prioridad y fila de torrents según disableTorrents
-      document.getElementById('priorityContainer').style.display = (!state.disableTorrents && !isCloud) ? 'block' : 'none';
+      document.getElementById('priorityContainer').style.display = (!state.disableTorrents) ? 'block' : 'none';
       const rowTorrent = document.getElementById('rowHackstoreTorrent');
       if (rowTorrent) {
         rowTorrent.style.display = state.disableTorrents ? 'none' : 'flex';
@@ -1155,11 +1083,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       });
 
       // Sliders
-      const cloudSlider = document.getElementById('cloudSlider');
-      const cloudLabel = document.getElementById('cloudLabel');
-      cloudSlider.value = state.maxCloudStreams;
-      cloudLabel.textContent = Number(state.maxCloudStreams) === 0 ? '0 (Desactivado)' : state.maxCloudStreams + ' enlaces';
-
       const webPerProvSlider = document.getElementById('webPerProvSlider');
       const webPerProvLabel = document.getElementById('webPerProvLabel');
       webPerProvSlider.value = state.maxWebStreamsPerProvider;
@@ -1172,14 +1095,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
       updateUrls();
     }
-
-    // Presets de Modo click
-    document.querySelectorAll('.btn-preset').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.mode = btn.dataset.preset;
-        syncUI();
-      });
-    });
 
     // Presets rápidos de proveedores
     document.getElementById('btnPresetRecommended').addEventListener('click', () => {
@@ -1336,12 +1251,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
     });
 
     // Sliders listeners
-    document.getElementById('cloudSlider').addEventListener('input', (e) => {
-      state.maxCloudStreams = parseInt(e.target.value, 10);
-      document.getElementById('cloudLabel').textContent = state.maxCloudStreams + ' enlaces';
-      updateUrls();
-    });
-
     document.getElementById('webPerProvSlider').addEventListener('input', (e) => {
       state.maxWebStreamsPerProvider = parseInt(e.target.value, 10);
       document.getElementById('webPerProvLabel').textContent = state.maxWebStreamsPerProvider === 1 ? '1 por sitio' : state.maxWebStreamsPerProvider + ' por sitio';

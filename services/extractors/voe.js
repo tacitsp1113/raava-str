@@ -78,9 +78,10 @@ async function resolveVoe(url) {
     let currentUrl = url;
 
     // Check permanentToken redirect if present
-    if (/permanentToken/i.test(html)) {
-      const redirectMatch = html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
-      if (redirectMatch) {
+    if (/permanentToken/i.test(html) || /window\.location/i.test(html)) {
+      const redirectMatch = html.match(/window\.location(?:\.href)?\s*=\s*['"](https?:\/\/[^'"]+)['"]/i)
+        || html.match(/window\.location\.href\s*=\s*['"]([^'"]+)['"]/i);
+      if (redirectMatch && redirectMatch[1] !== currentUrl) {
         const nextUrl = redirectMatch[1].startsWith('http')
           ? redirectMatch[1]
           : new URL(redirectMatch[1], currentUrl).href;

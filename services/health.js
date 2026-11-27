@@ -1,29 +1,11 @@
 const axios = require('axios');
 const path = require('path');
 const fs = require('fs');
-const { DatabaseSync } = require('node:sqlite');
-
 const https = require('https');
 const agent = new https.Agent({ rejectUnauthorized: false });
 
 const TIMEOUT_MS = 4000;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-
-async function checkCloud() {
-  const start = Date.now();
-  const dbPath = path.join(__dirname, '..', 'data', 'catalog.sqlite');
-  if (!fs.existsSync(dbPath)) {
-    return { name: 'Biblioteca Nube (SQLite)', ok: false, ms: Date.now() - start, error: 'Archivo no encontrado' };
-  }
-  try {
-    const db = new DatabaseSync(dbPath, { readOnly: true });
-    const row = db.prepare('SELECT COUNT(*) as total FROM movies').get();
-    db.close();
-    return { name: 'Biblioteca Nube (SQLite)', ok: true, ms: Date.now() - start, info: `${row.total} títulos` };
-  } catch (e) {
-    return { name: 'Biblioteca Nube (SQLite)', ok: false, ms: Date.now() - start, error: e.message };
-  }
-}
 
 async function pingUrl(name, url, isJson = false) {
   const start = Date.now();
@@ -43,15 +25,14 @@ async function pingUrl(name, url, isJson = false) {
 
 async function checkAllProviders() {
   const checks = [
-    checkCloud(),
-    pingUrl('SeriesFlix', 'https://seriesflixhd.pw/?s=avatar'),
-    pingUrl('LaMovie', 'https://lamovie.org/wp-api/v1/search?q=avatar&postType=any&postsPerPage=5', true),
     pingUrl('CineCalidad', 'https://www.cinecalidad.am/?s=avatar'),
     pingUrl('Cuevana', 'https://cuevana3.sc/wp-json/cuevana/v1/search?q=avatar', true),
+    pingUrl('Hackstore', 'https://hackstore2.com/api/rest/search?post_type=movies&query=avatar', true),
+    pingUrl('SeriesFlix', 'https://seriesflixhd.pw/?s=avatar'),
     pingUrl('PelisPlus HD', 'https://pelisplushd.bz/search?s=avatar'),
     pingUrl('TioAnime', 'https://tioanime.com/directorio?q=naruto'),
-    pingUrl('LACartoons', 'https://www.lacartoons.com/?Titulo=spider'),
-    pingUrl('Hackstore', 'https://hackstore2.com/api/rest/search?post_type=movies&query=avatar', true)
+    pingUrl('LaMovie', 'https://lamovie.org/wp-api/v1/search?q=avatar&postType=any&postsPerPage=5', true),
+    pingUrl('LACartoons', 'https://www.lacartoons.com/?Titulo=spider')
   ];
 
   const results = await Promise.all(checks);

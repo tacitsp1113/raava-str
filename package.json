@@ -22,6 +22,8 @@
     "axios": "^1.7.9",
     "bittorrent-tracker": "^11.2.3",
     "cheerio": "^1.2.0",
+    "cheerio-without-node-native": "^0.20.2",
+    "crypto-js": "^4.2.0",
     "express": "^4.21.2",
     "stremio-addon-sdk": "^1.6.10"
   }

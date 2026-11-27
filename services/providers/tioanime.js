@@ -90,7 +90,16 @@ async function getTioanimeStreams(media, season = null, episode = null, config =
       }
     }
 
-    const promises = videoList.slice(0, 3).map(async (v) => {
+    const supportedVideos = videoList.filter(v => {
+      const url = Array.isArray(v) ? v[1] : v;
+      return typeof url === 'string' && (
+        url.includes('voe') || url.includes('vimeos') || url.includes('cloudwindow')
+      );
+    });
+
+    const targets = supportedVideos.length > 0 ? supportedVideos : videoList.slice(0, 5);
+
+    const promises = targets.slice(0, 3).map(async (v) => {
       const serverCode = Array.isArray(v) ? v[0] : '';
       const serverUrl = Array.isArray(v) ? v[1] : v;
 

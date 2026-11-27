@@ -62,12 +62,17 @@ async function resolveEmbed69(embedUrl) {
       return [];
     }
 
+    const linkChallengeMatch = html.match(/LINK_CHALLENGE\s*=\s*['"]([^'"]+)['"]/);
+    const linkSaltMatch = html.match(/LINK_SALT\s*=\s*['"]([^'"]+)['"]/);
+
     const challengeMatch = html.match(/POW_CHALLENGE\s*=\s*['"]([^'"]+)['"]/);
     const saltMatch = html.match(/POW_SALT\s*=\s*['"]([^'"]+)['"]/);
     const diffMatch = html.match(/POW_DIFFICULTY\s*=\s*(\d+)/);
 
     let keyHex = null;
-    if (challengeMatch && saltMatch && diffMatch) {
+    if (linkChallengeMatch && linkSaltMatch) {
+      keyHex = sha256Hex(linkChallengeMatch[1] + linkSaltMatch[1]);
+    } else if (challengeMatch && saltMatch && diffMatch) {
       const challenge = challengeMatch[1];
       const salt = saltMatch[1];
       const difficulty = parseInt(diffMatch[1], 10);
