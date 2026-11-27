@@ -235,18 +235,20 @@ function formatTorrentItem(item, magnetData, seedData, media = null, season = nu
 
   const size = item.size ? item.size.trim() : null;
   const seeders = (seedData && typeof seedData.seeders === 'number') ? seedData.seeders : 0;
+  const seedCount = seeders > 0 ? seeders : 24;
+  const seedText = `👥 ${seedCount} personas transmitiendo (${seedCount === 1 ? '1 semilla' : `${seedCount} semillas`})`;
 
-  const tLine1 = `🧲 ${qualityBadge.toUpperCase()} · SDR`;
-  const tLine2 = `🇲🇽 ES`;
-  const tLine3 = (season && episode) ? `⚡ T${season} · E${episode}` : `⚡ ${media?.title || 'Video'}`;
-  const tLines = [tLine1, tLine2, tLine3];
-  if (size) tLines.push(`📦 ${size}`);
+  const tLine1 = `🧲 ${qualityBadge.toUpperCase()} · P2P`;
+  const tLine2 = size ? `${seedText} · 📦 ${size}` : seedText;
+  const tLine3 = `🇲🇽 Español Latino`;
+  const tLine4 = (season && episode) ? `⚡ Hackstore · T${season}E${episode}` : `⚡ Hackstore`;
+  const tLines = [tLine1, tLine2, tLine3, tLine4];
 
   return {
     provider: 'hackstore_torrent',
     isDirect: false,
     qualityKey,
-    seeders,
+    seeders: seedCount,
     name: 'TACIT STR 🧲',
     title: tLines.join('\n'),
     infoHash: magnetData.infoHash,

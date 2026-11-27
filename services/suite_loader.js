@@ -104,16 +104,20 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
           const lang = s.language || '🇲🇽 Latino';
           const cleanLang = lang.includes('Latino') ? '🇲🇽 ES' : (lang.includes('Castellano') ? '🇪🇸 ES' : '🌐 Multi');
 
+          const seeds = s.seeders && s.seeders > 0 ? s.seeders : 18;
+          const seedText = `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`;
+          const sizeText = s.size ? ` · 📦 ${s.size}` : '';
+
           mapped.push({
             provider: scraper.id,
-            server: isTorrent ? 'Torrent' : srv,
+            server: isTorrent ? 'Torrent P2P' : srv,
             serverTier: 1,
             isDirect: !isTorrent,
             qualityKey: qKey,
-            seeders: s.seeders || (isTorrent ? 20 : 999),
+            seeders: seeds,
             name: isTorrent ? 'TACIT STR 🧲' : 'TACIT STR · WEB',
             title: isTorrent
-              ? `🧲 ${qKey.toUpperCase()} · P2P (${s.seeders || 15} 👥)\n${cleanLang}\n⚡ ${scraper.name}`
+              ? `🧲 ${qKey.toUpperCase()} · P2P\n${seedText}${sizeText}\n${cleanLang}\n⚡ ${scraper.name}`
               : `🎬 ${qKey.toUpperCase()} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}`,
             url: s.url,
             infoHash: s.infoHash,

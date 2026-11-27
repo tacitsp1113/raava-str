@@ -495,6 +495,12 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
   for (const s of streams) {
     if (!s.isDirect) {
       s.name = 'TACIT STR 🧲';
+      const seeds = s.seeders && s.seeders > 0 ? s.seeders : 20;
+      if (s.title && !s.title.includes('personas transmitiendo') && !s.title.includes('semillas')) {
+        const lines = s.title.split('\n');
+        lines.splice(1, 0, `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`);
+        s.title = lines.join('\n');
+      }
     } else {
       s.name = 'TACIT STR · WEB';
     }
