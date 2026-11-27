@@ -167,7 +167,7 @@ async function resolveStreams(type, id, rawConfig) {
             isAnime,
             config
           ),
-          6500
+          9500
         )
       );
     }
@@ -199,7 +199,7 @@ async function resolveStreams(type, id, rawConfig) {
   }
 }
 
-function taskWithTimeout(taskPromise, ms = 6000) {
+function taskWithTimeout(taskPromise, ms = 9500) {
   return Promise.race([
     taskPromise,
     new Promise(resolve => setTimeout(() => resolve([]), ms))
@@ -216,7 +216,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
     : (config.providers?.movie || DEFAULT_CONFIG.providers.movie);
 
   const shouldRun = (prov) => Array.isArray(activeProviders) && activeProviders.includes(prov);
-  const TASK_TIMEOUT = 6000;
+  const TASK_TIMEOUT = 9500;
 
   // 1. CineCalidad (Películas y Series - Directo Vimeos)
   if (shouldRun('cinecalidad')) {
