@@ -51,21 +51,22 @@ function setCachedStreams(key, data) {
 }
 
 function parseConfig(raw) {
-  let fallback = DEFAULT_CONFIG;
-  try {
-    const { getConfig } = require('./services/config_store');
-    const stored = getConfig();
-    if (stored) {
-      fallback = {
-        ...DEFAULT_CONFIG,
-        ...stored,
-        providers: stored.proveedores ? { movie: stored.proveedores, series: stored.proveedores } : DEFAULT_CONFIG.providers,
-        qualities: stored.calidades || DEFAULT_CONFIG.qualities,
-        disableTorrents: stored.disableTorrents !== undefined ? stored.disableTorrents : DEFAULT_CONFIG.disableTorrents
-      };
-    }
-  } catch(_) {}
+  if (raw && typeof raw === 'string' && raw.startsWith('tacit_')) {
+    try {
+      const { getUserConfigByToken } = require('./services/config_store');
+      const u = getUserConfigByToken(raw);
+      if (u && u.config) {
+        return {
+          ...DEFAULT_CONFIG,
+          providers: u.config.proveedores ? { movie: u.config.proveedores, series: u.config.proveedores } : DEFAULT_CONFIG.providers,
+          qualities: (u.config.calidades || DEFAULT_CONFIG.qualities).map(q => q.toLowerCase()),
+          disableTorrents: u.config.disableTorrents !== undefined ? u.config.disableTorrents : false
+        };
+      }
+    } catch(_) {}
+  }
 
+  let fallback = DEFAULT_CONFIG;
   if (!raw || typeof raw !== 'string' || raw === 'manifest.json') return fallback;
   try {
     let parsed;

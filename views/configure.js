@@ -1,5 +1,5 @@
 /**
- * Plantilla del panel interactivo de configuración de TACIT STR
+ * Plantilla del panel interactivo de configuración de TACIT STR con soporte multi-perfil (Usuario + PIN)
  */
 
 function renderConfigPage(initialConfig = null, baseUrl = '') {
@@ -16,7 +16,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --rojo: #0ea5e9; --rojo-hover: #38bdf8; --rojo-suave: rgba(14,165,233,0.14); --rojo-borde: rgba(14,165,233,0.45);
+    --cian: #0ea5e9; --cian-hover: #38bdf8; --cian-suave: rgba(14,165,233,0.14); --cian-borde: rgba(14,165,233,0.45);
     --fondo: #06090f; --capa: #0d1424; --tarjeta: #111a2e; --borde: #1e293b; --borde-fuerte: #334155;
     --texto: #f8fafc; --suave: #94a3b8; --tenue: #64748b; --verde: #10b981; --amarillo: #fbbf24;
   }
@@ -25,27 +25,27 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   a { color: inherit; text-decoration: none; }
   button { font-family: inherit; }
   .app { position: relative; display: grid; grid-template-columns: 270px 1fr; gap: 18px; padding: 18px; min-height: 100vh; }
-  aside { background: rgba(13,20,36,0.92); border: 1px solid var(--borde); border-radius: 24px; display: flex; flex-direction: column; position: sticky; top: 18px; height: calc(100vh - 36px); overflow-y: auto; padding: 18px 14px 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  aside { background: rgba(13,20,36,0.94); border: 1px solid var(--borde); border-radius: 24px; display: flex; flex-direction: column; position: sticky; top: 18px; height: calc(100vh - 36px); overflow-y: auto; padding: 18px 14px 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
   .marca { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 14px; border-bottom: 1px solid var(--borde); margin-bottom: 14px; }
   .marca img { width: 50px; height: 50px; border-radius: 16px; box-shadow: 0 0 30px rgba(14,165,233,0.35); object-fit: cover; }
-  .marca b { font-size: 19px; font-weight: 900; color: #38bdf8; letter-spacing: -0.5px; }
+  .marca b { font-size: 19px; font-weight: 900; color: var(--cian-hover); letter-spacing: -0.5px; }
   .seccion-menu { color: var(--tenue); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 12px 12px 6px; }
   .item { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; color: var(--suave); padding: 9px 12px; border-radius: 14px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; transition: background .15s, color .15s; margin-bottom: 3px; }
   .item .ico { width: 34px; height: 34px; border-radius: 11px; background: #162035; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
   .item svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .item:hover { color: var(--texto); background: #1a2740; }
   .item.activo { color: #fff; background: linear-gradient(90deg, rgba(14,165,233,0.25), rgba(14,165,233,0.05)); }
-  .item.activo .ico { background: var(--rojo); box-shadow: 0 0 15px rgba(14,165,233,0.5); }
+  .item.activo .ico { background: var(--cian); box-shadow: 0 0 15px rgba(14,165,233,0.5); }
   .item .num { margin-left: auto; font-size: 12px; color: var(--tenue); font-weight: 700; }
   .pie-menu { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--borde); }
   .yo { display: flex; align-items: center; gap: 10px; padding: 8px 10px 12px; }
-  .yo .avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--rojo-borde); background: #162035; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #38bdf8; }
+  .yo .avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--cian-borde); background: #162035; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: var(--cian-hover); }
   .yo div { min-width: 0; }
   .yo b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #f8fafc; }
-  .yo small { color: var(--tenue); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .yo small { color: var(--tenue); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; font-family: monospace; }
   main { min-width: 0; }
   .movil { display: none; align-items: center; justify-content: space-between; padding: 6px 4px 14px; }
-  .movil .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; color: #38bdf8; font-size: 18px; }
+  .movil .logo { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--cian-hover); font-size: 18px; }
   .movil .logo img { width: 32px; height: 32px; border-radius: 9px; object-fit: cover; }
   .icono-btn { width: 42px; height: 42px; border-radius: 14px; border: 1px solid var(--borde); background: var(--capa); color: var(--texto); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
   .icono-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
@@ -56,22 +56,22 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .encabezado { margin: 6px 0 20px; }
   .encabezado h1 { font-size: 28px; font-weight: 900; letter-spacing: -0.8px; color: #f8fafc; }
   .encabezado p { color: var(--suave); font-size: 15px; margin-top: 4px; }
-  .bienvenida { position: relative; overflow: hidden; border-radius: 26px; padding: 30px; border: 1px solid var(--rojo-borde); background: linear-gradient(135deg, #08213b 0%, #0c1829 45%, #070c14 100%); margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .bienvenida { position: relative; overflow: hidden; border-radius: 26px; padding: 30px; border: 1px solid var(--cian-borde); background: linear-gradient(135deg, #08213b 0%, #0c1829 45%, #070c14 100%); margin-bottom: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
   .bienvenida small { color: #7dd3fc; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
   .bienvenida h2 { font-size: clamp(24px, 4vw, 34px); font-weight: 900; letter-spacing: -1px; margin: 6px 0 8px; color: #ffffff; }
   .bienvenida p { color: #cbd5e1; max-width: 520px; line-height: 1.6; font-size: 15px; }
   .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; position: relative; z-index: 1; }
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: none; border-radius: 16px; font-weight: 800; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; font-size: 15px; padding: 14px 22px; }
   .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-  .btn-rojo { background: var(--rojo); color: #fff; box-shadow: 0 10px 30px rgba(14,165,233,0.35); }
-  .btn-rojo:hover { background: var(--rojo-hover); transform: translateY(-1px); }
+  .btn-rojo { background: var(--cian); color: #fff; box-shadow: 0 10px 30px rgba(14,165,233,0.35); }
+  .btn-rojo:hover { background: var(--cian-hover); transform: translateY(-1px); }
   .btn-claro { background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.14); }
-  .btn-claro:hover { border-color: var(--rojo-borde); background: rgba(14,165,233,0.12); }
+  .btn-claro:hover { border-color: var(--cian-borde); background: rgba(14,165,233,0.12); }
   .chips { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
   .chip { display: inline-flex; align-items: center; gap: 8px; background: var(--capa); border: 1px solid var(--borde); padding: 10px 16px; border-radius: 999px; font-size: 14px; color: var(--suave); cursor: pointer; transition: border-color .15s; }
-  .chip:hover { border-color: var(--rojo-borde); }
+  .chip:hover { border-color: var(--cian-borde); }
   .chip b { color: #fff; }
-  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--rojo); display: inline-block; box-shadow: 0 0 10px #38bdf8; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--cian); display: inline-block; box-shadow: 0 0 10px #38bdf8; }
   .tarjeta { background: rgba(17,26,46,0.92); border: 1px solid var(--borde); border-radius: 22px; padding: 22px; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
   .tarjeta h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #f8fafc; }
   .tarjeta > p { color: var(--suave); font-size: 14px; line-height: 1.6; }
@@ -80,7 +80,7 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .mini { display: flex; gap: 14px; align-items: flex-start; }
   .mini p { color: var(--suave); font-size: 14px; line-height: 1.55; margin: 4px 0 12px; }
   .enlace { color: #38bdf8; font-weight: 700; font-size: 14px; cursor: pointer; background: none; border: none; padding: 0; }
-  .enlace:hover { color: #7dd3fc; }
+  .enlace:hover { color: #7dd3fc; text-decoration: underline; }
   .aviso { display: flex; gap: 12px; align-items: flex-start; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.3); color: #bae6fd; border-radius: 18px; padding: 16px 18px; font-size: 14px; line-height: 1.6; margin-bottom: 18px; }
   .aviso b { color: #fff; }
   .grupo-prov { margin-bottom: 26px; }
@@ -89,15 +89,15 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .grupo-prov h3 small { color: var(--tenue); font-size: 13px; font-weight: 500; margin-left: 8px; }
   .botones-grupo { display: flex; gap: 6px; }
   .pastilla { background: var(--capa); border: 1px solid var(--borde); color: var(--suave); font-size: 12px; font-weight: 700; cursor: pointer; padding: 6px 12px; border-radius: 999px; transition: all .15s; }
-  .pastilla:hover { color: #fff; border-color: var(--rojo-borde); }
+  .pastilla:hover { color: #fff; border-color: var(--cian-borde); }
   .opciones { display: flex; flex-wrap: wrap; gap: 10px; }
   .opcion { display: inline-flex; align-items: center; gap: 10px; background: var(--capa); border: 1.5px solid var(--borde); border-radius: 999px; padding: 9px 16px 9px 10px; cursor: pointer; user-select: none; transition: all .15s; font-size: 14px; font-weight: 600; color: var(--suave); }
   .opcion .marca-op { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #334155; display: flex; align-items: center; justify-content: center; transition: all .15s; flex-shrink: 0; }
   .opcion .marca-op svg { width: 12px; height: 12px; stroke: #fff; fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
   .opcion small { color: var(--tenue); font-weight: 500; font-size: 12px; }
   .opcion:hover { border-color: #475569; color: #fff; }
-  .opcion.on { border-color: var(--rojo-borde); background: var(--rojo-suave); color: #fff; }
-  .opcion.on .marca-op { background: var(--rojo); border-color: var(--rojo); }
+  .opcion.on { border-color: var(--cian-borde); background: var(--cian-suave); color: #fff; }
+  .opcion.on .marca-op { background: var(--cian); border-color: var(--cian); }
   .opcion.on .marca-op svg { opacity: 1; }
   .opcion.grande { border-radius: 18px; padding: 14px 18px 14px 14px; flex: 1 1 200px; }
   .opcion.grande div b { display: block; color: inherit; }
@@ -106,10 +106,23 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   .caja-url .btn { padding: 10px 16px; font-size: 14px; border-radius: 12px; }
   .pasos { counter-reset: paso; list-style: none; margin-top: 14px; }
   .pasos li { counter-increment: paso; position: relative; padding: 0 0 14px 42px; color: var(--suave); font-size: 14px; line-height: 1.55; }
-  .pasos li::before { content: counter(paso); position: absolute; left: 0; top: -2px; width: 28px; height: 28px; border-radius: 50%; background: var(--rojo-suave); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .pasos li::before { content: counter(paso); position: absolute; left: 0; top: -2px; width: 28px; height: 28px; border-radius: 50%; background: var(--cian-suave); color: #38bdf8; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; }
   .pasos b { color: #fff; }
-  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(120px); background: #0d1424; border: 1px solid var(--rojo-borde); color: #f8fafc; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: transform .25s, opacity .25s; z-index: 200; opacity: 0; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(120px); background: #0d1424; border: 1px solid var(--cian-borde); color: #f8fafc; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: transform .25s, opacity .25s; z-index: 200; opacity: 0; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
   .toast.ver { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+  /* MODAL DE PERFIL / LOGIN */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(4,7,13,0.88); backdrop-filter: blur(8px); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.oculto { display: none; }
+  .modal-card { max-width: 420px; width: 100%; background: #0d1424; border: 1.5px solid var(--cian-borde); border-radius: 24px; padding: 32px 24px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+  .modal-card h2 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+  .modal-card p { font-size: 14px; color: var(--suave); margin-bottom: 22px; line-height: 1.5; }
+  .campo { text-align: left; margin-bottom: 16px; }
+  .campo label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+  .campo input { width: 100%; background: #06090f; border: 1.5px solid var(--borde); border-radius: 12px; padding: 12px 14px; color: #fff; font-size: 14px; font-family: inherit; transition: border-color .15s; }
+  .campo input:focus { outline: none; border-color: var(--cian); }
+  .btn-submit { width: 100%; margin-top: 10px; }
+
   .cortina { display: none; }
   @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; padding: 12px; }
@@ -124,6 +137,28 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 </style>
 </head>
 <body>
+
+<!-- MODAL DE ACCESO A PERFIL (USUARIO + PIN) -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal-card">
+    <div class="marca" style="border:none;margin-bottom:0;padding-bottom:10px;"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
+    <h2>Perfil Personal</h2>
+    <p>Ingresa tu nombre y PIN para que lo que tú muevas se guarde solo en tu Stremio sin afectar a los demás.</p>
+    <form id="form-login" onsubmit="return false;">
+      <div class="campo">
+        <label>Nombre de usuario o dispositivo:</label>
+        <input type="text" id="inp-user" placeholder="Ej: Elihu, Sala, Papa" autocomplete="username" required>
+      </div>
+      <div class="campo">
+        <label>PIN o Contraseña secreta:</label>
+        <input type="password" id="inp-pin" placeholder="PIN secreto (ej: 1234)" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-rojo btn-submit" id="btn-entrar">Acceder a mi panel</button>
+      <div id="login-error" style="color:#fca5a5;font-size:13px;margin-top:12px;display:none;"></div>
+    </form>
+  </div>
+</div>
+
 <div class="app" id="app">
   <div class="cortina" id="cortina"></div>
   <aside id="menu">
@@ -137,8 +172,12 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     <div class="pie-menu">
       <div class="yo">
-        <div class="avatar">T</div>
-        <div><b>TACIT STR</b><small>Servidor Personal</small></div>
+        <div class="avatar" id="avatar-user">T</div>
+        <div>
+          <b id="perfil-nombre">TACIT STR</b>
+          <small id="perfil-token">Servidor Personal</small>
+          <button type="button" class="enlace" id="btn-cambiar-perfil" style="font-size:11px;margin-top:2px;">Cambiar perfil</button>
+        </div>
       </div>
     </div>
   </aside>
@@ -152,9 +191,9 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <!-- VISTA INICIO -->
       <section class="vista activa" id="v-inicio">
         <div class="bienvenida">
-          <small>Tu addon está listo</small>
-          <h2 id="saludo">Hola, Familia</h2>
-          <p>Instálalo una vez y listo. Si cambias tus sitios o calidades, copia o instala el nuevo enlace en tu Stremio.</p>
+          <small>Tu addon personal está listo</small>
+          <h2>Hola, <span id="saludo-nombre">Usuario</span></h2>
+          <p>Instálalo una vez en tu Stremio. Si cambias tus sitios o calidades aquí, se actualiza solo en tu televisión sin reinstalar.</p>
           <div class="acciones">
             <a class="btn btn-rojo" id="instalar" href="#"><svg viewBox="0 0 24 24"><path d="m6 4 14 8-14 8z"></path></svg>Instalar en Stremio</a>
             <button class="btn btn-claro" id="copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>Copiar URL del addon</button>
@@ -308,22 +347,14 @@ const CALIDADES = [
 
 const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg></span>';
 
-// Estado de configuración
+// Estado de usuario y configuración
+let currentUser = null;
 let config = {
-  proveedores: null, // null = todos activos
+  proveedores: null,
   calidades: ['4k', '1080p', '720p'],
   disableTorrents: false,
   filtrarMuertos: true
 };
-
-// Cargar config previa si existe en URL o localStorage
-try {
-  const saved = localStorage.getItem('tacit_config');
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (parsed) config = { ...config, ...parsed };
-  }
-} catch(_) {}
 
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -339,18 +370,10 @@ function toast(t) {
 const activos = () => (config.proveedores === null ? PROVEEDORES_LISTA.map(p => p.id) : config.proveedores);
 
 function generarUrlManifest() {
-  const act = activos();
-  const cfgPayload = {
-    providers: act.length === PROVEEDORES_LISTA.length ? null : act,
-    qualities: config.calidades.map(q => q.toLowerCase()),
-    disableTorrents: config.disableTorrents,
-    maxWebStreamsPerProvider: 3,
-    maxTotalWebStreams: 8
-  };
-
-  const jsonStr = JSON.stringify(cfgPayload);
-  let b64 = btoa(unescape(encodeURIComponent(jsonStr)));
-  return BASE_URL + '/' + encodeURIComponent(b64) + '/manifest.json';
+  if (currentUser && currentUser.token) {
+    return BASE_URL + '/' + encodeURIComponent(currentUser.token) + '/manifest.json';
+  }
+  return BASE_URL + '/manifest.json';
 }
 
 function pintarResumen() {
@@ -361,6 +384,13 @@ function pintarResumen() {
   $('chip-calidades').textContent = config.calidades.join(' · ') || 'Sin calidades';
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
 
+  if (currentUser) {
+    $('saludo-nombre').textContent = currentUser.username;
+    $('perfil-nombre').textContent = currentUser.username;
+    $('perfil-token').textContent = currentUser.token;
+    $('avatar-user').textContent = (currentUser.username[0] || 'T').toUpperCase();
+  }
+
   const manifestUrl = generarUrlManifest();
   $('instalar').href = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
   $('instalar-web').href = 'https://web.stremio.com/#/addons?addon=' + encodeURIComponent(manifestUrl);
@@ -369,21 +399,18 @@ function pintarResumen() {
 let saveTimer;
 function guardar() {
   pintarResumen();
-  try {
-    localStorage.setItem('tacit_config', JSON.stringify(config));
-  } catch(_) {}
-
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
+    if (!currentUser || !currentUser.token) return;
     try {
-      await fetch('/api/config', {
+      await fetch('/api/user/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+        body: JSON.stringify({ token: currentUser.token, config })
       });
-      toast('Sincronizado con tus dispositivos ✓');
+      toast('Sincronizado con tu perfil ✓');
     } catch(_) {
-      toast('Cambios guardados ✓');
+      toast('Cambios guardados localmente');
     }
   }, 350);
 }
@@ -495,27 +522,104 @@ async function copiar(texto, aviso) {
   }
 }
 
-$('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL de TACIT STR copiada ✓'));
+$('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL personal de TACIT STR copiada ✓'));
 $('copiar-plugin').addEventListener('click', () => copiar($('url-plugin').textContent, 'Enlace de Nuvio copiado ✓'));
 
-// Iniciar interfaz
-pintarFuentes();
-pintarCalidades();
-pintarResumen();
-mostrarVista(location.hash.slice(1) || 'inicio');
+// --- GESTIÓN DE PERFIL (LOGIN / CAMBIAR PERFIL) ---
+function abrirModalLogin() {
+  $('modal-login').classList.remove('oculto');
+  $('inp-user').focus();
+}
 
-// Sincronizar configuración remota desde el servidor
-fetch('/api/config')
-  .then(r => r.json())
-  .then(serverCfg => {
-    if (serverCfg && typeof serverCfg === 'object') {
-      config = { ...config, ...serverCfg };
-      pintarFuentes();
-      pintarCalidades();
-      pintarResumen();
+function cerrarModalLogin() {
+  $('modal-login').classList.add('oculto');
+}
+
+$('btn-cambiar-perfil').addEventListener('click', () => {
+  abrirModalLogin();
+});
+
+$('form-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = $('inp-user').value.trim();
+  const pin = $('inp-pin').value.trim();
+  const errBox = $('login-error');
+
+  errBox.style.display = 'none';
+
+  if (!username || !pin) {
+    errBox.textContent = 'Por favor completa ambos campos.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, pin })
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      errBox.textContent = data.error || 'Error al autenticar.';
+      errBox.style.display = 'block';
+      return;
     }
-  })
-  .catch(() => {});
+
+    currentUser = data.user;
+    if (data.user.config) {
+      config = { ...config, ...data.user.config };
+    }
+    localStorage.setItem('tacit_active_user', JSON.stringify({ username, pin, token: currentUser.token }));
+
+    cerrarModalLogin();
+    pintarFuentes();
+    pintarCalidades();
+    pintarResumen();
+    toast(data.created ? '¡Perfil creado con éxito! ✓' : '¡Bienvenido de vuelta! ✓');
+  } catch(err) {
+    errBox.textContent = 'Error de conexión con el servidor.';
+    errBox.style.display = 'block';
+  }
+});
+
+// Inicialización de la sesión del usuario
+async function initSession() {
+  try {
+    const saved = localStorage.getItem('tacit_active_user');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.username && parsed.pin) {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: parsed.username, pin: parsed.pin })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          currentUser = data.user;
+          if (data.user.config) {
+            config = { ...config, ...data.user.config };
+          }
+          cerrarModalLogin();
+          pintarFuentes();
+          pintarCalidades();
+          pintarResumen();
+          mostrarVista(location.hash.slice(1) || 'inicio');
+          return;
+        }
+      }
+    }
+  } catch(_) {}
+
+  // Si no hay sesión previa, abrir modal de perfil
+  pintarFuentes();
+  pintarCalidades();
+  pintarResumen();
+  abrirModalLogin();
+}
+
+initSession();
 </script>
 </body>
 </html>`;
