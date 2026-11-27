@@ -134,6 +134,17 @@ function getUserConfigByToken(token) {
       config: usersStore[uKey].config
     };
   }
+
+  // Recuperación automática si el contenedor se reinició
+  if (token && typeof token === 'string' && token.startsWith('tacit_')) {
+    const parts = token.split('_');
+    const recoveredName = (parts[1] || 'usuario').toUpperCase();
+    return {
+      username: recoveredName,
+      config: { ...DEFAULT_USER_CONFIG }
+    };
+  }
+
   return null;
 }
 

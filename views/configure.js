@@ -153,19 +153,19 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 <!-- MODAL DE ACCESO A PERFIL (USUARIO + PIN) -->
 <div class="modal-overlay" id="modal-login">
   <div class="modal-card">
-    <div class="marca" style="border:none;margin-bottom:0;padding-bottom:10px;"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
-    <h2>Perfil Personal</h2>
-    <p>Ingresa tu nombre y PIN para que lo que tú muevas se guarde solo en tu Stremio sin afectar a los demás.</p>
+    <div class="marca" style="border:none;margin-bottom:0;padding-bottom:12px;"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
+    <h2>Acceso al Panel</h2>
+    <p>Ingresa tu usuario y PIN para cargar tu configuración.</p>
     <form id="form-login" onsubmit="return false;">
       <div class="campo">
-        <label>Nombre de usuario o dispositivo:</label>
-        <input type="text" id="inp-user" placeholder="Ej: Elihu, Sala, Papa" autocomplete="username" required>
+        <label>Usuario:</label>
+        <input type="text" id="inp-user" placeholder="Ej: TV-Sala" autocomplete="username" required>
       </div>
       <div class="campo">
-        <label>PIN o Contraseña secreta:</label>
-        <input type="password" id="inp-pin" placeholder="PIN secreto (ej: 1234)" autocomplete="current-password" required>
+        <label>PIN:</label>
+        <input type="password" id="inp-pin" placeholder="Ej: 1234" autocomplete="current-password" required>
       </div>
-      <button type="submit" class="btn btn-rojo btn-submit" id="btn-entrar">Acceder a mi panel</button>
+      <button type="submit" class="btn btn-rojo btn-submit" id="btn-entrar">Ingresar</button>
       <div id="login-error" style="color:#fca5a5;font-size:13px;margin-top:12px;display:none;"></div>
     </form>
   </div>
@@ -187,8 +187,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="avatar" id="avatar-user">T</div>
         <div>
           <b id="perfil-nombre">TACIT STR</b>
-          <small id="perfil-token">Servidor Personal</small>
-          <button type="button" class="enlace" id="btn-cambiar-perfil" style="font-size:11px;margin-top:2px;">Cambiar perfil</button>
+          <small id="perfil-token">ID de perfil</small>
+          <button type="button" class="enlace" id="btn-cambiar-perfil" style="font-size:11px;margin-top:2px;">Cambiar usuario</button>
         </div>
       </div>
     </div>
@@ -203,21 +203,21 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <!-- BARRA SUPERIOR DE PERFIL ACTIVO (VALIDACIÓN VISUAL) -->
       <div class="barra-perfil" id="barra-perfil">
         <div class="perfil-info">
-          <span class="badge-conectado"><span class="dot-verde"></span> PERFIL CONECTADO</span>
+          <span class="badge-conectado"><span class="dot-verde"></span> ACTIVO</span>
           <span style="font-size:14px;color:#cbd5e1">Usuario: <b id="top-nombre" style="color:var(--cian);font-size:15px;">...</b></span>
           <span class="token-pill" id="top-token">tacit_...</span>
         </div>
         <div>
-          <button type="button" class="btn-logout" id="btn-logout">Cerrar sesión / Cambiar perfil</button>
+          <button type="button" class="btn-logout" id="btn-logout">Cerrar sesión</button>
         </div>
       </div>
 
       <!-- VISTA INICIO -->
       <section class="vista activa" id="v-inicio">
         <div class="bienvenida">
-          <small>Tu addon personal está listo</small>
-          <h2>Hola, <span id="saludo-nombre">Usuario</span></h2>
-          <p>Instálalo una vez en tu Stremio. Si cambias tus sitios o calidades aquí, se actualiza solo en tu televisión sin reinstalar.</p>
+          <small>Configuración del Addon</small>
+          <h2>Panel de Control</h2>
+          <p>Configura las fuentes y calidades deseadas. Tus preferencias se sincronizan automáticamente con tu reproductor.</p>
           <div class="acciones">
             <a class="btn btn-rojo" id="instalar" href="#"><svg viewBox="0 0 24 24"><path d="m6 4 14 8-14 8z"></path></svg>Instalar en Stremio</a>
             <button class="btn btn-claro" id="copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15V5a2 2 0 0 1 2-2h10"></path></svg>Copiar URL del addon</button>
