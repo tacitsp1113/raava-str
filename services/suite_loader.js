@@ -137,6 +137,8 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
   });
 }
 
+const TORRENT_SCRAPERS = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
+
 /**
  * Ejecuta la suite de raspadores según la configuración del usuario
  */
@@ -156,6 +158,11 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
     // Filtrar por tipo soportado
     if (!s.supportedTypes || !s.supportedTypes.includes(manifestType)) return false;
 
+    // Si los torrents están desactivados por el usuario, omitir scrapers exclusivos de torrent
+    if (userConfig.disableTorrents && TORRENT_SCRAPERS.has(s.id)) {
+      return false;
+    }
+
     // Si el usuario especificó lista de proveedores
     if (Array.isArray(userProviders) && userProviders.length > 0) {
       return userProviders.includes(s.id);
@@ -163,11 +170,11 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
 
     // Por defecto en Anime
     if (isAnime) {
-      return ['jkanime', 'tioanime', 'animeav1', 'animejl', 'latanime', 'monoschinos'].includes(s.id);
+      return ['jkanime', 'tioanime', 'animeflv', 'animeav1', 'animejl', 'latanime', 'monoschinos'].includes(s.id);
     }
 
-    // Por defecto en películas / series: fuentes top más rápidas y confiables
-    return ['cinecalidad', 'pelispanda', 'cuevana', 'seriesflix', 'allcalidad', 'pelisplus', 'pelispedia', 'lamovie', 'hackstore'].includes(s.id);
+    // Por defecto en películas / series: todas las fuentes soportadas
+    return true;
   });
 
   addLog('info', 'Suite', `Consultando ${targetScrapers.length} raspadores para ${manifestType} TMDB:${tmdbId}...`);

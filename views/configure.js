@@ -232,6 +232,17 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
 <script>
 const PROVEEDORES_LISTA = [
+  // 🧲 FUENTES TORRENT (P2P 4K / 1080P)
+  { id: 'hackstore', nombre: 'HackStore (P2P / Directo)', grupo: 'torrents' },
+  { id: '4khdhub', nombre: '4kHDHub (4K UHD / P2P)', grupo: 'torrents' },
+  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR / P2P)', grupo: 'torrents' },
+  { id: 'hdhub4u', nombre: 'HDHub4u (P2P)', grupo: 'torrents' },
+  { id: 'showbox', nombre: 'ShowBox (P2P)', grupo: 'torrents' },
+  { id: 'videasy', nombre: 'Videasy (P2P / Web)', grupo: 'torrents' },
+  { id: 'vidfast', nombre: 'VidFast (P2P / Web)', grupo: 'torrents' },
+  { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' },
+
+  // 🎬 PELÍCULAS Y SERIES (STREAMING DIRECTO HTTPS)
   { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'peliculas' },
   { id: 'cuevana', nombre: 'Cuevana', grupo: 'peliculas' },
   { id: 'cuevana3', nombre: 'Cuevana 3', grupo: 'peliculas' },
@@ -252,17 +263,11 @@ const PROVEEDORES_LISTA = [
   { id: 'gnula', nombre: 'Gnula', grupo: 'peliculas' },
   { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasySeries', grupo: 'peliculas' },
   { id: 'miradetodo', nombre: 'MiraDeTodo', grupo: 'peliculas' },
-  { id: 'hackstore', nombre: 'HackStore', grupo: 'peliculas' },
-  { id: '4khdhub', nombre: '4kHDHub (4K/P2P)', grupo: 'peliculas' },
-  { id: 'hdhub4u', nombre: 'HDHub4u', grupo: 'peliculas' },
-  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR)', grupo: 'peliculas' },
-  { id: 'showbox', nombre: 'ShowBox', grupo: 'peliculas' },
-  { id: 'videasy', nombre: 'Videasy', grupo: 'peliculas' },
-  { id: 'vidfast', nombre: 'VidFast', grupo: 'peliculas' },
-  { id: 'vidlink', nombre: 'VidLink', grupo: 'peliculas' },
   { id: 'vidsrc', nombre: 'VidSrc', grupo: 'peliculas' },
   { id: 'vidsrcicu', nombre: 'VidSrc ICU', grupo: 'peliculas' },
   { id: 'vidsrcto', nombre: 'VidSrc TO', grupo: 'peliculas' },
+
+  // ⛩️ ANIME
   { id: 'animeflv', nombre: 'AnimeFLV', grupo: 'anime' },
   { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime' },
   { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
@@ -271,12 +276,20 @@ const PROVEEDORES_LISTA = [
   { id: 'animefenix', nombre: 'AnimeFenix', grupo: 'anime' },
   { id: 'animelatinohd', nombre: 'AnimeLatinoHD', grupo: 'anime' },
   { id: 'animeshd', nombre: 'AnimesHD', grupo: 'anime' },
+
+  // 🐉 DONGHUA
   { id: 'luciferdonghua', nombre: 'LuciferDonghua', grupo: 'donghua' },
   { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua' },
+
+  // 🎭 DORAMAS
   { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'doramas' },
   { id: 'doramasmp4', nombre: 'DoramasMP4', grupo: 'doramas' },
   { id: 'estrenosdoramas', nombre: 'EstrenosDoramas', grupo: 'doramas' },
+
+  // 📺 CARICATURAS Y RETRO
   { id: 'lacartoons', nombre: 'LACartoons (Retro)', grupo: 'caricaturas' },
+
+  // 🌐 ESPECIALES
   { id: 'tokyvideo', nombre: 'TokyVideo', grupo: 'especiales' },
   { id: 'playdede', nombre: 'PlayDede', grupo: 'especiales' },
   { id: 'sololatino', nombre: 'SoloLatino', grupo: 'especiales' },
@@ -287,12 +300,13 @@ const PROVEEDORES_LISTA = [
 ];
 
 const GRUPOS = {
-  peliculas: ['Películas y series', 'Cine, series y estrenos'],
-  anime: ['Anime', 'Animación japonesa en audio latino y subtitulado'],
-  donghua: ['Donghua', 'Animación china subtitulada'],
-  doramas: ['Doramas', 'Dramas asiáticos'],
-  caricaturas: ['Caricaturas y retro', 'Series animadas clásicas de TV'],
-  especiales: ['Especiales y respaldo', 'Fuentes adicionales de streaming directo']
+  torrents: ['🧲 Fuentes Torrent (P2P)', 'Películas y series en 4K UHD y 1080p vía red P2P con recuento de semillas'],
+  peliculas: ['🎬 Películas y series (Directo)', 'Cine, series y estrenos con streaming directo HTTPS'],
+  anime: ['⛩️ Anime', 'Animación japonesa en audio latino y subtitulado'],
+  donghua: ['🐉 Donghua', 'Animación china subtitulada'],
+  doramas: ['🎭 Doramas', 'Dramas asiáticos'],
+  caricaturas: ['📺 Caricaturas y retro', 'Series animadas clásicas de TV'],
+  especiales: ['🌐 Especiales y respaldo', 'Fuentes adicionales de streaming directo']
 };
 
 const CALIDADES = [
@@ -389,8 +403,13 @@ function pintarFuentes() {
     const lista = PROVEEDORES_LISTA.filter(p => p.grupo === g);
     if (!lista.length) return '';
     const on = lista.filter(p => act.has(p.id)).length;
+    const isTorrentsGroup = g === 'torrents';
+    const torrentNotice = (isTorrentsGroup && config.disableTorrents)
+      ? '<span style="color:#f87171;font-size:11px;font-weight:700;margin-left:8px;">(Desactivado por interruptor general)</span>'
+      : '';
+
     return '<div class="tarjeta grupo-prov">' +
-      '<header><h3>' + nombre + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
+      '<header><h3>' + nombre + torrentNotice + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
       '<div class="botones-grupo"><button class="pastilla" data-todos="' + g + '">Todos</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
       '<div class="opciones">' +
       lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + '</div>').join('') +
@@ -465,6 +484,7 @@ $('op-muertos').addEventListener('click', () => {
 $('op-torrents').addEventListener('click', () => {
   config.disableTorrents = !config.disableTorrents;
   pintarCalidades();
+  pintarFuentes();
   guardar();
 });
 

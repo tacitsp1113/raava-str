@@ -36,8 +36,8 @@ const DEFAULT_CONFIG = {
   qualities: ['4k', '1080p', '720p', '480p'],
   disableTorrents: false,
   priority: 'direct', // 'direct' | 'torrent'
-  maxWebStreamsPerProvider: 3, // Límite por sitio
-  maxTotalWebStreams: 8,       // Límite total web combinado
+  maxWebStreamsPerProvider: 4, // Límite por sitio
+  maxTotalWebStreams: 25,      // Límite total web combinado
   minSeeders: 1
 };
 
@@ -470,8 +470,8 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
   });
 
   // E. Límites numéricos: por proveedor y total combinado
-  const maxPerProvider = Math.max(1, parseInt(config.maxWebStreamsPerProvider, 10) || 3);
-  const maxTotalWeb = Math.max(1, parseInt(config.maxTotalWebStreams, 10) || 8);
+  const maxPerProvider = Math.max(1, parseInt(config.maxWebStreamsPerProvider, 10) || 4);
+  const maxTotalWeb = Math.max(1, parseInt(config.maxTotalWebStreams, 10) || 25);
 
   const providerCounts = {};
   const finalStreams = [];
