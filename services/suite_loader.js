@@ -138,6 +138,8 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 }
 
 const TORRENT_SCRAPERS = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
+const BUILTIN_PROVIDERS = new Set(['cinecalidad', 'cuevana', 'seriesflix', 'hackstore', 'pelisplus', 'tioanime', 'lamovie', 'lacartoons']);
+const TOP_PROVIDERS_SET = new Set(['pelispanda', 'uhdmovies', '4khdhub', 'animeflv', 'mundodonghua', 'doramasflix']);
 
 /**
  * Ejecuta la suite de raspadores según la configuración del usuario
@@ -155,26 +157,29 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
     : (userConfig.providers?.movie || null);
 
   const targetScrapers = allScrapers.filter((s) => {
-    // Filtrar por tipo soportado
+    // 1. Filtrar por tipo soportado
     if (!s.supportedTypes || !s.supportedTypes.includes(manifestType)) return false;
 
-    // Si los torrents están desactivados por el usuario, omitir scrapers exclusivos de torrent
+    // 2. Si los torrents están desactivados por el usuario, omitir scrapers exclusivos de torrent
     if (userConfig.disableTorrents && TORRENT_SCRAPERS.has(s.id)) {
       return false;
     }
 
-    // Si el usuario especificó lista de proveedores
-    if (Array.isArray(userProviders) && userProviders.length > 0) {
+    // 3. Omitir si ya se ejecuta de forma nativa optimizada en buildWebTasks
+    if (BUILTIN_PROVIDERS.has(s.id)) {
+      return false;
+    }
+
+    // 4. Si el usuario especificó lista de proveedores (incluso si seleccionó 0 []), filtrar estrictamente
+    if (Array.isArray(userProviders)) {
       return userProviders.includes(s.id);
     }
 
-    // Por defecto en Anime
+    // 5. Fallback si no hay lista configurada: solo fuentes TOP para máxima velocidad y evitar caídas
     if (isAnime) {
-      return ['jkanime', 'tioanime', 'animeflv', 'animeav1', 'animejl', 'latanime', 'monoschinos'].includes(s.id);
+      return ['animeflv', 'mundodonghua'].includes(s.id);
     }
-
-    // Por defecto en películas / series: todas las fuentes soportadas
-    return true;
+    return TOP_PROVIDERS_SET.has(s.id);
   });
 
   addLog('info', 'Suite', `Consultando ${targetScrapers.length} raspadores para ${manifestType} TMDB:${tmdbId}...`);

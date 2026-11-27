@@ -132,8 +132,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
   <aside id="menu">
     <div class="marca"><img src="/logo.png" alt="TACIT STR"><b>TACIT STR</b></div>
     <button class="item activo" data-vista="inicio"><span class="ico"><svg viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"></path><path d="M5 10v10h14V10"></path></svg></span>Inicio</button>
-    <button class="item" data-vista="fuentes"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>Sitios<span class="num" id="num-fuentes">53/53</span></button>
-    <button class="item" data-vista="calidad"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15V9l3 3 3-3v6M17 9v6"></path></svg></span>Calidad<span class="num" id="num-calidad">4</span></button>
+    <button class="item" data-vista="fuentes"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>Sitios<span class="num" id="num-fuentes">12/53</span></button>
+    <button class="item" data-vista="calidad"><span class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M7 15V9l3 3 3-3v6M17 9v6"></path></svg></span>Calidad<span class="num" id="num-calidad">3</span></button>
     <div class="seccion-menu">Herramientas</div>
     <button class="item" data-vista="nuvio"><span class="ico"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"></rect><path d="M11 18h2"></path></svg></span>Plugin de Nuvio</button>
     <a class="item" href="/status" target="_blank"><span class="ico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></span>Diagnóstico</a>
@@ -163,8 +163,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
           </div>
         </div>
         <div class="chips">
-          <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">53 de 53</b> sitios activos</span>
-          <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080p · 720p</b></span>
+          <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">12 de 53 (⭐ TOP)</b> sitios activos</span>
+          <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080P · 720P</b></span>
           <span class="chip" data-ir="calidad"><i></i><b id="chip-torrents">🧲 Torrents Activos</b></span>
           <span class="chip" data-ir="calidad"><i></i><span id="chip-muertos">Links muertos ocultos</span></span>
         </div>
@@ -325,8 +325,10 @@ const CALIDADES = [
 const CHECK = '<span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>';
 const BASE_URL = ${JSON.stringify(baseUrl)} || location.origin;
 
+const TOP_IDS = PROVEEDORES_LISTA.filter(p => p.top).map(p => p.id);
+
 const DEFAULT_CONFIG = {
-  proveedores: null,
+  proveedores: [...TOP_IDS],
   calidades: ['4k', '1080p', '720p'],
   disableTorrents: false,
   filtrarMuertos: true
@@ -356,10 +358,14 @@ function toast(t) {
   toast.t = setTimeout(() => el.classList.remove('ver'), 2000);
 }
 
-const activos = () => (config.proveedores === null ? PROVEEDORES_LISTA.map(p => p.id) : config.proveedores);
+const activos = () => (Array.isArray(config.proveedores) ? config.proveedores : TOP_IDS);
 
 function generarUrlManifest() {
-  const isDefault = (config.proveedores === null || config.proveedores.length === PROVEEDORES_LISTA.length) &&
+  const currentProvs = activos();
+  const isDefaultProvs = currentProvs.length === TOP_IDS.length &&
+    TOP_IDS.every(id => currentProvs.includes(id));
+
+  const isDefault = isDefaultProvs &&
     config.calidades.length === 3 &&
     config.calidades.includes('4k') &&
     config.calidades.includes('1080p') &&
@@ -372,7 +378,7 @@ function generarUrlManifest() {
   }
 
   const payload = {
-    providers: config.proveedores,
+    providers: currentProvs,
     qualities: config.calidades,
     disableTorrents: Boolean(config.disableTorrents),
     filtrarMuertos: Boolean(config.filtrarMuertos)
@@ -382,11 +388,15 @@ function generarUrlManifest() {
 }
 
 function pintarResumen() {
-  const n = activos().length;
-  $('num-fuentes').textContent = n + '/' + PROVEEDORES_LISTA.length;
+  const current = activos();
+  const n = current.length;
+  const total = PROVEEDORES_LISTA.length;
+  const esTop = n === TOP_IDS.length && TOP_IDS.every(id => current.includes(id));
+
+  $('num-fuentes').textContent = n + '/' + total;
   $('num-calidad').textContent = config.calidades.length;
-  $('chip-sitios').textContent = n + ' de ' + PROVEEDORES_LISTA.length;
-  $('chip-calidades').textContent = config.calidades.join(' · ') || 'Sin calidades';
+  $('chip-sitios').textContent = n + ' de ' + total + (esTop ? ' (⭐ TOP)' : '');
+  $('chip-calidades').textContent = config.calidades.map(c => c.toUpperCase()).join(' · ') || 'Sin calidades';
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
   $('chip-torrents').textContent = config.disableTorrents ? '🚫 Solo Streaming Directo' : '🧲 Torrents Activos';
 
@@ -425,7 +435,7 @@ function pintarFuentes() {
 function cambiarProveedores(ids, encender) {
   const act = new Set(activos());
   ids.forEach(id => encender ? act.add(id) : act.delete(id));
-  config.proveedores = act.size === PROVEEDORES_LISTA.length ? null : [...act];
+  config.proveedores = [...act];
   pintarFuentes();
   guardar();
 }
@@ -448,7 +458,7 @@ $('lista-fuentes').addEventListener('click', (e) => {
       if (topIds.has(p.id)) act.add(p.id);
       else act.delete(p.id);
     });
-    config.proveedores = act.size === PROVEEDORES_LISTA.length ? null : [...act];
+    config.proveedores = [...act];
     pintarFuentes();
     guardar();
   } else if (ninguno) {
@@ -459,20 +469,20 @@ $('lista-fuentes').addEventListener('click', (e) => {
 const btnSoloTop = $('btn-solo-top');
 if (btnSoloTop) {
   btnSoloTop.addEventListener('click', () => {
-    config.proveedores = PROVEEDORES_LISTA.filter(p => p.top).map(p => p.id);
+    config.proveedores = [...TOP_IDS];
     pintarFuentes();
     guardar();
-    toast('Activadas únicamente fuentes ⭐ TOP');
+    toast('Activadas únicamente fuentes ⭐ TOP (' + TOP_IDS.length + ')');
   });
 }
 
 const btnActivarTodas = $('btn-activar-todas');
 if (btnActivarTodas) {
   btnActivarTodas.addEventListener('click', () => {
-    config.proveedores = null;
+    config.proveedores = PROVEEDORES_LISTA.map(p => p.id);
     pintarFuentes();
     guardar();
-    toast('Activadas todas las fuentes');
+    toast('Activadas todas las fuentes (' + PROVEEDORES_LISTA.length + ')');
   });
 }
 

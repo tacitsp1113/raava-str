@@ -11,30 +11,30 @@ const { getHackstoreStreams } = require('./services/providers/hackstore');
 const { getTioanimeStreams } = require('./services/providers/tioanime');
 const { addLog } = require('./services/logger');
 
+const TOP_PROVIDERS = [
+  'pelispanda',
+  'cinecalidad',
+  'cuevana',
+  'seriesflix',
+  'hackstore',
+  'uhdmovies',
+  '4khdhub',
+  'tioanime',
+  'animeflv',
+  'mundodonghua',
+  'doramasflix',
+  'lacartoons'
+];
+
 const DEFAULT_CONFIG = {
   mode: 'scrapers',
   providers: {
-    movie: [
-      'pelispanda',
-      'cinecalidad',
-      'allcalidad',
-      'cuevana',
-      'pelispedia',
-      'hackstore',
-      'pelisplus'
-    ],
-    series: [
-      'seriesflix',
-      'pelispanda',
-      'cuevana',
-      'cinecalidad',
-      'pelisplus',
-      'tioanime',
-      'jkanime'
-    ]
+    movie: [...TOP_PROVIDERS],
+    series: [...TOP_PROVIDERS]
   },
-  qualities: ['4k', '1080p', '720p', '480p'],
+  qualities: ['4k', '1080p', '720p'],
   disableTorrents: false,
+  filtrarMuertos: true,
   priority: 'direct', // 'direct' | 'torrent'
   maxWebStreamsPerProvider: 4, // Límite por sitio
   maxTotalWebStreams: 25,      // Límite total web combinado
@@ -215,7 +215,8 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
     ? (config.providers?.series || DEFAULT_CONFIG.providers.series)
     : (config.providers?.movie || DEFAULT_CONFIG.providers.movie);
 
-  const shouldRun = (prov) => activeProviders.includes(prov);
+  const shouldRun = (prov) => Array.isArray(activeProviders) && activeProviders.includes(prov);
+  const TASK_TIMEOUT = 6000;
 
   // 1. CineCalidad (Películas y Series - Directo Vimeos)
   if (shouldRun('cinecalidad')) {
@@ -236,7 +237,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'CineCalidad', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -260,7 +261,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'Cuevana', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -284,7 +285,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'SeriesFlix', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -308,7 +309,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'Hackstore', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -332,13 +333,13 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'PelisPlus', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
 
   // 6. TioAnime (Para contenido de Anime)
-  if (isAnime || shouldRun('tioanime')) {
+  if (shouldRun('tioanime')) {
     providerTasks.push(
       taskWithTimeout(
         (async () => {
@@ -356,7 +357,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           addLog('error', 'TioAnime', `Error: ${e.message}`);
           return [];
         }),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -369,7 +370,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           const s = await getLaMovieStreams(media, season, episode, config);
           return s;
         })().catch(() => []),
-        10000
+        TASK_TIMEOUT
       )
     );
   }
@@ -382,7 +383,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
           const s = await getLACartoonsStreams(media, season, episode, config);
           return s;
         })().catch(() => []),
-        10000
+        TASK_TIMEOUT
       )
     );
   }

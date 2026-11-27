@@ -326,9 +326,9 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
 }
 
 async function getHackstoreStreams(media, season = null, episode = null, config = {}) {
-  const wantTorrents = config.wantTorrents !== undefined
+  const wantTorrents = !config.disableTorrents && (config.wantTorrents !== undefined
     ? config.wantTorrents
-    : (Array.isArray(config.providers) ? config.providers.includes('hackstore_torrent') : true);
+    : (Array.isArray(config.providers) ? config.providers.includes('hackstore_torrent') : true));
   const wantDirect = config.wantDirect !== undefined
     ? config.wantDirect
     : (Array.isArray(config.providers) ? config.providers.includes('hackstore_direct') : true);
