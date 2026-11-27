@@ -647,6 +647,137 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         </div>
 
         <div id="providersList">
+          <!-- 0. PelisPanda -->
+          <div class="provider-row" draggable="true" data-prov-id="pelispanda">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">PelisPanda</span>
+                <span class="tag-badge tag-recommended">⭐ Suite Top</span>
+                <span class="tag-badge tag-fast">⚡ Vimeos 1080p</span>
+              </div>
+              <div class="provider-desc">Líder en enlaces directos Full HD sin bloqueos de IP para estrenos de películas y series.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="pelispanda" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="pelispanda" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 0b. AllCalidad -->
+          <div class="provider-row" draggable="true" data-prov-id="allcalidad">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">AllCalidad</span>
+                <span class="tag-badge tag-recommended">⭐ Suite Top</span>
+              </div>
+              <div class="provider-desc">Estrenos de cine y series completas con audio Latino dual y enlaces directos HD.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="allcalidad" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="allcalidad" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 0c. PelisPedia -->
+          <div class="provider-row" draggable="true" data-prov-id="pelispedia">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">PelisPedia</span>
+                <span class="tag-badge tag-fast">⚡ Multi-Server</span>
+              </div>
+              <div class="provider-desc">Catálogo extenso de películas y series con servidores directos Fastream y VOE.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="pelispedia" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="pelispedia" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 0d. JKAnime -->
+          <div class="provider-row" draggable="true" data-prov-id="jkanime">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">JKAnime</span>
+                <span class="tag-badge tag-recommended">⭐ Anime Top</span>
+              </div>
+              <div class="provider-desc">El portal más grande de anime clásico, películas y episodios en emisión con audio Latino.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="jkanime" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="jkanime" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
+          <!-- 0e. DoramasFlix -->
+          <div class="provider-row" draggable="true" data-prov-id="doramasflix">
+            <div class="order-controls">
+              <button type="button" class="btn-order btn-move-up" title="Subir prioridad">▲</button>
+              <span class="drag-handle" title="Arrastra para ordenar">⠿</span>
+              <button type="button" class="btn-order btn-move-down" title="Bajar prioridad">▼</button>
+            </div>
+            <div class="provider-meta">
+              <div class="provider-name-line">
+                <span class="provider-title">DoramasFlix</span>
+                <span class="tag-badge tag-recommended">⭐ Doramas</span>
+              </div>
+              <div class="provider-desc">K-Dramas coreanos, doramas asiáticos y series dobladas al español latino.</div>
+            </div>
+            <div class="toggle-group">
+              <button type="button" class="btn-toggle-type active" data-prov="doramasflix" data-type="movie">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                🎬 Pelis
+              </button>
+              <button type="button" class="btn-toggle-type active" data-prov="doramasflix" data-type="series">
+                <svg class="toggle-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                📺 Series
+              </button>
+            </div>
+          </div>
+
           <!-- 1. SeriesFlix -->
           <div class="provider-row" draggable="true" data-prov-id="seriesflix">
             <div class="order-controls">
@@ -994,8 +1125,8 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
     const initialServerConfig = ${JSON.stringify(initialConfig)};
 
-    const DEFAULT_MOVIES = ['cinecalidad', 'cuevana', 'hackstore', 'pelisplus'];
-    const DEFAULT_SERIES = ['seriesflix', 'cuevana', 'cinecalidad', 'pelisplus', 'tioanime'];
+    const DEFAULT_MOVIES = ['pelispanda', 'cinecalidad', 'allcalidad', 'cuevana', 'pelispedia', 'hackstore', 'pelisplus'];
+    const DEFAULT_SERIES = ['seriesflix', 'pelispanda', 'cuevana', 'cinecalidad', 'pelisplus', 'tioanime', 'jkanime', 'doramasflix'];
 
     const state = {
       mode: 'scrapers',

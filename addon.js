@@ -1,5 +1,6 @@
 const { addonBuilder } = require('stremio-addon-sdk');
 const { getMediaDetails } = require('./services/tmdb');
+const { fetchSuiteStreams } = require('./services/suite_loader');
 const { getSeriesFlixStreams } = require('./services/providers/seriesflix');
 const { getLaMovieStreams } = require('./services/providers/lamovie');
 const { getLACartoonsStreams } = require('./services/providers/lacartoons');
@@ -14,17 +15,22 @@ const DEFAULT_CONFIG = {
   mode: 'scrapers',
   providers: {
     movie: [
+      'pelispanda',
       'cinecalidad',
+      'allcalidad',
       'cuevana',
+      'pelispedia',
       'hackstore',
       'pelisplus'
     ],
     series: [
       'seriesflix',
+      'pelispanda',
       'cuevana',
       'cinecalidad',
       'pelisplus',
-      'tioanime'
+      'tioanime',
+      'jkanime'
     ]
   },
   qualities: ['4k', '1080p', '720p', '480p'],
@@ -150,14 +156,36 @@ async function resolveStreams(type, id, rawConfig) {
       (media.country === 'JP' || media.originalLanguage === 'ja')
     );
 
-    addLog('info', 'Scrapers', `Buscando en páginas web para "${media.title}"...`);
-    const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
-    const settled = await Promise.allSettled(providerTasks);
-
+    addLog('info', 'Scrapers', `Buscando en suite de raspadores para "${media.title}"...`);
     const collectedStreams = [];
-    for (const res of settled) {
-      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-        collectedStreams.push(...res.value);
+
+    // 1. Ejecutar Suite completa de 54 raspadores
+    if (media.tmdbId) {
+      try {
+        const suiteStreams = await fetchSuiteStreams(
+          media.tmdbId,
+          isSeries ? 'series' : 'movie',
+          season,
+          episode,
+          isAnime,
+          config
+        );
+        if (Array.isArray(suiteStreams) && suiteStreams.length > 0) {
+          collectedStreams.push(...suiteStreams);
+        }
+      } catch (err) {
+        addLog('warn', 'Suite', `Error en suite: ${err.message}`);
+      }
+    }
+
+    // 2. Si se necesitan más resultados o como respaldo, ejecutar raspadores locales
+    if (collectedStreams.length < 3) {
+      const providerTasks = buildWebTasks(media, season, episode, isSeries, isAnime, config);
+      const settled = await Promise.allSettled(providerTasks);
+      for (const res of settled) {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          collectedStreams.push(...res.value);
+        }
       }
     }
 
