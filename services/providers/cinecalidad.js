@@ -181,14 +181,18 @@ async function resolveOption(optionUrl, media = null, season = null, episode = n
     name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
+    headers: (resolved.headers && Object.keys(resolved.headers).length > 0) ? resolved.headers : undefined,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,
       url: s.url,
       lang: s.lang === 'spa' ? 'Spanish' : 'English'
     })),
-    behaviorHints: {
-      notWebReady: false
-    }
+    behaviorHints: (resolved.headers && Object.keys(resolved.headers).length > 0) ? {
+      proxyHeaders: {
+        request: resolved.headers
+      },
+      notWebReady: true
+    } : undefined
   };
 }
 

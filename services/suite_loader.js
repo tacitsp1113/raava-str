@@ -102,6 +102,8 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
           const sizeText = s.size ? ` · 📦 ${s.size}` : '';
           const directSizeLine = s.size ? `\n📦 ${s.size}` : '';
 
+          const reqHeaders = (!isTorrent && s.headers && Object.keys(s.headers).length > 0) ? s.headers : null;
+
           mapped.push({
             provider: scraper.id,
             server: isTorrent ? 'Torrent P2P' : srv,
@@ -116,10 +118,13 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
             url: s.url,
             infoHash: s.infoHash,
             fileIdx: s.fileIdx,
-            behaviorHints: {
-              proxyHeaders: (!isTorrent && s.headers) ? { request: s.headers } : undefined,
-              notWebReady: false
-            }
+            headers: reqHeaders || undefined,
+            behaviorHints: reqHeaders ? {
+              proxyHeaders: {
+                request: reqHeaders
+              },
+              notWebReady: true
+            } : undefined
           });
         }
         resolve(mapped);

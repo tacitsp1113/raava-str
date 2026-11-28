@@ -305,6 +305,8 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
   const line2 = `🇲🇽 Español Latino`;
   const line3 = (season && episode) ? `⚡ HackStore · T${season}E${episode}` : `⚡ HackStore`;
 
+  const reqHeaders = (resolved.headers && Object.keys(resolved.headers).length > 0) ? resolved.headers : null;
+
   return {
     provider: 'hackstore',
     server: serverName,
@@ -315,24 +317,27 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
     name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
+    headers: reqHeaders || undefined,
     subtitles: (resolved.subtitles || []).map(s => ({
       id: s.lang,
       url: s.url,
       lang: s.lang === 'spa' ? 'Spanish' : 'English'
     })),
-    behaviorHints: {
-      notWebReady: false
-    }
+    behaviorHints: reqHeaders ? {
+      proxyHeaders: {
+        request: reqHeaders
+      },
+      notWebReady: true
+    } : undefined
   };
 }
 
 async function getHackstoreStreams(media, season = null, episode = null, config = {}) {
-  // Torrents suspendidos temporalmente a nivel global para garantizar privacidad de IP (0 riesgo de multas)
-  // Se conserva la función formatTorrentItem intacta para reactivación futura.
+  // Torrents suspendidos al 100% por privacidad de IP (0 riesgo de multas/Abmahnung)
   const wantTorrents = false;
   const wantDirect = true;
 
-  if (!wantTorrents && !wantDirect) return [];
+  if (!wantDirect) return [];
 
   const isSeries = Boolean(season && episode);
   let posts = [];
@@ -362,7 +367,8 @@ async function getHackstoreStreams(media, season = null, episode = null, config 
 
     const promises = [];
 
-    // 1. Torrents P2P
+    // [SUSPENDIDO] 1. Torrents P2P desactivados por seguridad de IP
+    /*
     if (wantTorrents) {
       promises.push(
         getDownloads(targetId).then(async (downloads) => {
@@ -380,8 +386,9 @@ async function getHackstoreStreams(media, season = null, episode = null, config 
         }).catch(() => [])
       );
     }
+    */
 
-    // 2. Direct Web Players (Vimeos, etc.)
+    // 2. Direct Web Players (Vimeos 1080p, Goodstream - 100% Seguro HTTPS)
     if (wantDirect) {
       promises.push(
         getPlayers(targetId).then(async (players) => {

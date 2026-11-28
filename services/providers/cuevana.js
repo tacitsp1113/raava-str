@@ -131,6 +131,8 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     ? `⚡ Cuevana · T${season}E${episode}`
     : `⚡ Cuevana`;
 
+  const reqHeaders = (resolved.headers && Object.keys(resolved.headers).length > 0) ? resolved.headers : null;
+
   return {
     provider: 'cuevana',
     server,
@@ -141,9 +143,13 @@ async function resolveEmbedUrl(embedUrl, lang, baseUrl, media = null, season = n
     name: 'TACIT STR · WEB',
     title: `${line1}\n${line2}\n${line3}`,
     url: resolved.url,
-    behaviorHints: {
-      notWebReady: false
-    }
+    headers: reqHeaders || undefined,
+    behaviorHints: reqHeaders ? {
+      proxyHeaders: {
+        request: reqHeaders
+      },
+      notWebReady: true
+    } : undefined
   };
 }
 
