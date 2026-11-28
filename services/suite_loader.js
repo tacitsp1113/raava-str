@@ -88,16 +88,8 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 
           const isTorrent = Boolean(s.infoHash || (s.url && s.url.startsWith('magnet:')));
 
-          // Descartar servidores con amarre de IP problemáticos en streaming directo
-          if (!isTorrent && s.url) {
-            const urlLower = s.url.toLowerCase();
-            const nameLower = (s.name || '').toLowerCase();
-            if (urlLower.includes('vidhide') || nameLower.includes('vidhide') ||
-                urlLower.includes('streamwish') || nameLower.includes('streamwish') ||
-                urlLower.includes('doodstream') || nameLower.includes('doodstream')) {
-              continue;
-            }
-          }
+          // Validar enlace existente
+          if (!isTorrent && !s.url) continue;
 
           const qKey = normalizeQuality(s.quality);
           const srv = extractServer(s.name || s.title);
