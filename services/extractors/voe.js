@@ -53,10 +53,15 @@ function voeDecode(encoded, patternsRaw) {
 
 const { addLog } = require('../logger');
 
+let voeBlockedUntil = 0;
+
 /**
  * Resolves a VOE (voe.sx or mirrors) embed URL to direct m3u8 or mp4
  */
 async function resolveVoe(url) {
+  if (Date.now() < voeBlockedUntil) {
+    return null; // Omitir inmediatamente si VOE está en cooldown por bloqueo Cloudflare/DDoS-Guard
+  }
   try {
     addLog('info', 'VOE', `Iniciando resolución VOE: ${url}`);
     const res = await axios.get(url, {
@@ -65,8 +70,8 @@ async function resolveVoe(url) {
         'Referer': url,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
       },
-      timeout: 6000,
-      maxRedirects: 5
+      timeout: 3500,
+      maxRedirects: 3
     });
 
     let html = res.data;
@@ -147,7 +152,12 @@ async function resolveVoe(url) {
     addLog('warn', 'VOE', `No se encontró patrón de video en HTML de ${url}`);
     return null;
   } catch (err) {
-    addLog('error', 'VOE', `Fallo al resolver ${url}: ${err.message} (status: ${err.response?.status || 'N/A'})`);
+    if (err.response?.status === 403) {
+      voeBlockedUntil = Date.now() + 60000; // 1 minuto de cooldown para no bloquear llamadas paralelas
+      addLog('warn', 'VOE', `VOE bloqueado (Cloudflare 403). Omitiendo espejos VOE.`);
+    } else {
+      addLog('error', 'VOE', `Fallo al resolver ${url}: ${err.message} (status: ${err.response?.status || 'N/A'})`);
+    }
     return null;
   }
 }

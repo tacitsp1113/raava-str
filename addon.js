@@ -66,18 +66,31 @@ function setCachedStreams(key, data) {
   // Desactivado intencionalmente para garantizar enlaces frescos en cada reproducción
 }
 
+const TORRENT_SCRAPERS_SET = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
+
 function capProvidersList(list) {
   if (!Array.isArray(list)) return [...DEFAULT_ACTIVE_8];
-  if (list.length <= MAX_ACTIVE_PROVIDERS) return [...list];
 
-  // Si la petición trae más de 8 (por ejemplo URLs viejas con 24 o 53), priorizar fuentes TOP y recortar estrictamente a 8
-  const sorted = [...list].sort((a, b) => {
+  // 1. Descartar scrapers suspendidos (torrents) y nombres obsoletos
+  let cleaned = list.filter(p => !TORRENT_SCRAPERS_SET.has(p) && p !== 'cuevana3' && p !== 'cuevana8' && p !== 'cuevanabiz');
+
+  // 2. Asegurar que PelisHax y AllCalidad estén activos para reemplazar slots muertos de torrents
+  if (!cleaned.includes('pelishax')) {
+    cleaned.unshift('pelishax');
+  }
+  if (!cleaned.includes('allcalidad') && cleaned.length < MAX_ACTIVE_PROVIDERS) {
+    cleaned.push('allcalidad');
+  }
+
+  // 3. Ordenar por prioridad TOP
+  const sorted = [...cleaned].sort((a, b) => {
     const aRank = TOP_PROVIDERS.indexOf(a);
     const bRank = TOP_PROVIDERS.indexOf(b);
     const aVal = aRank === -1 ? 999 : aRank;
     const bVal = bRank === -1 ? 999 : bRank;
     return aVal - bVal;
   });
+
   return sorted.slice(0, MAX_ACTIVE_PROVIDERS);
 }
 
@@ -149,7 +162,8 @@ async function resolveStreams(type, id, rawConfig) {
     return cached;
   }
 
-  console.log(`[TACIT Request] Resolving streams for type=${type}, id=${id}`);
+    const activeList = isSeries ? config.providers?.series : config.providers?.movie;
+    console.log(`[TACIT Request] Resolving streams for type=${type}, id=${id} | Active: ${Array.isArray(activeList) ? activeList.join(', ') : 'default'}`);
 
   try {
     const isSeries = type === 'series';
