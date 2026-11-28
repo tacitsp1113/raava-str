@@ -133,7 +133,7 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 
 const TORRENT_SCRAPERS = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
 const BUILTIN_PROVIDERS = new Set(['cinecalidad', 'cuevana', 'seriesflix', 'hackstore', 'pelisplus', 'tioanime', 'lamovie', 'lacartoons']);
-const TOP_PROVIDERS_SET = new Set(['pelispanda', 'uhdmovies', '4khdhub', 'animeflv', 'mundodonghua', 'doramasflix']);
+const TOP_PROVIDERS_SET = new Set(['pelispanda', 'pelishax', 'allcalidad', 'uhdmovies', '4khdhub', 'animeflv', 'mundodonghua', 'doramasflix']);
 
 /**
  * Ejecuta la suite de raspadores según la configuración del usuario

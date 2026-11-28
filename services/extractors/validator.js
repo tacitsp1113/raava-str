@@ -48,9 +48,6 @@ async function isStreamAlive(url, headers = {}, timeoutMs = 2000) {
  * Bloquean o cortan el audio al reproducirse desde otra IP.
  */
 const IP_LOCKED_DOMAINS = [
-  'vidhide',
-  'earnvids',
-  'streamhide',
   'luluvdo',
   'lulustream',
   'doodstream',

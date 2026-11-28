@@ -249,60 +249,61 @@ const PROVEEDORES_LISTA = [
   { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' },
 
   // 🎬 PELÍCULAS Y SERIES (STREAMING DIRECTO HTTPS)
-  { id: 'pelispanda', nombre: 'PelisPanda', grupo: 'peliculas', top: true },
-  { id: 'cinecalidad', nombre: 'CineCalidad', grupo: 'peliculas', top: true },
-  { id: 'cuevana', nombre: 'Cuevana', grupo: 'peliculas', top: true },
+  { id: 'pelispanda', nombre: 'PelisPanda (Vimeos)', grupo: 'peliculas', top: true },
+  { id: 'cinecalidad', nombre: 'CineCalidad (Vimeos)', grupo: 'peliculas', top: true },
+  { id: 'cuevana', nombre: 'Cuevana (Vimeos / StreamWish)', grupo: 'peliculas', top: true },
+  { id: 'pelishax', nombre: 'PelisHax (StreamWish / VidHide)', grupo: 'peliculas', top: true },
+  { id: 'allcalidad', nombre: 'AllCalidad (Vimeos)', grupo: 'peliculas', top: true },
   { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'peliculas', top: true },
-  { id: 'cuevana3', nombre: 'Cuevana 3', grupo: 'peliculas' },
-  { id: 'cuevana8', nombre: 'Cuevana 8', grupo: 'peliculas' },
-  { id: 'cuevanabiz', nombre: 'Cuevana Biz', grupo: 'peliculas' },
+  { id: 'allpeliculasse', nombre: 'AllPeliculas (Vimeos)', grupo: 'peliculas' },
+  { id: 'gnula', nombre: 'Gnula (StreamWish)', grupo: 'peliculas' },
   { id: 'pelisplus', nombre: 'PelisPlus', grupo: 'peliculas' },
-  { id: 'pelisplushd', nombre: 'PelisPlus HD', grupo: 'peliculas' },
-  { id: 'pelispluslat', nombre: 'PelisPlus Lat', grupo: 'peliculas' },
-  { id: 'pelispluslatino', nombre: 'PelisPlus Latino', grupo: 'peliculas' },
-  { id: 'pelisplusto', nombre: 'PelisPlus TO', grupo: 'peliculas' },
-  { id: 'pelisflix2', nombre: 'PelisFlix 2', grupo: 'peliculas' },
-  { id: 'series24', nombre: 'Series24', grupo: 'peliculas' },
-  { id: 'repelis', nombre: 'RePelis', grupo: 'peliculas' },
-  { id: 'repelishd', nombre: 'RePelis HD', grupo: 'peliculas' },
-  { id: 'pedropolis', nombre: 'Pedropolis', grupo: 'peliculas' },
-  { id: 'gnula', nombre: 'Gnula', grupo: 'peliculas' },
-  { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasySeries', grupo: 'peliculas' },
-  { id: 'miradetodo', nombre: 'MiraDeTodo', grupo: 'peliculas' },
-  { id: 'vidsrc', nombre: 'VidSrc', grupo: 'peliculas' },
-  { id: 'vidsrcicu', nombre: 'VidSrc ICU', grupo: 'peliculas' },
-  { id: 'vidsrcto', nombre: 'VidSrc TO', grupo: 'peliculas' },
+  { id: 'pelisgo', nombre: 'PelisGo (Latino / Cast)', grupo: 'peliculas' },
+  { id: 'pelispedia', nombre: 'PelisPedia', grupo: 'peliculas' },
+  { id: 'sololatino', nombre: 'SoloLatino', grupo: 'peliculas' },
+  { id: 'tioplus', nombre: 'TioPlus', grupo: 'peliculas' },
+  { id: 'peliserieshoy', nombre: 'PelisSeriesHoy', grupo: 'peliculas' },
+  { id: 'seriesmetro', nombre: 'SeriesMetro', grupo: 'peliculas' },
+  { id: 'peliculasflix', nombre: 'PeliculasFlix', grupo: 'peliculas' },
+  { id: 'homecine', nombre: 'HomeCine', grupo: 'peliculas' },
+  { id: 'areshd', nombre: 'AresHD', grupo: 'peliculas' },
+  { id: 'unlimplay', nombre: 'UnlimPlay', grupo: 'peliculas' },
+  { id: 'cinehdplus', nombre: 'CineHdPlus', grupo: 'peliculas' },
+  { id: 'lamovie', nombre: 'LaMovie', grupo: 'peliculas' },
+  { id: 'moviebox', nombre: 'MovieBox', grupo: 'peliculas' },
+  { id: 'embed69', nombre: 'Embed69', grupo: 'peliculas' },
+  { id: 'entrepeliculasyseries', nombre: 'EntrePeliculasYSeries', grupo: 'peliculas' },
+  { id: 'vitaminagg', nombre: 'VitaminaGG', grupo: 'peliculas' },
+  { id: 'vimeus', nombre: 'Vimeus', grupo: 'peliculas' },
 
   // ⛩️ ANIME
   { id: 'tioanime', nombre: 'TioAnime', grupo: 'anime', top: true },
-  { id: 'animeflv', nombre: 'AnimeFLV', grupo: 'anime', top: true },
   { id: 'jkanime', nombre: 'JKAnime', grupo: 'anime' },
   { id: 'monoschinos', nombre: 'MonosChinos', grupo: 'anime' },
-  { id: 'animeonline', nombre: 'AnimeOnline', grupo: 'anime' },
-  { id: 'animefenix', nombre: 'AnimeFenix', grupo: 'anime' },
-  { id: 'animelatinohd', nombre: 'AnimeLatinoHD', grupo: 'anime' },
-  { id: 'animeshd', nombre: 'AnimesHD', grupo: 'anime' },
+  { id: 'latanime', nombre: 'LatAnime', grupo: 'anime' },
+  { id: 'animejl', nombre: 'AnimeJL', grupo: 'anime' },
+  { id: 'animeav1', nombre: 'AnimeAV1', grupo: 'anime' },
+  { id: 'henaojara', nombre: 'Henaojara', grupo: 'anime' },
+  { id: 'katanime', nombre: 'KatAnime', grupo: 'anime' },
 
   // 🐉 DONGHUA
   { id: 'mundodonghua', nombre: 'MundoDonghua', grupo: 'donghua', top: true },
-  { id: 'luciferdonghua', nombre: 'LuciferDonghua', grupo: 'donghua' },
+  { id: 'reydonghua', nombre: 'ReyDonghua', grupo: 'donghua' },
+  { id: 'donghualife', nombre: 'DonghuaLife', grupo: 'donghua' },
 
   // 🎭 DORAMAS
   { id: 'doramasflix', nombre: 'DoramasFlix', grupo: 'doramas', top: true },
-  { id: 'doramasmp4', nombre: 'DoramasMP4', grupo: 'doramas' },
-  { id: 'estrenosdoramas', nombre: 'EstrenosDoramas', grupo: 'doramas' },
+  { id: 'doramasyt', nombre: 'DoramasYT', grupo: 'doramas' },
 
   // 📺 CARICATURAS Y RETRO
-  { id: 'lacartoons', nombre: 'LACartoons (Retro)', grupo: 'caricaturas', top: true },
+  { id: 'lacartoons', nombre: 'LACartoons (Retro Latino)', grupo: 'caricaturas', top: true },
+  { id: 'danimados', nombre: 'Danimados (Latino)', grupo: 'caricaturas' },
 
-  // 🌐 ESPECIALES
-  { id: 'tokyvideo', nombre: 'TokyVideo', grupo: 'especiales' },
-  { id: 'playdede', nombre: 'PlayDede', grupo: 'especiales' },
-  { id: 'sololatino', nombre: 'SoloLatino', grupo: 'especiales' },
-  { id: 'verlatino', nombre: 'VerLatino', grupo: 'especiales' },
-  { id: 'cinelatino', nombre: 'CineLatino', grupo: 'especiales' },
-  { id: 'cinecalidadlatam', nombre: 'CineCalidad Latam', grupo: 'especiales' },
-  { id: 'latamstream', nombre: 'LatamStream', grupo: 'especiales' }
+  // 🌐 ESPECIALES Y DOCUMENTALES
+  { id: 'plutotv', nombre: 'Pluto TV (Oficial)', grupo: 'especiales' },
+  { id: 'rcn', nombre: 'RCN Total (Colombia)', grupo: 'especiales' },
+  { id: 'areadocumental', nombre: 'Area Documental', grupo: 'especiales' },
+  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' }
 ];
 
 const GRUPOS = {
@@ -330,11 +331,11 @@ const DEFAULT_ACTIVE_8 = [
   'pelispanda',
   'cinecalidad',
   'cuevana',
+  'pelishax',
   'seriesflix',
   'hackstore',
   'uhdmovies',
-  'tioanime',
-  'doramasflix'
+  'tioanime'
 ];
 
 const MAX_FUENTES = 8;

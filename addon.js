@@ -15,17 +15,19 @@ const DEFAULT_ACTIVE_8 = [
   'pelispanda',
   'cinecalidad',
   'cuevana',
+  'pelishax',
   'seriesflix',
   'hackstore',
   'uhdmovies',
-  'tioanime',
-  'doramasflix'
+  'tioanime'
 ];
 
 const TOP_PROVIDERS = [
   'pelispanda',
   'cinecalidad',
   'cuevana',
+  'pelishax',
+  'allcalidad',
   'seriesflix',
   'hackstore',
   'uhdmovies',
