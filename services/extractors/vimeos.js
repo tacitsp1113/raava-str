@@ -46,16 +46,28 @@ async function resolveVimeos(url, referer = 'https://vimeos.net/') {
       embedUrl = `https://vimeos.net/embed-${id}`;
     }
 
-    const res = await axios.get(embedUrl, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        'Referer': referer
-      },
-      timeout: 6000
-    });
+    let html = null;
+    try {
+      const res = await axios.get(embedUrl, {
+        headers: {
+          'User-Agent': USER_AGENT,
+          'Referer': referer
+        },
+        timeout: 5000
+      });
+      html = res.data;
+    } catch (directErr) {
+      // Fallback al colchón privado de Google Apps Script ante bloqueos de IP
+      try {
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxQMdtoQ5ys6hFdMjPHftpkPzNpQSv2HBu768zdamoYZmQpj4gWIs-YZx7-i-I0RrL4/exec?url=' + encodeURIComponent(embedUrl);
+        const gasRes = await axios.get(gasUrl, { timeout: 6000 });
+        html = gasRes.data;
+      } catch (_) {
+        return null;
+      }
+    }
 
-    const html = res.data;
-    if (!html) return null;
+    if (!html || typeof html !== 'string') return null;
 
     // Look for packed script
     const packedMatch = html.match(/eval\(function\(p,a,c,k,e,d\)[\s\S]*?\.split\('\|'\)\)\)/);

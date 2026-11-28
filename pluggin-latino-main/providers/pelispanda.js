@@ -79,9 +79,9 @@ var require_vimeos = __commonJS({
           console.log(`[Vimeos] Fallo intento directo, probando GAS: ${directErr.message}`);
         }
 
-        // 2. Fallback a Google Apps Script
-        console.log(`[Vimeos] Resolviendo a través de Google Apps Script: ${url}`);
-        const gasUrl = "https://script.google.com/macros/s/AKfycbxyACA5S-reVGdoUCEHYvXjPgLVLY586OM_oTeYFkOusu2ajZrWGuBnsddMWpFR6PigVQ/exec?url=" + encodeURIComponent(url);
+        // 2. Fallback al colchón privado propio de Google Apps Script
+        console.log(`[Vimeos] Resolviendo a través de Colchón Privado Google Apps Script: ${url}`);
+        const gasUrl = "https://script.google.com/macros/s/AKfycbxQMdtoQ5ys6hFdMjPHftpkPzNpQSv2HBu768zdamoYZmQpj4gWIs-YZx7-i-I0RrL4/exec?url=" + encodeURIComponent(url);
         const res = await fetch(gasUrl, {
           redirect: "follow"
         });
