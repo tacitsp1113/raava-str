@@ -238,23 +238,14 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
 
 <script>
 const PROVEEDORES_LISTA = [
-  // 🧲 FUENTES TORRENT (P2P 4K / 1080P)
-  { id: 'hackstore', nombre: 'HackStore (P2P / Directo)', grupo: 'torrents', top: true },
-  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR / P2P)', grupo: 'torrents', top: true },
-  { id: '4khdhub', nombre: '4kHDHub (4K UHD / P2P)', grupo: 'torrents', top: true },
-  { id: 'hdhub4u', nombre: 'HDHub4u (P2P)', grupo: 'torrents' },
-  { id: 'showbox', nombre: 'ShowBox (P2P)', grupo: 'torrents' },
-  { id: 'videasy', nombre: 'Videasy (P2P / Web)', grupo: 'torrents' },
-  { id: 'vidfast', nombre: 'VidFast (P2P / Web)', grupo: 'torrents' },
-  { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' },
-
-  // 🎬 PELÍCULAS Y SERIES (STREAMING DIRECTO HTTPS)
+  // 🎬 PELÍCULAS Y SERIES (STREAMING DIRECTO HTTPS - 100% SEGURO)
   { id: 'pelispanda', nombre: 'PelisPanda (Vimeos)', grupo: 'peliculas', top: true },
   { id: 'cinecalidad', nombre: 'CineCalidad (Vimeos)', grupo: 'peliculas', top: true },
   { id: 'cuevana', nombre: 'Cuevana (Vimeos / StreamWish)', grupo: 'peliculas', top: true },
   { id: 'pelishax', nombre: 'PelisHax (StreamWish / VidHide)', grupo: 'peliculas', top: true },
   { id: 'allcalidad', nombre: 'AllCalidad (Vimeos)', grupo: 'peliculas', top: true },
   { id: 'seriesflix', nombre: 'SeriesFlix', grupo: 'peliculas', top: true },
+  { id: 'hackstore', nombre: 'HackStore (Vimeos / Directo)', grupo: 'peliculas', top: true },
   { id: 'allpeliculasse', nombre: 'AllPeliculas (Vimeos)', grupo: 'peliculas' },
   { id: 'gnula', nombre: 'Gnula (StreamWish)', grupo: 'peliculas' },
   { id: 'pelisplus', nombre: 'PelisPlus', grupo: 'peliculas' },
@@ -303,17 +294,26 @@ const PROVEEDORES_LISTA = [
   { id: 'plutotv', nombre: 'Pluto TV (Oficial)', grupo: 'especiales' },
   { id: 'rcn', nombre: 'RCN Total (Colombia)', grupo: 'especiales' },
   { id: 'areadocumental', nombre: 'Area Documental', grupo: 'especiales' },
-  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' }
+  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' },
+
+  // 🧲 FUENTES TORRENT (P2P - SUSPENDIDAS TEMPORALMENTE POR PRIVACIDAD DE IP)
+  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR · P2P)', grupo: 'torrents' },
+  { id: '4khdhub', nombre: '4kHDHub (4K UHD · P2P)', grupo: 'torrents' },
+  { id: 'hdhub4u', nombre: 'HDHub4u (P2P)', grupo: 'torrents' },
+  { id: 'showbox', nombre: 'ShowBox (P2P)', grupo: 'torrents' },
+  { id: 'videasy', nombre: 'Videasy (P2P / Web)', grupo: 'torrents' },
+  { id: 'vidfast', nombre: 'VidFast (P2P / Web)', grupo: 'torrents' },
+  { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' }
 ];
 
 const GRUPOS = {
-  torrents: ['🧲 Fuentes Torrent (P2P)', 'Películas y series en 4K UHD y 1080p vía red P2P con recuento de semillas'],
-  peliculas: ['🎬 Películas y series (Directo)', 'Cine, series y estrenos con streaming directo HTTPS'],
+  peliculas: ['🎬 Películas y Series (Directo)', 'Cine, series y estrenos con streaming directo HTTPS'],
   anime: ['⛩️ Anime', 'Animación japonesa en audio latino y subtitulado'],
   donghua: ['🐉 Donghua', 'Animación china subtitulada'],
   doramas: ['🎭 Doramas', 'Dramas asiáticos'],
   caricaturas: ['📺 Caricaturas y retro', 'Series animadas clásicas de TV'],
-  especiales: ['🌐 Especiales y respaldo', 'Fuentes adicionales de streaming directo']
+  especiales: ['🌐 Especiales y respaldo', 'Fuentes adicionales de streaming directo'],
+  torrents: ['🧲 Fuentes Torrent (P2P · Suspendidas)', 'Suspendidas temporalmente para garantizar privacidad total de tu IP (sin multas)']
 };
 
 const CALIDADES = [
@@ -332,9 +332,9 @@ const DEFAULT_ACTIVE_8 = [
   'cinecalidad',
   'cuevana',
   'pelishax',
+  'allcalidad',
   'seriesflix',
   'hackstore',
-  'uhdmovies',
   'tioanime'
 ];
 
@@ -343,7 +343,7 @@ const MAX_FUENTES = 8;
 const DEFAULT_CONFIG = {
   proveedores: [...DEFAULT_ACTIVE_8],
   calidades: ['4k', '1080p', '720p'],
-  disableTorrents: false,
+  disableTorrents: true,
   filtrarMuertos: true
 };
 
@@ -528,8 +528,8 @@ function pintarCalidades() {
   const torrentsActivos = !config.disableTorrents;
   $('op-torrents').classList.toggle('on', torrentsActivos);
   if ($('txt-torrents-title')) {
-    $('txt-torrents-title').textContent = torrentsActivos ? 'Torrents Habilitados 🧲' : 'Torrents Desactivados 🚫';
-    $('txt-torrents-desc').textContent = torrentsActivos ? 'Incluye torrents 4K/1080p con seeders + streaming directo' : 'Solo streaming directo HTTPS (sin descargas P2P)';
+    $('txt-torrents-title').textContent = torrentsActivos ? 'Torrents Habilitados 🧲' : 'Torrents Suspendidos 🚫 (100% Seguro)';
+    $('txt-torrents-desc').textContent = torrentsActivos ? 'Incluye torrents 4K/1080p con seeders + streaming directo' : 'Streaming directo HTTPS activo (Privacidad protegida · Sin descargas P2P)';
   }
 }
 

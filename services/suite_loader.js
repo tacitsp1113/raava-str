@@ -133,7 +133,7 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 
 const TORRENT_SCRAPERS = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
 const BUILTIN_PROVIDERS = new Set(['cinecalidad', 'cuevana', 'seriesflix', 'hackstore', 'pelisplus', 'tioanime', 'lamovie', 'lacartoons']);
-const TOP_PROVIDERS_SET = new Set(['pelispanda', 'pelishax', 'allcalidad', 'uhdmovies', '4khdhub', 'animeflv', 'mundodonghua', 'doramasflix']);
+const TOP_PROVIDERS_SET = new Set(['pelispanda', 'pelishax', 'allcalidad', 'mundodonghua', 'doramasflix']);
 
 /**
  * Ejecuta la suite de raspadores según la configuración del usuario
@@ -154,8 +154,8 @@ async function fetchSuiteStreams(tmdbId, mediaType, season, episode, isAnime, us
     // 1. Filtrar por tipo soportado
     if (!s.supportedTypes || !s.supportedTypes.includes(manifestType)) return false;
 
-    // 2. Si los torrents están desactivados por el usuario, omitir scrapers exclusivos de torrent
-    if (userConfig.disableTorrents && TORRENT_SCRAPERS.has(s.id)) {
+    // 2. Torrents suspendidos: omitir scrapers exclusivos de torrent
+    if (TORRENT_SCRAPERS.has(s.id)) {
       return false;
     }
 

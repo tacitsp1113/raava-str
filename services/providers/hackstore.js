@@ -300,12 +300,13 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
   else if (/720p|hd/i.test(rawQuality)) { qualityBadge = '720p'; qualityKey = '720p'; }
   else { qualityBadge = 'SD'; qualityKey = '480p'; }
 
-  const line1 = `🎬 ${qualityBadge.toUpperCase()} · ${serverName}`;
+  const codec = qualityKey === '4k' ? 'HEVC · HDR' : 'H.264 · SDR';
+  const line1 = `🎬 ${qualityBadge.toUpperCase()} · ${codec} · ${serverName}`;
   const line2 = `🇲🇽 Español Latino`;
   const line3 = (season && episode) ? `⚡ HackStore · T${season}E${episode}` : `⚡ HackStore`;
 
   return {
-    provider: 'hackstore_direct',
+    provider: 'hackstore',
     server: serverName,
     serverTier: 1,
     isDirect: true,
@@ -326,12 +327,10 @@ async function resolveDirectPlayer(player, media = null, season = null, episode 
 }
 
 async function getHackstoreStreams(media, season = null, episode = null, config = {}) {
-  const wantTorrents = !config.disableTorrents && (config.wantTorrents !== undefined
-    ? config.wantTorrents
-    : (Array.isArray(config.providers) ? config.providers.includes('hackstore_torrent') : true));
-  const wantDirect = config.wantDirect !== undefined
-    ? config.wantDirect
-    : (Array.isArray(config.providers) ? config.providers.includes('hackstore_direct') : true);
+  // Torrents suspendidos temporalmente a nivel global para garantizar privacidad de IP (0 riesgo de multas)
+  // Se conserva la función formatTorrentItem intacta para reactivación futura.
+  const wantTorrents = false;
+  const wantDirect = true;
 
   if (!wantTorrents && !wantDirect) return [];
 

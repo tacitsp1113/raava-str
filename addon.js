@@ -16,9 +16,9 @@ const DEFAULT_ACTIVE_8 = [
   'cinecalidad',
   'cuevana',
   'pelishax',
+  'allcalidad',
   'seriesflix',
   'hackstore',
-  'uhdmovies',
   'tioanime'
 ];
 
@@ -30,16 +30,17 @@ const TOP_PROVIDERS = [
   'allcalidad',
   'seriesflix',
   'hackstore',
-  'uhdmovies',
-  '4khdhub',
   'tioanime',
-  'animeflv',
   'mundodonghua',
   'doramasflix',
   'lacartoons'
 ];
 
 const MAX_ACTIVE_PROVIDERS = 8;
+
+// Suspensión global de Torrents a petición del usuario para garantizar privacidad total de IP (0 riesgo de multas/Abmahnung)
+// Se conserva intacto el código de resolución/formateo para reactivación a futuro.
+const SUSPEND_TORRENTS = true;
 
 const DEFAULT_CONFIG = {
   mode: 'scrapers',
@@ -48,9 +49,9 @@ const DEFAULT_CONFIG = {
     series: [...DEFAULT_ACTIVE_8]
   },
   qualities: ['4k', '1080p', '720p'],
-  disableTorrents: false,
+  disableTorrents: true, // Suspendido por seguridad y privacidad de IP
   filtrarMuertos: true,
-  priority: 'direct', // 'direct' | 'torrent'
+  priority: 'direct', // 'direct'
   maxWebStreamsPerProvider: 4, // Límite por sitio
   maxTotalWebStreams: 25,      // Límite total web combinado
   minSeeders: 1
@@ -435,8 +436,8 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
     return allowedQualities.includes(q);
   });
 
-  // A2. Filtro de torrents deshabilitados
-  if (config.disableTorrents) {
+  // A2. Filtro de torrents (Suspendidos globalmente o por configuración)
+  if (SUSPEND_TORRENTS || config.disableTorrents) {
     streams = streams.filter(s => s.isDirect);
   }
 
