@@ -95,10 +95,12 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
           const srv = extractServer(s.name || s.title);
           const lang = s.language || '🇲🇽 Latino';
           const cleanLang = lang.includes('Latino') ? '🇲🇽 Español Latino' : (lang.includes('Castellano') ? '🇪🇸 Castellano' : '🌐 Multi Audio');
+          const codec = qKey === '4k' ? 'HEVC · HDR' : 'H.264 · SDR';
 
           const seeds = s.seeders && s.seeders > 0 ? s.seeders : 18;
           const seedText = `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`;
           const sizeText = s.size ? ` · 📦 ${s.size}` : '';
+          const directSizeLine = s.size ? `\n📦 ${s.size}` : '';
 
           mapped.push({
             provider: scraper.id,
@@ -109,8 +111,8 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
             seeders: seeds,
             name: isTorrent ? 'TACIT STR 🧲' : 'TACIT STR · WEB',
             title: isTorrent
-              ? `🧲 ${qKey.toUpperCase()} · P2P\n${seedText}${sizeText}\n${cleanLang}\n⚡ ${scraper.name}`
-              : `🎬 ${qKey.toUpperCase()} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}`,
+              ? `🧲 ${qKey.toUpperCase()} · ${codec} · P2P\n${seedText}${sizeText}\n${cleanLang}\n⚡ ${scraper.name}`
+              : `🎬 ${qKey.toUpperCase()} · ${codec} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}${directSizeLine}`,
             url: s.url,
             infoHash: s.infoHash,
             fileIdx: s.fileIdx,

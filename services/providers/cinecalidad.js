@@ -166,7 +166,8 @@ async function resolveOption(optionUrl, media = null, season = null, episode = n
   const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
 
   const qBadge = quality.toUpperCase();
-  const line1 = `🎬 ${qBadge} · ${serverName}`;
+  const codec = qualityKey === '4k' ? 'HEVC · HDR' : 'H.264 · SDR';
+  const line1 = `🎬 ${qBadge} · ${codec} · ${serverName}`;
   const line2 = `🇲🇽 Español Latino`;
   const line3 = (season && episode) ? `⚡ CineCalidad · T${season}E${episode}` : `⚡ CineCalidad`;
 
