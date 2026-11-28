@@ -3,11 +3,11 @@ const cheerio = require('cheerio');
 const { cleanTitle } = require('../tmdb');
 const { resolveVoe } = require('../extractors/voe');
 const { resolveVimeos } = require('../extractors/vimeos');
-const { resolveStreamwish } = require('../extractors/vidhide');
+const { resolveStreamwish, resolveVidhide } = require('../extractors/vidhide');
 const { resolveNupload } = require('../extractors/nupload');
 const { isStreamAlive, isIpLockedServer } = require('../extractors/validator');
 
-const BASES = ['https://seriesflixhd.pw', 'https://seriesflixhd.best', 'https://seriesflixhd.ink'];
+const BASES = ['https://seriesflixhd.cfd', 'https://seriesflixhd.pw', 'https://seriesflixhd.ink'];
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
 // In-memory cache con TTL de 15 minutos
@@ -213,10 +213,10 @@ function extractButtons(html) {
 
 // Clasificación de prioridad de servidores: VOE > StreamWish > Vimeos > Otros
 function getServerTier(url) {
-  if (url.includes('voe.sx') || url.includes('cloudwindow-route') || url.includes('voe-network') || url.includes('repacklab.com')) return 1;
-  if (url.includes('streamwish') || url.includes('vibuxer') || url.includes('swdyu')) return 2;
-  if (url.includes('vimeos.net') || url.includes('vimeos.zip')) return 3;
-  if (url.includes('nupload.my')) return 4;
+  if (url.includes('vimeos.net') || url.includes('vimeos.zip')) return 1;
+  if (url.includes('streamwish') || url.includes('vibuxer') || url.includes('swdyu') || url.includes('hglink')) return 2;
+  if (url.includes('vidhide') || url.includes('filelions') || url.includes('callistanise')) return 3;
+  if (url.includes('voe.sx') || url.includes('cloudwindow-route') || url.includes('voe-network') || url.includes('repacklab.com')) return 4;
   return 5;
 }
 
@@ -254,15 +254,18 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
           let resolved = null;
           let server = 'Directo';
 
-          if (btn.url.includes('voe.sx') || btn.url.includes('repacklab.com') || btn.url.includes('cloudwindow-route') || btn.url.includes('voe-network')) {
-            server = 'VOE';
-            resolved = await resolveVoe(btn.url);
-          } else if (btn.url.includes('streamwish') || btn.url.includes('vibuxer') || btn.url.includes('swdyu')) {
-            server = 'StreamWish';
-            resolved = await resolveStreamwish(btn.url);
-          } else if (btn.url.includes('vimeos.net') || btn.url.includes('vimeos.zip')) {
+          if (btn.url.includes('vimeos.net') || btn.url.includes('vimeos.zip')) {
             server = 'Vimeos';
             resolved = await resolveVimeos(btn.url);
+          } else if (btn.url.includes('streamwish') || btn.url.includes('vibuxer') || btn.url.includes('swdyu') || btn.url.includes('hglink')) {
+            server = 'StreamWish';
+            resolved = await resolveStreamwish(btn.url);
+          } else if (btn.url.includes('vidhide') || btn.url.includes('filelions') || btn.url.includes('callistanise') || btn.url.includes('dintezuvio')) {
+            server = 'VidHide';
+            resolved = await resolveVidhide(btn.url);
+          } else if (btn.url.includes('voe.sx') || btn.url.includes('repacklab.com') || btn.url.includes('cloudwindow-route') || btn.url.includes('voe-network')) {
+            server = 'VOE';
+            resolved = await resolveVoe(btn.url);
           } else if (btn.url.includes('nupload.my')) {
             server = 'Nupload';
             resolved = await resolveNupload(btn.url);
@@ -272,16 +275,19 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
             const alive = await isStreamAlive(resolved.url, resolved.headers || {}, 1800);
             if (alive) {
               const audioBadge = btn.audio === 'Latino'
-                ? '🇲🇽 ES (Latino)'
+                ? '🇲🇽 Español Latino'
                 : btn.audio === 'Castellano'
-                ? '🇪🇸 ES (Castellano)'
-                : '🇺🇸 EN (Subtitulado)';
+                ? '🇪🇸 Castellano'
+                : '🇺🇸 Subtitulado';
 
               const quality = resolved.quality || '1080p';
               const qualityKey = quality.toLowerCase().includes('4k') ? '4k' : quality.toLowerCase().includes('720') ? '720p' : '1080p';
-              const line1 = `🎬 ${quality.toUpperCase()} · SDR`;
+              const codec = qualityKey === '4k' ? 'HEVC · HDR' : 'H.264 · SDR';
+              const line1 = `🎬 ${qualityKey.toUpperCase()} · ${codec} · ${server}`;
               const line2 = audioBadge;
-              const line3 = `⚡ T${season} · E${episode}`;
+              const line3 = `⚡ SeriesFlix · T${season}E${episode}`;
+
+              const reqHeaders = (resolved.headers && Object.keys(resolved.headers).length > 0) ? resolved.headers : null;
 
               return {
                 name: 'TACIT STR · WEB',
@@ -289,9 +295,13 @@ async function getSeriesFlixStreams(media, season = null, episode = null, config
                 url: resolved.url,
                 server,
                 serverTier: 1,
-                behaviorHints: {
-                  notWebReady: false
-                },
+                headers: reqHeaders || undefined,
+                behaviorHints: reqHeaders ? {
+                  proxyHeaders: {
+                    request: reqHeaders
+                  },
+                  notWebReady: true
+                } : undefined,
                 qualityKey,
                 isDirect: true,
                 seeders: 999,
