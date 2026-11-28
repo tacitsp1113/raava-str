@@ -96,8 +96,12 @@ app.get('/debug/test-voe', async (req, res) => {
 
 
 // Iniciar Servidor
-app.listen(PORT, () => {
-  console.log(`[TACIT STR] Servidor corriendo en el puerto ${PORT}`);
-  console.log(`[TACIT STR] URL de Configuración: http://localhost:${PORT}/configure`);
-  console.log(`[TACIT STR] URL del Manifiesto: http://localhost:${PORT}/manifest.json`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[TACIT STR] Servidor corriendo en el puerto ${PORT}`);
+    console.log(`[TACIT STR] URL de Configuración: http://localhost:${PORT}/configure`);
+    console.log(`[TACIT STR] URL del Manifiesto: http://localhost:${PORT}/manifest.json`);
+  });
+}
+
+module.exports = app;
