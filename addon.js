@@ -69,20 +69,15 @@ function setCachedStreams(key, data) {
 const TORRENT_SCRAPERS_SET = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbox', 'videasy', 'vidfast', 'vidlink']);
 
 function capProvidersList(list) {
-  if (!Array.isArray(list)) return [...DEFAULT_ACTIVE_8];
+  if (!Array.isArray(list) || list.length === 0) return [...DEFAULT_ACTIVE_8];
 
   // 1. Descartar scrapers suspendidos (torrents) y nombres obsoletos
   let cleaned = list.filter(p => !TORRENT_SCRAPERS_SET.has(p) && p !== 'cuevana3' && p !== 'cuevana8' && p !== 'cuevanabiz');
 
-  // 2. Asegurar que PelisHax y AllCalidad estén activos para reemplazar slots muertos de torrents
-  if (!cleaned.includes('pelishax')) {
-    cleaned.unshift('pelishax');
-  }
-  if (!cleaned.includes('allcalidad') && cleaned.length < MAX_ACTIVE_PROVIDERS) {
-    cleaned.push('allcalidad');
-  }
+  // Si tras filtrar quedó vacía, recurrir a los 8 recomendados
+  if (cleaned.length === 0) return [...DEFAULT_ACTIVE_8];
 
-  // 3. Ordenar por prioridad TOP
+  // 2. Ordenar por prioridad y respetar estrictamente la selección del usuario
   const sorted = [...cleaned].sort((a, b) => {
     const aRank = TOP_PROVIDERS.indexOf(a);
     const bRank = TOP_PROVIDERS.indexOf(b);

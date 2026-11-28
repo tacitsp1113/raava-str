@@ -360,6 +360,22 @@ try {
 } catch (_) {}
 `}
 
+// Normalizar estructura de config para garantizar compatibilidad total
+if (!Array.isArray(config.calidades)) {
+  if (Array.isArray(config.qualities)) config.calidades = [...config.qualities];
+  else config.calidades = ['4k', '1080p', '720p'];
+}
+config.qualities = config.calidades;
+
+if (!Array.isArray(config.proveedores)) {
+  if (Array.isArray(config.providers)) config.proveedores = [...config.providers];
+  else if (config.providers && Array.isArray(config.providers.movie)) config.proveedores = [...config.providers.movie];
+  else config.proveedores = [...DEFAULT_ACTIVE_8];
+}
+config.providers = config.proveedores;
+if (typeof config.disableTorrents !== 'boolean') config.disableTorrents = true;
+if (typeof config.filtrarMuertos !== 'boolean') config.filtrarMuertos = true;
+
 const $ = (id) => document.getElementById(id);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -388,7 +404,7 @@ function generarUrlManifest() {
     config.calidades.includes('4k') &&
     config.calidades.includes('1080p') &&
     config.calidades.includes('720p') &&
-    !config.disableTorrents &&
+    Boolean(config.disableTorrents) &&
     config.filtrarMuertos;
 
   if (isDefault) {
@@ -594,6 +610,20 @@ async function copiar(texto, aviso) {
 
 $('copiar').addEventListener('click', () => copiar(generarUrlManifest(), 'URL de TACIT STR copiada ✓'));
 $('copiar-plugin').addEventListener('click', () => copiar($('url-plugin').textContent, 'Enlace de Nuvio copiado ✓'));
+
+$('instalar').addEventListener('click', (e) => {
+  e.preventDefault();
+  const manifestUrl = generarUrlManifest();
+  const stremioUrl = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
+  window.location.href = stremioUrl;
+});
+
+$('instalar-web').addEventListener('click', (e) => {
+  e.preventDefault();
+  const manifestUrl = generarUrlManifest();
+  const webUrl = 'https://web.stremio.com/#/addons?addon=' + encodeURIComponent(manifestUrl);
+  window.open(webUrl, '_blank', 'noopener,noreferrer');
+});
 
 // Iniciar interfaz
 pintarFuentes();
