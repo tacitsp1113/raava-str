@@ -157,11 +157,11 @@ async function resolveStreams(type, id, rawConfig) {
     return cached;
   }
 
-    const activeList = isSeries ? config.providers?.series : config.providers?.movie;
-    console.log(`[TACIT Request] Resolving streams for type=${type}, id=${id} | Active: ${Array.isArray(activeList) ? activeList.join(', ') : 'default'}`);
+  const isSeries = type === 'series';
+  const activeList = isSeries ? config.providers?.series : config.providers?.movie;
+  console.log(`[TACIT Request] Resolving streams for type=${type}, id=${id} | Active: ${Array.isArray(activeList) ? activeList.join(', ') : 'default'}`);
 
   try {
-    const isSeries = type === 'series';
     let imdbId = id;
     let season = null;
     let episode = null;
