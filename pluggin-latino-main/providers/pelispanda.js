@@ -46,7 +46,41 @@ var require_vimeos = __commonJS({
     }
     async function k(url) {
       try {
-        console.log(`[Vimeos] Resolviendo a trav\xE9s de Google Apps Script: ${url}`);
+        let embedUrl = url;
+        if (!embedUrl.includes('/embed-') && embedUrl.includes('vimeos.net/')) {
+          const id = embedUrl.substring(embedUrl.lastIndexOf('/') + 1);
+          embedUrl = `https://vimeos.net/embed-${id}`;
+        }
+
+        // 1. Intento directo ultra-rápido (nativo sin intermediarios)
+        try {
+          console.log(`[Vimeos] Resolviendo directo: ${embedUrl}`);
+          const directRes = await fetch(embedUrl, {
+            headers: {
+              "User-Agent": UA2,
+              "Referer": "https://pelispanda.org/"
+            },
+            redirect: "follow"
+          });
+          if (directRes.ok) {
+            const html = await directRes.text();
+            const packMatch = html.match(/eval\(function\(p,a,c,k,e,[dr]\)\{[\s\S]+?\}\('([\s\S]+?)',\s*(\d+),\s*\d+,\s*'([\s\S]+?)'\.split\('\|'\)/);
+            if (packMatch) {
+              const unpacked = unpackJS(packMatch[1], parseInt(packMatch[2]), packMatch[3].split("|"));
+              const fileMatch = unpacked.match(/file\s*:\s*["']([^"']+)["']/i);
+              if (fileMatch && fileMatch[1]) {
+                const streamUrl = fileMatch[1];
+                console.log(`[Vimeos] URL directa: ${streamUrl.substring(0, 80)}...`);
+                return { url: streamUrl, quality: "1080p", headers: { "User-Agent": UA2, Referer: "https://vimeos.net/" } };
+              }
+            }
+          }
+        } catch (directErr) {
+          console.log(`[Vimeos] Fallo intento directo, probando GAS: ${directErr.message}`);
+        }
+
+        // 2. Fallback a Google Apps Script
+        console.log(`[Vimeos] Resolviendo a través de Google Apps Script: ${url}`);
         const gasUrl = "https://script.google.com/macros/s/AKfycbxyACA5S-reVGdoUCEHYvXjPgLVLY586OM_oTeYFkOusu2ajZrWGuBnsddMWpFR6PigVQ/exec?url=" + encodeURIComponent(url);
         const res = await fetch(gasUrl, {
           redirect: "follow"
@@ -64,7 +98,7 @@ var require_vimeos = __commonJS({
         const streamUrl = fileMatch[1];
         console.log(`[Vimeos] URL: ${streamUrl.substring(0, 80)}...`);
         const headers = { "User-Agent": UA2, Referer: "https://vimeos.net/" };
-        return { url: streamUrl, quality: "HD", headers };
+        return { url: streamUrl, quality: "1080p", headers };
       } catch (err) {
         console.log(`[Vimeos] Error: ${err.message}`);
         return null;
