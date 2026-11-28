@@ -38,10 +38,6 @@ const TOP_PROVIDERS = [
 
 const MAX_ACTIVE_PROVIDERS = 8;
 
-// Suspensión global de Torrents a petición del usuario para garantizar privacidad total de IP (0 riesgo de multas/Abmahnung)
-// Se conserva intacto el código de resolución/formateo para reactivación a futuro.
-const SUSPEND_TORRENTS = true;
-
 const DEFAULT_CONFIG = {
   mode: 'scrapers',
   providers: {
@@ -49,12 +45,9 @@ const DEFAULT_CONFIG = {
     series: [...DEFAULT_ACTIVE_8]
   },
   qualities: ['4k', '1080p', '720p'],
-  disableTorrents: true, // Suspendido por seguridad y privacidad de IP
   filtrarMuertos: true,
-  priority: 'direct', // 'direct'
   maxWebStreamsPerProvider: 4, // Límite por sitio
-  maxTotalWebStreams: 25,      // Límite total web combinado
-  minSeeders: 1
+  maxTotalWebStreams: 25       // Límite total web combinado
 };
 
 // Enlaces 100% en vivo: sin caché de streams para evitar tokens HLS caducados
@@ -71,7 +64,7 @@ const TORRENT_SCRAPERS_SET = new Set(['4khdhub', 'uhdmovies', 'hdhub4u', 'showbo
 function capProvidersList(list) {
   if (!Array.isArray(list) || list.length === 0) return [...DEFAULT_ACTIVE_8];
 
-  // 1. Descartar scrapers suspendidos (torrents) y nombres obsoletos
+  // 1. Descartar scrapers de torrents y nombres obsoletos
   let cleaned = list.filter(p => !TORRENT_SCRAPERS_SET.has(p) && p !== 'cuevana3' && p !== 'cuevana8' && p !== 'cuevanabiz');
 
   // Si tras filtrar quedó vacía, recurrir a los 8 recomendados
@@ -130,7 +123,7 @@ const manifest = {
   id: 'org.tacit.str',
   version: '1.0.0',
   name: 'TACIT STR',
-  description: 'Películas, series y anime en Español Latino. Enlaces híbridos (Directo Vimeos/VOE + Torrents 4K/1080p).',
+  description: 'Películas, series y anime en Español Latino. Streaming Web Directo HTTPS.',
   logo: 'https://raava-str-1.onrender.com/logo.png',
   background: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1920&q=80',
   resources: ['stream'],
@@ -149,7 +142,7 @@ const manifest = {
 async function resolveStreams(type, id, rawConfig) {
   const config = parseConfig(rawConfig);
   const provKey = JSON.stringify(config.providers || {});
-  const cacheKey = `${config.priority}:${config.disableTorrents}:${provKey}:${config.maxTotalWebStreams}:${type}:${id}`;
+  const cacheKey = `${provKey}:${config.maxTotalWebStreams}:${type}:${id}`;
 
   const cached = getCachedStreams(cacheKey);
   if (cached) {
@@ -433,7 +426,7 @@ function buildWebTasks(media, season, episode, isSeries, isAnime, config) {
 }
 
 /**
- * Filtra, ordena y limita streams de forma uniforme
+ * Filtra, ordena y limita streams directos web de forma uniforme
  */
 function processAndFilterStreams(rawStreams, config, isSeries = false) {
   if (!Array.isArray(rawStreams) || rawStreams.length === 0) return [];
@@ -441,36 +434,20 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
   // A. Filtro por calidad permitida
   const allowedQualities = config.qualities || ['4k', '1080p', '720p', '480p'];
   let streams = rawStreams.filter(s => {
+    if (!s || !s.url) return false;
     const q = (s.qualityKey || '1080p').toLowerCase();
     return allowedQualities.includes(q);
   });
 
-  // A2. Filtro de torrents (Suspendidos globalmente o por configuración)
-  if (SUSPEND_TORRENTS || config.disableTorrents) {
-    streams = streams.filter(s => s.isDirect);
-  }
-
-  // B. Filtro por seeders mínimos en torrents
-  const minSeeders = typeof config.minSeeders === 'number' ? config.minSeeders : 1;
-  streams = streams.filter(s => {
-    if (!s.isDirect) {
-      if (minSeeders <= 1) return true;
-      return (s.seeders || 0) >= minSeeders;
-    }
-    return true;
-  });
-
-  // C. Deduplicación por URL o InfoHash exacto
+  // B. Deduplicación por URL exacta
   const seenUrls = new Set();
   streams = streams.filter(s => {
-    const targetUrl = s.url || s.infoHash;
-    if (!targetUrl) return false;
-    if (seenUrls.has(targetUrl)) return false;
-    seenUrls.add(targetUrl);
+    if (!s.url || seenUrls.has(s.url)) return false;
+    seenUrls.add(s.url);
     return true;
   });
 
-  // D. Ordenamiento por prioridad y calidad
+  // C. Ordenamiento por prioridad de proveedores y calidad
   const providerList = isSeries ? config.providers?.series : config.providers?.movie;
   const getProvRank = (p) => {
     if (!providerList || !Array.isArray(providerList)) return 999;
@@ -486,32 +463,19 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
   };
 
   streams.sort((a, b) => {
-    // 1. Prioridad Directo primero vs Torrents primero
-    if (config.priority === 'direct') {
-      if (a.isDirect && !b.isDirect) return -1;
-      if (!a.isDirect && b.isDirect) return 1;
-    } else if (config.priority === 'torrent') {
-      if (!a.isDirect && b.isDirect) return -1;
-      if (a.isDirect && !b.isDirect) return 1;
-    }
-
-    // 2. Orden de prioridad de proveedores definido por el usuario
+    // 1. Orden de prioridad de proveedores definido por el usuario
     const rankA = getProvRank(a.provider);
     const rankB = getProvRank(b.provider);
     if (rankA !== rankB) return rankA - rankB;
 
-    // 3. Calidad más alta primero
+    // 2. Calidad más alta primero
     const diffQ = qRank(b.qualityKey) - qRank(a.qualityKey);
     if (diffQ !== 0) return diffQ;
 
-    // 4. En torrents, ordenar por mayor número de seeders
-    if (!a.isDirect && !b.isDirect) {
-      return (b.seeders || 0) - (a.seeders || 0);
-    }
     return 0;
   });
 
-  // E. Límites numéricos: por proveedor y total combinado
+  // D. Límites numéricos: por proveedor y total combinado
   const maxPerProvider = Math.max(1, parseInt(config.maxWebStreamsPerProvider, 10) || 4);
   const maxTotalWeb = Math.max(1, parseInt(config.maxTotalWebStreams, 10) || 25);
 
@@ -520,17 +484,7 @@ function processAndFilterStreams(rawStreams, config, isSeries = false) {
   let totalCount = 0;
 
   for (const s of streams) {
-    if (!s.isDirect) {
-      s.name = 'TACIT STR 🧲';
-      const seeds = s.seeders && s.seeders > 0 ? s.seeders : 20;
-      if (s.title && !s.title.includes('personas transmitiendo') && !s.title.includes('semillas')) {
-        const lines = s.title.split('\n');
-        lines.splice(1, 0, `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`);
-        s.title = lines.join('\n');
-      }
-    } else {
-      s.name = 'TACIT STR · WEB';
-    }
+    s.name = 'TACIT STR · WEB';
 
     const prov = s.provider || 'web_other';
     providerCounts[prov] = (providerCounts[prov] || 0);

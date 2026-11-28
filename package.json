@@ -1,7 +1,7 @@
 {
   "name": "tacit-str",
   "version": "1.0.0",
-  "description": "TACIT STR - Stremio Addon para películas y series en Español Latino (Híbrido Torrents + Streaming Directo)",
+  "description": "TACIT STR - Stremio Addon para películas y series en Español Latino (Streaming Web Directo HTTPS)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -20,7 +20,6 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.7.9",
-    "bittorrent-tracker": "^11.2.3",
     "cheerio": "^1.2.0",
     "cheerio-without-node-native": "^0.20.2",
     "crypto-js": "^4.2.0",

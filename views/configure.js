@@ -165,7 +165,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
         <div class="chips">
           <span class="chip" data-ir="fuentes"><i></i><b id="chip-sitios">8 de 8 fuentes (⭐ Recomendadas)</b></span>
           <span class="chip" data-ir="calidad"><i></i><b id="chip-calidades">4K · 1080P · 720P</b></span>
-          <span class="chip" data-ir="calidad"><i></i><b id="chip-torrents">🧲 Torrents Activos</b></span>
           <span class="chip" data-ir="calidad"><i></i><span id="chip-muertos">Links muertos ocultos</span></span>
         </div>
         <div class="rejilla2">
@@ -190,16 +189,6 @@ function renderConfigPage(initialConfig = null, baseUrl = '') {
       <section class="vista" id="v-calidad">
         <div class="encabezado"><h1>Calidad</h1><p>Solo te saldrán las calidades que tengas marcadas aquí.</p></div>
         <div class="tarjeta"><div class="opciones" id="lista-calidades"></div></div>
-        <div class="tarjeta">
-          <h3>🧲 Enlaces Torrents (P2P 4K / 1080p)</h3>
-          <p style="margin-bottom:14px">Permite buscar y reproducir enlaces torrent para máxima fidelidad 4K/1080p con recuento de personas transmitiendo (semillas).</p>
-          <div class="opciones">
-            <div class="opcion grande on" id="op-torrents">
-              <span class="marca-op"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"></path></svg></span>
-              <div><b id="txt-torrents-title">Torrents Habilitados 🧲</b><small id="txt-torrents-desc">Incluye torrents 4K/1080p con seeders + streaming directo</small></div>
-            </div>
-          </div>
-        </div>
         <div class="tarjeta">
           <h3>Filtro de compatibilidad</h3>
           <p style="margin-bottom:14px">Descarta servidores problemáticos para evitar pantallas negras en Smart TV.</p>
@@ -294,16 +283,7 @@ const PROVEEDORES_LISTA = [
   { id: 'plutotv', nombre: 'Pluto TV (Oficial)', grupo: 'especiales' },
   { id: 'rcn', nombre: 'RCN Total (Colombia)', grupo: 'especiales' },
   { id: 'areadocumental', nombre: 'Area Documental', grupo: 'especiales' },
-  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' },
-
-  // 🧲 FUENTES TORRENT (P2P - SUSPENDIDAS TEMPORALMENTE POR PRIVACIDAD DE IP)
-  { id: 'uhdmovies', nombre: 'UHDMovies (4K HDR · P2P)', grupo: 'torrents' },
-  { id: '4khdhub', nombre: '4kHDHub (4K UHD · P2P)', grupo: 'torrents' },
-  { id: 'hdhub4u', nombre: 'HDHub4u (P2P)', grupo: 'torrents' },
-  { id: 'showbox', nombre: 'ShowBox (P2P)', grupo: 'torrents' },
-  { id: 'videasy', nombre: 'Videasy (P2P / Web)', grupo: 'torrents' },
-  { id: 'vidfast', nombre: 'VidFast (P2P / Web)', grupo: 'torrents' },
-  { id: 'vidlink', nombre: 'VidLink (P2P / Web)', grupo: 'torrents' }
+  { id: 'documaniatv', nombre: 'DocumaniaTV', grupo: 'especiales' }
 ];
 
 const GRUPOS = {
@@ -312,8 +292,7 @@ const GRUPOS = {
   donghua: ['🐉 Donghua', 'Animación china subtitulada'],
   doramas: ['🎭 Doramas', 'Dramas asiáticos'],
   caricaturas: ['📺 Caricaturas y retro', 'Series animadas clásicas de TV'],
-  especiales: ['🌐 Especiales y respaldo', 'Fuentes adicionales de streaming directo'],
-  torrents: ['🧲 Fuentes Torrent (P2P · Suspendidas)', 'Suspendidas temporalmente para garantizar privacidad total de tu IP (sin multas)']
+  especiales: ['🌐 Especiales y respaldo', 'Fuentes adicionales de streaming directo']
 };
 
 const CALIDADES = [
@@ -343,7 +322,6 @@ const MAX_FUENTES = 8;
 const DEFAULT_CONFIG = {
   proveedores: [...DEFAULT_ACTIVE_8],
   calidades: ['4k', '1080p', '720p'],
-  disableTorrents: true,
   filtrarMuertos: true
 };
 
@@ -373,7 +351,6 @@ if (!Array.isArray(config.proveedores)) {
   else config.proveedores = [...DEFAULT_ACTIVE_8];
 }
 config.providers = config.proveedores;
-if (typeof config.disableTorrents !== 'boolean') config.disableTorrents = true;
 if (typeof config.filtrarMuertos !== 'boolean') config.filtrarMuertos = true;
 
 const $ = (id) => document.getElementById(id);
@@ -404,7 +381,6 @@ function generarUrlManifest() {
     config.calidades.includes('4k') &&
     config.calidades.includes('1080p') &&
     config.calidades.includes('720p') &&
-    Boolean(config.disableTorrents) &&
     config.filtrarMuertos;
 
   if (isDefault) {
@@ -414,7 +390,6 @@ function generarUrlManifest() {
   const payload = {
     providers: currentProvs,
     qualities: config.calidades,
-    disableTorrents: Boolean(config.disableTorrents),
     filtrarMuertos: Boolean(config.filtrarMuertos)
   };
   const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
@@ -434,7 +409,6 @@ function pintarResumen() {
   }
   $('chip-calidades').textContent = config.calidades.map(c => c.toUpperCase()).join(' · ') || 'Sin calidades';
   $('chip-muertos').textContent = config.filtrarMuertos ? 'Links muertos ocultos' : 'Links muertos visibles';
-  $('chip-torrents').textContent = config.disableTorrents ? '🚫 Solo Streaming Directo' : '🧲 Torrents Activos';
 
   const manifestUrl = generarUrlManifest();
   $('instalar').href = manifestUrl.replace(/^https?:\\/\\//, 'stremio://');
@@ -454,13 +428,9 @@ function pintarFuentes() {
     const lista = PROVEEDORES_LISTA.filter(p => p.grupo === g);
     if (!lista.length) return '';
     const on = lista.filter(p => act.has(p.id)).length;
-    const isTorrentsGroup = g === 'torrents';
-    const torrentNotice = (isTorrentsGroup && config.disableTorrents)
-      ? '<span style="color:#f87171;font-size:11px;font-weight:700;margin-left:8px;">(Desactivado por interruptor general)</span>'
-      : '';
 
     return '<div class="tarjeta grupo-prov">' +
-      '<header><h3>' + nombre + torrentNotice + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
+      '<header><h3>' + nombre + '<small>' + desc + ' · ' + on + ' de ' + lista.length + '</small></h3>' +
       '<div class="botones-grupo"><button class="pastilla" data-top="' + g + '">⭐ TOP</button><button class="pastilla" data-ninguno="' + g + '">Ninguno</button></div></header>' +
       '<div class="opciones">' +
       lista.map(p => '<div class="opcion ' + (act.has(p.id) ? 'on' : '') + '" data-prov="' + esc(p.id) + '">' + CHECK + esc(p.nombre) + (p.top ? '<span class="badge-top">⭐ TOP</span>' : '') + '</div>').join('') +
@@ -541,12 +511,6 @@ function pintarCalidades() {
   }).join('');
 
   $('op-muertos').classList.toggle('on', config.filtrarMuertos);
-  const torrentsActivos = !config.disableTorrents;
-  $('op-torrents').classList.toggle('on', torrentsActivos);
-  if ($('txt-torrents-title')) {
-    $('txt-torrents-title').textContent = torrentsActivos ? 'Torrents Habilitados 🧲' : 'Torrents Suspendidos 🚫 (100% Seguro)';
-    $('txt-torrents-desc').textContent = torrentsActivos ? 'Incluye torrents 4K/1080p con seeders + streaming directo' : 'Streaming directo HTTPS activo (Privacidad protegida · Sin descargas P2P)';
-  }
 }
 
 $('lista-calidades').addEventListener('click', (e) => {
@@ -571,13 +535,6 @@ $('lista-calidades').addEventListener('click', (e) => {
 $('op-muertos').addEventListener('click', () => {
   config.filtrarMuertos = !config.filtrarMuertos;
   pintarCalidades();
-  guardar();
-});
-
-$('op-torrents').addEventListener('click', () => {
-  config.disableTorrents = !config.disableTorrents;
-  pintarCalidades();
-  pintarFuentes();
   guardar();
 });
 

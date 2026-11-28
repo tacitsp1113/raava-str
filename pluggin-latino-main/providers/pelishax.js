@@ -6664,14 +6664,19 @@ var require_vidhide = __commonJS({
           }), t2;
         };
         var unpack = unpack2;
-        const I = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36";
-        console.log(`[VidHide] Resolviendo: ${url}`);
-        let t = await fetch(url, {
+        const I = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+        let targetUrl = (url || '')
+          .replace(/https?:\/\/(?:mivalyo|dinisglows|dhtpre|peytonepre|smoothpre|vidhidepro|vidhidepre|vidhide|dintezuvio|minochinos)\.com/i, 'https://vidhidevip.com')
+          .replace(/\/d\//, '/v/')
+          .replace(/\/download\//, '/v/')
+          .replace(/\/file\//, '/v/');
+        console.log(`[VidHide] Resolviendo: ${targetUrl}`);
+        let t = await fetch(targetUrl, {
           method: "GET",
           headers: {
             "User-Agent": I,
             Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            Referer: "https://embed69.org/"
+            Referer: targetUrl
           },
           redirect: "follow"
         });
@@ -6680,7 +6685,7 @@ var require_vidhide = __commonJS({
         let text = await t.text();
         let s = text.match(/eval\(function\(p,a,c,k,e,[rd]\)[\s\S]*?\.split\('\|'\)[^\)]*\)\)/);
         if (!s) {
-          console.log("[VidHide] No se encontr\xF3 bloque eval");
+          console.log("[VidHide] No se encontró bloque eval");
           return null;
         }
         let unpacked = unpack2(s[0]);
@@ -6688,19 +6693,18 @@ var require_vidhide = __commonJS({
           console.log("[VidHide] No se pudo desempacar");
           return null;
         }
-        let hlsMatch = unpacked.match(/"hls4"\s*:\s*"([^"]+)"/) || unpacked.match(/"hls2"\s*:\s*"([^"]+)"/);
+        let hlsMatch = unpacked.match(/"hls4"\s*:\s*"([^"]+)"/) || unpacked.match(/"hls2"\s*:\s*"([^"]+)"/) || unpacked.match(/"hls"\s*:\s*"([^"]+)"/);
         let hlsUrl = hlsMatch ? hlsMatch[1] : null;
         if (!hlsUrl) {
-          console.log("[VidHide] No se encontr\xF3 hls4/hls2");
+          console.log("[VidHide] No se encontró hls4/hls2");
           return null;
         }
-        let origin = new URL(url).origin;
+        let origin = new URL(t.url || targetUrl).origin;
         let finalUrl = hlsUrl.startsWith("http") ? hlsUrl : `${origin}${hlsUrl}`;
         console.log(`[VidHide] URL encontrada: ${finalUrl.substring(0, 80)}...`);
         return {
           url: finalUrl,
           quality: "1080p",
-          // VidHide suele devolver 1080p o HLS
           headers: { "User-Agent": I, Referer: `${origin}/`, Origin: origin }
         };
       } catch (e) {

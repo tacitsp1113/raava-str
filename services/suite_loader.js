@@ -84,40 +84,27 @@ async function runProviderSafe(scraper, tmdbId, mediaType, season, episode, time
 
         const mapped = [];
         for (const s of rawStreams) {
-          if (!s || (!s.url && !s.infoHash)) continue;
-
-          const isTorrent = Boolean(s.infoHash || (s.url && s.url.startsWith('magnet:')));
-
-          // Validar enlace existente
-          if (!isTorrent && !s.url) continue;
+          if (!s || !s.url) continue;
+          if (s.infoHash || s.url.startsWith('magnet:')) continue; // 100% libre de Torrents
 
           const qKey = normalizeQuality(s.quality);
           const srv = extractServer(s.name || s.title);
           const lang = s.language || '🇲🇽 Latino';
           const cleanLang = lang.includes('Latino') ? '🇲🇽 Español Latino' : (lang.includes('Castellano') ? '🇪🇸 Castellano' : '🌐 Multi Audio');
           const codec = qKey === '4k' ? 'HEVC · HDR' : 'H.264 · SDR';
-
-          const seeds = s.seeders && s.seeders > 0 ? s.seeders : 18;
-          const seedText = `👥 ${seeds} personas transmitiendo (${seeds === 1 ? '1 semilla' : `${seeds} semillas`})`;
-          const sizeText = s.size ? ` · 📦 ${s.size}` : '';
           const directSizeLine = s.size ? `\n📦 ${s.size}` : '';
-
-          const reqHeaders = (!isTorrent && s.headers && Object.keys(s.headers).length > 0) ? s.headers : null;
+          const reqHeaders = (s.headers && Object.keys(s.headers).length > 0) ? s.headers : null;
 
           mapped.push({
             provider: scraper.id,
-            server: isTorrent ? 'Torrent P2P' : srv,
+            server: srv,
             serverTier: 1,
-            isDirect: !isTorrent,
+            isDirect: true,
             qualityKey: qKey,
-            seeders: seeds,
-            name: isTorrent ? 'TACIT STR 🧲' : 'TACIT STR · WEB',
-            title: isTorrent
-              ? `🧲 ${qKey.toUpperCase()} · ${codec} · P2P\n${seedText}${sizeText}\n${cleanLang}\n⚡ ${scraper.name}`
-              : `🎬 ${qKey.toUpperCase()} · ${codec} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}${directSizeLine}`,
+            seeders: 999,
+            name: 'TACIT STR · WEB',
+            title: `🎬 ${qKey.toUpperCase()} · ${codec} · ${srv}\n${cleanLang}\n⚡ ${scraper.name}${directSizeLine}`,
             url: s.url,
-            infoHash: s.infoHash,
-            fileIdx: s.fileIdx,
             headers: reqHeaders || undefined,
             behaviorHints: reqHeaders ? {
               proxyHeaders: {

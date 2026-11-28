@@ -15397,18 +15397,7 @@ async function getStreamsInternal(tmdbId, mediaType, season, episode, title) {
         }
       }));
     }
-    if (downloads.length > 0) {
-      for (const download of downloads) {
-        try {
-          const torrentStream = torrentToStream(download);
-          if (torrentStream) {
-            results.push(torrentStream);
-          }
-        } catch (e) {
-          console.log(`[PelisPanda] Error en torrent: ${e.message}`);
-        }
-      }
-    }
+    // Torrents retirados al 100% para streaming directo seguro y ligero
     const elapsed = ((Date.now() - startTime) / 1e3).toFixed(2);
     console.log(`[PelisPanda] \u2713 ${results.length} streams en ${elapsed}s`);
     return results;

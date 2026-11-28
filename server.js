@@ -20,14 +20,13 @@ app.get('/logo.png', (req, res) => {
 app.get('/:configuration/manifest.json', (req, res) => {
   const config = parseConfig(req.params.configuration);
 
-  const torrentInfo = config.disableTorrents ? '🚫 Sin Torrents' : '🧲 Torrents Activos';
   const qInfo = (config.qualities || ['1080p']).map(q => q.toUpperCase()).join(' · ');
-  const streamInfo = `Web: máx ${config.maxTotalWebStreams || 8}`;
+  const streamInfo = `Web: máx ${config.maxTotalWebStreams || 25}`;
 
   const customManifest = {
     ...manifest,
     name: 'TACIT STR',
-    description: `⚡ Raspadores Web · ${torrentInfo} · [${qInfo}] · ${streamInfo}`
+    description: `⚡ Streaming Web Directo HTTPS · [${qInfo}] · ${streamInfo}`
   };
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json; charset=utf-8');

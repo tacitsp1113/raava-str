@@ -10,9 +10,13 @@ function fixHostsLinks(url) {
     .replace('https://swdyu.com', 'https://streamwish.to')
     .replace('https://cybervynx.com', 'https://streamwish.to')
     .replace('https://dumbalag.com', 'https://streamwish.to')
-    .replace('https://mivalyo.com', 'https://vidhidepro.com')
-    .replace('https://dinisglows.com', 'https://vidhidepro.com')
-    .replace('https://dhtpre.com', 'https://vidhidepro.com')
+    .replace('https://mivalyo.com', 'https://vidhidevip.com')
+    .replace('https://dinisglows.com', 'https://vidhidevip.com')
+    .replace('https://dhtpre.com', 'https://vidhidevip.com')
+    .replace('https://peytonepre.com', 'https://vidhidevip.com')
+    .replace('https://smoothpre.com', 'https://vidhidevip.com')
+    .replace('https://vidhidepre.com', 'https://vidhidevip.com')
+    .replace('https://vidhidepro.com', 'https://vidhidevip.com')
     .replace('https://filemoon.link', 'https://filemoon.sx')
     .replace('https://sblona.com', 'https://watchsb.com')
     .replace('https://lulu.st', 'https://lulustream.com')
@@ -94,6 +98,10 @@ async function resolvePacked(rawUrl, referer = null) {
       },
       timeout: 6000
     });
+
+    if (res.request?.res?.responseUrl) {
+      try { hostOrigin = new URL(res.request.res.responseUrl).origin; } catch (_) {}
+    }
 
     const html = res.data;
     if (!html || typeof html !== 'string') return null;
